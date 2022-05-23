@@ -37,7 +37,7 @@ class CameraActivity : AppCompatActivity() {
     private var selector: QualitySelector? = null
     private val cameraExecutor: ExecutorService by lazy { Executors.newSingleThreadExecutor() }
 
-    private val backgroundExecutor: ExecutorService by lazy { Executors.newSingleThreadExecutor() }
+    private val backgroundExecutor: ExecutorService by lazy { Executors.newWorkStealingPool() }
     private val labelData: List<String> by lazy { readLabels() }
     private val scope = CoroutineScope(Job() + Dispatchers.Default)
 
