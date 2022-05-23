@@ -23,14 +23,14 @@
         android:textStyle="bold" />
 
     <Button
+        android:layout_marginRight="20dp"
+        android:layout_marginLeft="20dp"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/textView2"
         android:id="@+id/scan_button"
         style="@style/PrimaryButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/textView2"
-        android:layout_alignParentLeft="true"
-        android:layout_marginLeft="20dp"
-        android:layout_marginRight="20dp"
         android:backgroundTint="@color/colorBgSecondary"
         android:drawableTint="@color/background_grey"
         android:text="@string/scan"
@@ -73,15 +73,13 @@
         android:layout_height="wrap_content" />
 
     <androidx.recyclerview.widget.RecyclerView
+        android:layout_margin="20dp"
+        android:layout_below="@+id/scan_info"
         android:id="@+id/scan_results"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@+id/scan_info"
-        android:layout_marginStart="20dp"
-        android:layout_marginTop="20dp"
-        android:layout_marginEnd="20dp"
-        android:layout_marginBottom="20dp"
+        android:layout_marginBottom="5dp"
         android:minHeight="200dp"
-        android:scrollbars="vertical" />
+        android:scrollbars="vertical"/>
 
 </RelativeLayout>

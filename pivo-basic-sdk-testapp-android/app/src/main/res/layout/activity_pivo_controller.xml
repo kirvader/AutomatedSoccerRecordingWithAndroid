@@ -6,16 +6,6 @@
     android:layout_height="match_parent"
     tools:context="app.pivo.android.basicsdkdemo.PivoControllerActivity">
 
-    <TextView
-        android:id="@+id/textView3"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Check if PivoPod is working correctly"
-        android:textFontWeight="30"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guideline"
         android:layout_width="wrap_content"

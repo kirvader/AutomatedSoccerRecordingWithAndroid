@@ -89,17 +89,14 @@ class PivoScanningActivity : AppCompatActivity() {
 
     //check permissions if they're granted start scanning, otherwise ask to user to grant permissions
     private fun checkPermission(){// alternative Permission library Dexter
-        PivoSdk.getInstance().scan()
         Permissions.check(this,
             permissionList, null, null,
             object : PermissionHandler() {
                 override fun onGranted() {
                     scanning_bar.visibility = View.VISIBLE
-                    print("Scan started.")
                     PivoSdk.getInstance().scan()
                 }
-            }
-        )
+            })
     }
     //permissions which are required for bluetooth
     private var permissionList = arrayOf(

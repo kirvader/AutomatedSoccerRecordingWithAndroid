@@ -3,53 +3,36 @@ package app.pivo.android.basicsdkdemo
 import ai.onnxruntime.OrtEnvironment
 import ai.onnxruntime.OrtSession
 import android.Manifest
-import android.content.ContentValues
 import android.content.pm.PackageManager
-import android.icu.text.SimpleDateFormat
+import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.provider.MediaStore
 import android.util.Log
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.camera.video.*
-import androidx.camera.video.VideoCapture
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.core.util.Consumer
-import androidx.lifecycle.LifecycleOwner
 import app.pivo.android.basicsdk.PivoSdk
-import kotlinx.android.synthetic.main.camera_activity.*
+import kotlinx.android.synthetic.main.activity_camera.*
 import kotlinx.coroutines.*
 import java.lang.Runnable
-import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import kotlin.math.abs
 import kotlin.math.pow
 
-class CameraActivity : AppCompatActivity(), LifecycleOwner {
-
-    private var mediaStoreOutputOptions: MediaStoreOutputOptions? = null
-    private var recorder: Recorder? = null
-    private var selector: QualitySelector? = null
-    private val cameraExecutor: ExecutorService by lazy { Executors.newSingleThreadExecutor() }
-
+class CameraActivity : AppCompatActivity() {
     private val backgroundExecutor: ExecutorService by lazy { Executors.newSingleThreadExecutor() }
     private val labelData: List<String> by lazy { readLabels() }
     private val scope = CoroutineScope(Job() + Dispatchers.Main)
 
-    private var ortEnv: OrtEnvironment? = null
-    private var imageAnalysis: ImageAnalysis? = null
-    private var videoCapture: VideoCapture<Recorder>? = null
-
-    private var recording: Recording? = null
+    private lateinit var ortEnv: OrtEnvironment
+    private lateinit var imageCapture: ImageCapture
+    private lateinit var imageAnalysis: ImageAnalysis
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        setContentView(R.layout.camera_activity)
+        setContentView(R.layout.activity_camera)
         // Request Camera permission
         if (allPermissionsGranted()) {
             ortEnv = OrtEnvironment.getEnvironment()
@@ -59,129 +42,45 @@ class CameraActivity : AppCompatActivity(), LifecycleOwner {
                 this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS
             )
         }
-
-        videoCaptureButton.setOnClickListener {
-            toggleCameraRecording()
-        }
-
-
     }
-
-    private val recordingListener = Consumer<VideoRecordEvent> { event ->
-        when(event) {
-            is VideoRecordEvent.Start -> {
-                val msg = "Capture Started"
-                Toast.makeText(this, msg, Toast.LENGTH_SHORT)
-                    .show()
-                // update app internal recording state
-
-            }
-            is VideoRecordEvent.Finalize -> {
-                val msg = if (!event.hasError()) {
-                    "Video capture succeeded: ${event.outputResults.outputUri}"
-                    // TODO() handle succeeding here
-                } else {
-                    // update app state when the capture failed.
-                    recording?.close()
-                    recording = null
-
-                    "Video capture ends with error: ${event.error}"
-                }
-                Toast.makeText(this, msg, Toast.LENGTH_SHORT)
-                    .show()
-            }
-        }
-    }
-    private fun toggleCameraRecording() {
-        if (recording != null) {
-            stopCapturing()
-        } else {
-            startCapture()
-        }
-    }
-
-    private fun startCapture() {
-        val name = "CameraX-recording-" +
-                SimpleDateFormat(FILENAME_FORMAT, Locale.US)
-                    .format(System.currentTimeMillis()) + ".mp4"
-        val contentValues = ContentValues().apply {
-            put(MediaStore.Video.Media.DISPLAY_NAME, name)
-        }
-
-        mediaStoreOutputOptions = MediaStoreOutputOptions
-            .Builder(this.contentResolver, MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
-            .setContentValues(contentValues)
-            .build()
-
-        if (ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.RECORD_AUDIO
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return
-        }
-        recording = videoCapture?.output
-            ?.prepareRecording(this, mediaStoreOutputOptions!!)
-            ?.withAudioEnabled()
-            ?.start(ContextCompat.getMainExecutor(this), recordingListener)!!
-    }
-
-    private fun stopCapturing() {
-        recording?.stop()
-        recording = null
-    }
-
 
     private fun startCamera() {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
 
         cameraProviderFuture.addListener(Runnable {
-            selector = QualitySelector
-                .from(
-                    Quality.UHD,
-                    FallbackStrategy.higherQualityOrLowerThan(Quality.HD)
-                )
-
-            recorder = Recorder.Builder()
-                .setExecutor(cameraExecutor).setQualitySelector(selector!!)
-                .build()
-
-            videoCapture = VideoCapture.withOutput(recorder!!)
-
             val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
 
-            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
             // Preview
             val preview = Preview.Builder()
-                .setTargetAspectRatio(AspectRatio.RATIO_16_9)
+//                .setTargetAspectRatio(AspectRatio.RATIO_16_9)
                 .build()
                 .also {
                     it.setSurfaceProvider(viewFinder.surfaceProvider)
                 }
 
+            imageCapture = ImageCapture.Builder()
+//                .setTargetAspectRatio(AspectRatio.RATIO_16_9)
+                .build()
+
+            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
             imageAnalysis = ImageAnalysis.Builder()
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .build()
 
+            setORTAnalyzer()
+
             try {
                 cameraProvider.unbindAll()
 
                 cameraProvider.bindToLifecycle(
-                    this, cameraSelector, preview, imageAnalysis
+                    this, cameraSelector, preview, imageCapture, imageAnalysis
                 )
             } catch (exc: Exception) {
                 Log.e(TAG, "Use case binding failed", exc)
             }
 
-            setORTAnalyzer()
+
         }, ContextCompat.getMainExecutor(this))
     }
 
@@ -191,7 +90,6 @@ class CameraActivity : AppCompatActivity(), LifecycleOwner {
 
     override fun onDestroy() {
         super.onDestroy()
-        cameraExecutor.shutdown()
         backgroundExecutor.shutdown()
         ortEnv?.close()
     }
@@ -234,18 +132,18 @@ class CameraActivity : AppCompatActivity(), LifecycleOwner {
     }
 
     private fun handlePivoPod(box_x: Float) {
-         // normalizing
+        // normalizing
         val x = normalizeBoxCoord(box_x)
         val abs_val = abs(x)
         var angle = 0
         var speed = 0
 
-        if (abs_val >= 0.8F) {
-            angle = 6
+        if (abs_val >= 0.6F) {
+            angle = 10
+            speed = 10
+        } else if (abs_val >= 0.2F) {
+            angle = 5
             speed = 20
-        } else if (abs_val >= 0.4F) {
-            angle = 3
-            speed = 30
         } else {
             PivoSdk.getInstance().stop()
             return
@@ -318,7 +216,6 @@ class CameraActivity : AppCompatActivity(), LifecycleOwner {
     companion object {
         public const val TAG = "ORTImageClassifier"
         private const val REQUEST_CODE_PERMISSIONS = 10
-        private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO)
-        private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
+        private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
     }
 }
