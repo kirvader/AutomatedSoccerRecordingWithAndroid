@@ -1,0 +1,1 @@
+loss = torch.nn.CrossEntropyLoss()
