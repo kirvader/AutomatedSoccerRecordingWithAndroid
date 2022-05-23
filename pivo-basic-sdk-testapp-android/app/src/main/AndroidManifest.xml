@@ -26,12 +26,12 @@
         android:theme="@style/AppTheme" >
         <activity
             android:name=".CameraActivity"
-            android:screenOrientation="landscape"
+            android:screenOrientation="portrait"
             android:exported="true" />
         <activity android:name=".PivoControllerActivity"
-            android:screenOrientation="landscape" />
+            android:screenOrientation="portrait" />
         <activity android:name=".PivoScanningActivity"
-            android:screenOrientation="landscape"
+            android:screenOrientation="portrait"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

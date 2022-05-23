@@ -148,7 +148,7 @@ class CameraActivity : AppCompatActivity() {
         cameraProviderFuture.addListener(Runnable {
             selector = QualitySelector
                 .from(
-                    Quality.SD,
+                    Quality.UHD,
                     FallbackStrategy.higherQualityOrLowerThan(Quality.SD)
                 )
 
@@ -300,7 +300,7 @@ class CameraActivity : AppCompatActivity() {
 
     // Read ort model into a ByteArray, run in background
     private suspend fun readModel(): ByteArray = withContext(Dispatchers.IO) {
-        val modelID = R.raw.yolov5s
+        val modelID = R.raw.yolov5n
         resources.openRawResource(modelID).readBytes()
     }
 

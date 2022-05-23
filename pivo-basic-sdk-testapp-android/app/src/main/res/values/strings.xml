@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">PivoSDK Test App</string>
+    <string name="app_name">N_ball</string>
 
     <!-- Scan -->
     <string name="action_scan">SCAN</string>
