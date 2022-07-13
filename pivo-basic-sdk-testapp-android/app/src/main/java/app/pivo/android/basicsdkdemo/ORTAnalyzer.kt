@@ -12,7 +12,6 @@ import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import app.pivo.android.basicsdkdemo.CameraActivity.Companion.TAG
 import java.util.*
-import kotlin.math.exp
 
 data class ClassifiedBox(
     val centerX: Float,
@@ -100,7 +99,7 @@ internal class ORTAnalyzer(
         val bitmap = rawBitmap?.rotate(image.imageInfo.rotationDegrees.toFloat())
 
         if (bitmap != null) {
-            var result = Result()
+            val result = Result()
 
             val imgData = preProcess(bitmap)
             val inputName = ortSession?.inputNames?.iterator()?.next()

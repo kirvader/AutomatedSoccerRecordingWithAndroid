@@ -2,9 +2,11 @@ package app.pivo.android.basicsdkdemo
 
 import android.Manifest
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.nabinbhandari.android.permissions.PermissionHandler
@@ -64,6 +66,7 @@ class PivoScanningActivity : AppCompatActivity() {
             scanning_bar.visibility = View.INVISIBLE
             if (it is PivoEvent.ConnectionComplete){
                 Log.e(TAG, "CONNECTION_COMPLETED")
+                appendToLog("Connection to PIVO POD completed successfully. Going to the next step.")
                 openController()
             }
         })
@@ -71,6 +74,8 @@ class PivoScanningActivity : AppCompatActivity() {
         PivoEventBus.subscribe(
             PivoEventBus.SCAN_DEVICE, this, Consumer {
             if (it is PivoEvent.Scanning){
+
+                Log.e(TAG, "Result for scanning is updated")
                 resultAdapter.addScanResult(it.device)
             }
         })
@@ -99,10 +104,18 @@ class PivoScanningActivity : AppCompatActivity() {
             })
     }
     //permissions which are required for bluetooth
-    private var permissionList = arrayOf(
-        Manifest.permission.ACCESS_FINE_LOCATION,
-        Manifest.permission.ACCESS_COARSE_LOCATION,
-        Manifest.permission.BLUETOOTH,
-        Manifest.permission.BLUETOOTH_ADMIN)
+    private var permissionList = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        arrayOf(
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION,
+            Manifest.permission.BLUETOOTH,
+            Manifest.permission.BLUETOOTH_ADMIN,
+            Manifest.permission.BLUETOOTH_SCAN,
+            Manifest.permission.CAMERA,
+            Manifest.permission.RECORD_AUDIO
+            )
+    } else {
+        TODO("VERSION.SDK_INT < S")
+    }
 
 }

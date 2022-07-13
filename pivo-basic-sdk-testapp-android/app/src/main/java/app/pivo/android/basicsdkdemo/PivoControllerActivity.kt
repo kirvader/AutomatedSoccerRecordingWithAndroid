@@ -59,13 +59,13 @@ class PivoControllerActivity : AppCompatActivity() {
         }
 
         //get Pivo supported speed list
-        val speedList = PivoSdk.getInstance().supportedSpeedsInSecondsPerRound.toMutableList()
+        val speedList = PivoSdk.getInstance().supportedSpeeds.toMutableList()
         //speed list view
         speed_list_view.adapter= ArrayAdapter<Int>(this, android.R.layout.simple_spinner_item, speedList)
         speed_list_view.onItemSelectedListener = object : OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 Log.e(TAG, "onSpeedChange: ${speedList[position]} save: ${save_speed_view.isChecked}")
-                PivoSdk.getInstance().setSpeedBySecondsPerRound(speedList[position])
+                PivoSdk.getInstance().setSpeed(speedList[position])
             }
 
             override fun onNothingSelected(parent: AdapterView<*>?) {}

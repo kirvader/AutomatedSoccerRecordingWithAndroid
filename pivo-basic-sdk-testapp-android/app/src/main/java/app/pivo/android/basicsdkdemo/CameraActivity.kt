@@ -9,7 +9,6 @@ import android.icu.text.SimpleDateFormat
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.MediaStore
-import android.util.Log
 import android.widget.Toast
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
@@ -23,6 +22,7 @@ import androidx.core.util.Consumer
 import app.pivo.android.basicsdk.PivoSdk
 import kotlinx.android.synthetic.main.activity_camera.*
 import kotlinx.coroutines.*
+import java.lang.Exception
 import java.lang.Runnable
 import java.util.*
 import java.util.concurrent.ExecutorService
@@ -58,6 +58,7 @@ class CameraActivity : AppCompatActivity() {
             ortEnv = OrtEnvironment.getEnvironment()
             startCamera()
         } else {
+            appendToLog("Permissions were not granted.")
             ActivityCompat.requestPermissions(
                 this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS
             )
@@ -75,7 +76,7 @@ class CameraActivity : AppCompatActivity() {
                 Toast.makeText(this, msg, Toast.LENGTH_SHORT)
                     .show()
                 // update app internal recording state
-
+                appendToLog(msg)
             }
             is VideoRecordEvent.Finalize -> {
                 val msg = if (!event.hasError()) {
@@ -90,6 +91,7 @@ class CameraActivity : AppCompatActivity() {
                 }
                 Toast.makeText(this, msg, Toast.LENGTH_SHORT)
                     .show()
+                appendToLog(msg)
             }
         }
     }
@@ -126,6 +128,7 @@ class CameraActivity : AppCompatActivity() {
             //                                          int[] grantResults)
             // to handle the case where the user grants the permission. See the documentation
             // for ActivityCompat#requestPermissions for more details.
+            appendToLog("Not all permissions granted.")
             return
         }
         recording = videoCapture?.output
@@ -139,53 +142,55 @@ class CameraActivity : AppCompatActivity() {
         recording = null
     }
 
-
-
     private fun startCamera() {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
         val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
 
         cameraProviderFuture.addListener(Runnable {
-            selector = QualitySelector
-                .from(
-                    Quality.UHD,
-                    FallbackStrategy.higherQualityOrLowerThan(Quality.SD)
+            try {
+                selector = QualitySelector
+                    .from(
+                        Quality.UHD,
+                        FallbackStrategy.higherQualityOrLowerThan(Quality.SD)
+                    )
+
+                recorder = Recorder.Builder()
+                    .setExecutor(cameraExecutor).setQualitySelector(selector!!)
+                    .build()
+
+                videoCapture = VideoCapture.withOutput(recorder!!)
+
+                // Preview
+                val preview = Preview.Builder()
+//                .setTargetAspectRatio(AspectRatio.RATIO_16_9)
+                    .build()
+
+                imageCapture = ImageCapture.Builder()
+//                .setTargetAspectRatio(AspectRatio.RATIO_16_9)
+                    .build()
+
+                val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+
+                imageAnalysis = ImageAnalysis.Builder()
+                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                    .build()
+
+                setORTAnalyzer()
+
+
+                cameraProvider.unbindAll()
+
+                cameraProvider.bindToLifecycle(
+                    this, cameraSelector, preview, videoCapture, imageAnalysis
                 )
 
-            recorder = Recorder.Builder()
-                .setExecutor(cameraExecutor).setQualitySelector(selector!!)
-                .build()
-
-            videoCapture = VideoCapture.withOutput(recorder!!)
-
-            // Preview
-            val preview = Preview.Builder()
-//                .setTargetAspectRatio(AspectRatio.RATIO_16_9)
-                .build()
-
-            imageCapture = ImageCapture.Builder()
-//                .setTargetAspectRatio(AspectRatio.RATIO_16_9)
-                .build()
-
-            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
-
-            imageAnalysis = ImageAnalysis.Builder()
-                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                .build()
-
-            setORTAnalyzer()
-
-
-            cameraProvider.unbindAll()
-
-            cameraProvider.bindToLifecycle(
-                this, cameraSelector, preview, videoCapture, imageAnalysis
-            )
-
-            preview.setSurfaceProvider(viewFinder.surfaceProvider)
-
-
-
+                preview.setSurfaceProvider(viewFinder.surfaceProvider)
+            } catch (ex: Exception) {
+                if (ex.message != null) {
+                    appendToLog(ex.message!!)
+                    appendToLog(ex.toString())
+                }
+            }
         }, ContextCompat.getMainExecutor(this))
     }
 
@@ -196,8 +201,11 @@ class CameraActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         backgroundExecutor.shutdown()
+        appendToLog("Background executor shut down")
         ortEnv?.close()
+        appendToLog("Ort Environment now closed")
         ProcessCameraProvider.getInstance(this).get().unbindAll()
+        appendToLog("Camera provider has unbind all it's components.")
 
     }
 
@@ -210,12 +218,16 @@ class CameraActivity : AppCompatActivity() {
         if (requestCode == REQUEST_CODE_PERMISSIONS) {
             if (allPermissionsGranted()) {
                 startCamera()
+                appendToLog("Camera started")
             } else {
                 Toast.makeText(
                     this,
                     "Permissions not granted by the user.",
                     Toast.LENGTH_SHORT
                 ).show()
+                ActivityCompat.requestPermissions(
+                    this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS
+                )
                 finish()
             }
 
@@ -287,7 +299,7 @@ class CameraActivity : AppCompatActivity() {
                 detected_item_3.text = "lost"
                 detected_item_value_3.text = ""
             }
-            inference_time_value.text = result.processTimeMs.toString() + "ms"
+            inference_time_value.text = "${result.processTimeMs}ms"
         }
         if (result.detectedObjects.isEmpty()) return
         val bestBallX = result.detectedObjects[0].centerX
@@ -300,12 +312,13 @@ class CameraActivity : AppCompatActivity() {
 
     // Read ort model into a ByteArray, run in background
     private suspend fun readModel(): ByteArray = withContext(Dispatchers.IO) {
-        val modelID = R.raw.yolov5n
+        val modelID = R.raw.best2
         resources.openRawResource(modelID).readBytes()
     }
 
     // Create a new ORT session in background
     private suspend fun createOrtSession(): OrtSession? = withContext(Dispatchers.Default) {
+//        appendToLog("Ort env is starting to create")
         ortEnv?.createSession(readModel())
     }
 
@@ -314,17 +327,25 @@ class CameraActivity : AppCompatActivity() {
     private fun setORTAnalyzer(){
         scope.launch {
             imageAnalysis?.clearAnalyzer()
-            imageAnalysis?.setAnalyzer(
-                backgroundExecutor,
-                ORTAnalyzer(createOrtSession(), ::updateUIAndCameraFOV)
-            )
+            try {
+                imageAnalysis?.setAnalyzer(
+                    backgroundExecutor,
+                    ORTAnalyzer(createOrtSession(), ::updateUIAndCameraFOV)
+                )
+            } catch (e: Exception) {
+                appendToLog("Analyzer setup failed. Using model best2.pt")
+            }
+            if (imageAnalysis != null)
+                appendToLog("Analyzer has been successfully set up.")
+            else
+                appendToLog("Analyzer is null.")
         }
     }
 
     companion object {
-        public const val TAG = "ORTImageClassifier"
+        const val TAG = "ORTImageClassifier"
         private const val REQUEST_CODE_PERMISSIONS = 10
-        private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
+        private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO)
         private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
     }
 }

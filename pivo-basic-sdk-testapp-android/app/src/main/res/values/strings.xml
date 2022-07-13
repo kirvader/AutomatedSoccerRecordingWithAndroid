@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">N_ball</string>
+    <string name="app_name">B2_ball</string>
 
     <!-- Scan -->
     <string name="action_scan">SCAN</string>
