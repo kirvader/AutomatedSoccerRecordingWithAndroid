@@ -25,12 +25,12 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme" >
         <activity
-            android:name=".CameraActivity"
-            android:screenOrientation="portrait"
+            android:name=".activities.CameraActivity"
+            android:screenOrientation="reversePortrait"
             android:exported="true" />
-        <activity android:name=".PivoControllerActivity"
+        <activity android:name=".activities.PivoControllerActivity"
             android:screenOrientation="portrait" />
-        <activity android:name=".PivoScanningActivity"
+        <activity android:name=".activities.PivoScanningActivity"
             android:screenOrientation="portrait"
             android:exported="true">
             <intent-filter>

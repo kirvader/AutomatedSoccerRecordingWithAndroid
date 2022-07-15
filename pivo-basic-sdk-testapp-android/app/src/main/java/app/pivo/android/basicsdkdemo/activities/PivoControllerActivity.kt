@@ -1,4 +1,4 @@
-package app.pivo.android.basicsdkdemo
+package app.pivo.android.basicsdkdemo.activities
 
 import android.content.Intent
 import android.os.Bundle
@@ -8,13 +8,11 @@ import android.widget.AdapterView
 import android.widget.AdapterView.OnItemSelectedListener
 import android.widget.ArrayAdapter
 import androidx.appcompat.app.AppCompatActivity
-import io.reactivex.functions.Consumer
 import app.pivo.android.basicsdk.PivoSdk
 import app.pivo.android.basicsdk.events.PivoEvent
 import app.pivo.android.basicsdk.events.PivoEventBus
 import app.pivo.android.basicsdkdemo.R
-import com.polidea.rxandroidble.RxBleClient
-import com.polidea.rxandroidble.internal.RxBleLog
+import io.reactivex.functions.Consumer
 import kotlinx.android.synthetic.main.activity_pivo_controller.*
 
 

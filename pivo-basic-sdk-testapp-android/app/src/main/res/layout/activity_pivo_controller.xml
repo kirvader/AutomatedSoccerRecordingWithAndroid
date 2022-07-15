@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="app.pivo.android.basicsdkdemo.PivoControllerActivity">
+    tools:context="app.pivo.android.basicsdkdemo.activities.PivoControllerActivity">
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guideline"

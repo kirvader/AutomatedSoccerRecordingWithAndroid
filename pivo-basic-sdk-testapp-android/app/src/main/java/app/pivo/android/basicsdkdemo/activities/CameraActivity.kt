@@ -1,4 +1,4 @@
-package app.pivo.android.basicsdkdemo
+package app.pivo.android.basicsdkdemo.activities
 
 import ai.onnxruntime.OrtEnvironment
 import ai.onnxruntime.OrtSession
@@ -6,10 +6,10 @@ import android.Manifest
 import android.content.ContentValues
 import android.content.pm.PackageManager
 import android.icu.text.SimpleDateFormat
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.MediaStore
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageCapture
@@ -19,15 +19,19 @@ import androidx.camera.video.*
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.util.Consumer
-import app.pivo.android.basicsdk.PivoSdk
+import app.pivo.android.basicsdkdemo.ORTAnalyzer
+import app.pivo.android.basicsdkdemo.R
+import app.pivo.android.basicsdkdemo.Result
+import app.pivo.android.basicsdkdemo.appendToLog
+import app.pivo.android.basicsdkdemo.utils.pod.ClassifiedBox
+import app.pivo.android.basicsdkdemo.utils.pod.PodController
+import app.pivo.android.basicsdkdemo.utils.pod.Point
 import kotlinx.android.synthetic.main.activity_camera.*
 import kotlinx.coroutines.*
-import java.lang.Exception
 import java.lang.Runnable
 import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
-import kotlin.math.abs
 import kotlin.math.pow
 
 class CameraActivity : AppCompatActivity() {
@@ -48,6 +52,8 @@ class CameraActivity : AppCompatActivity() {
 
     private var recording: Recording? = null
 
+
+    private val pivoPodController: PodController = PodController()
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -70,7 +76,7 @@ class CameraActivity : AppCompatActivity() {
     }
 
     private val recordingListener = Consumer<VideoRecordEvent> { event ->
-        when(event) {
+        when (event) {
             is VideoRecordEvent.Start -> {
                 val msg = "Capture Started"
                 Toast.makeText(this, msg, Toast.LENGTH_SHORT)
@@ -95,6 +101,7 @@ class CameraActivity : AppCompatActivity() {
             }
         }
     }
+
     private fun toggleCameraRecording() {
         if (recording != null) {
             stopCapturing()
@@ -239,42 +246,13 @@ class CameraActivity : AppCompatActivity() {
         return kotlin.math.round(number * multiplier) / multiplier
     }
 
-    private fun getBoxInfo(box: ClassifiedBox) : String {
-        val strPosition = "(${round(box.centerX.toDouble(), 2)};${round(box.centerY.toDouble(), 2)})"
+    private fun getBoxInfo(box: ClassifiedBox): String {
+        val strPosition =
+            "(${round(box.center.x.toDouble(), 2)};${round(box.center.y.toDouble(), 2)})"
         val strConfidence = "conf: ${round((box.confidence * 100).toDouble(), 2)}"
         return "$strPosition $strConfidence"
     }
 
-    // translates x to [-1; 1]
-    private fun normalizeBoxCoord(x: Float): Float = x * 2.0F - 1.0F
-
-    private fun handlePivoPod(box_x: Float) {
-        // normalizing
-        val x = normalizeBoxCoord(box_x)
-        val abs_val = abs(x)
-        var angle = 0
-        var speed = 0
-
-        when {
-            abs_val >= 0.6F -> {
-                angle = 10
-                speed = 10
-            }
-            abs_val >= 0.2F -> {
-                angle = 5
-                speed = 20
-            }
-            else -> {
-                PivoSdk.getInstance().stop()
-                return
-            }
-        }
-        if (x < 0) {
-            PivoSdk.getInstance().turnLeft(angle, speed)
-        } else {
-            PivoSdk.getInstance().turnRight(angle, speed)
-        }
-    }
 
     private fun updateUIAndCameraFOV(result: Result) {
         runOnUiThread {
@@ -301,9 +279,18 @@ class CameraActivity : AppCompatActivity() {
             }
             inference_time_value.text = "${result.processTimeMs}ms"
         }
-        if (result.detectedObjects.isEmpty()) return
-        val bestBallX = result.detectedObjects[0].centerX
-        handlePivoPod(bestBallX)
+        if (result.detectedObjects.isEmpty())
+        {
+            pivoPodController.updateObjectCurrentPosition(
+                Point(0.5f, 0.5f),
+                result.processTimeMs / 1000.0f
+            )
+            return
+        }
+        pivoPodController.updateObjectCurrentPosition(
+            result.detectedObjects[0],
+            result.processTimeMs / 1000.0f
+        )
     }
 
     // Read MobileNet V2 classification labels
@@ -312,7 +299,7 @@ class CameraActivity : AppCompatActivity() {
 
     // Read ort model into a ByteArray, run in background
     private suspend fun readModel(): ByteArray = withContext(Dispatchers.IO) {
-        val modelID = R.raw.best2
+        val modelID = R.raw.yolov5s
         resources.openRawResource(modelID).readBytes()
     }
 
@@ -324,7 +311,7 @@ class CameraActivity : AppCompatActivity() {
 
     // Create a new ORT session and then change the ImageAnalysis.Analyzer
     // This part is done in background to avoid blocking the UI
-    private fun setORTAnalyzer(){
+    private fun setORTAnalyzer() {
         scope.launch {
             imageAnalysis?.clearAnalyzer()
             try {
@@ -345,7 +332,8 @@ class CameraActivity : AppCompatActivity() {
     companion object {
         const val TAG = "ORTImageClassifier"
         private const val REQUEST_CODE_PERMISSIONS = 10
-        private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO)
+        private val REQUIRED_PERMISSIONS =
+            arrayOf(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO)
         private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
     }
 }
