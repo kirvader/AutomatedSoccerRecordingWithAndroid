@@ -4,22 +4,21 @@ import android.Manifest
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.View
-import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
+import app.pivo.android.basicsdk.PivoSdk
+import app.pivo.android.basicsdk.events.PivoEvent
+import app.pivo.android.basicsdk.events.PivoEventBus
+import com.elvishew.xlog.XLog
 import com.nabinbhandari.android.permissions.PermissionHandler
 import com.nabinbhandari.android.permissions.Permissions
 import io.reactivex.functions.Consumer
-import app.pivo.android.basicsdk.PivoSdk
-import app.pivo.android.basicsdk.events.PivoEventBus
-import app.pivo.android.basicsdk.events.PivoEvent
 import kotlinx.android.synthetic.main.activity_pivo_scanning.*
 
 class PivoScanningActivity : AppCompatActivity() {
 
-    private val TAG = "MainActivity"
+    private val TAG = "ScanActivity"
     private lateinit var resultAdapter: ScanResultsAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -45,16 +44,19 @@ class PivoScanningActivity : AppCompatActivity() {
             layoutManager = LinearLayoutManager(this@PivoScanningActivity)
             adapter = resultAdapter
         }
+
         //start scanning button
         scan_button.setOnClickListener {
             checkPermission()
         }
+
         //cancel scanning button
         cancel_button.setOnClickListener {
             scanning_bar.visibility = View.INVISIBLE
             PivoSdk.getInstance().stopScan()
             resultAdapter.clearScanResults()
         }
+        XLog.tag(TAG).i("Screen layout functionality setup")
     }
 
 
@@ -65,8 +67,7 @@ class PivoScanningActivity : AppCompatActivity() {
             PivoEventBus.CONNECTION_COMPLETED, this, Consumer {
             scanning_bar.visibility = View.INVISIBLE
             if (it is PivoEvent.ConnectionComplete){
-                Log.e(TAG, "CONNECTION_COMPLETED")
-                appendToLog("Connection to PIVO POD completed successfully. Going to the next step.")
+                XLog.tag(TAG).d("CONNECTION_COMPLETED.")
                 openController()
             }
         })
@@ -75,7 +76,7 @@ class PivoScanningActivity : AppCompatActivity() {
             PivoEventBus.SCAN_DEVICE, this, Consumer {
             if (it is PivoEvent.Scanning){
 
-                Log.e(TAG, "Result for scanning is updated")
+                XLog.tag(TAG).i("Result for scanning is updated")
                 resultAdapter.addScanResult(it.device)
             }
         })
@@ -100,6 +101,7 @@ class PivoScanningActivity : AppCompatActivity() {
                 override fun onGranted() {
                     scanning_bar.visibility = View.VISIBLE
                     PivoSdk.getInstance().scan()
+                    XLog.tag(TAG).i("All permissions granted")
                 }
             })
     }

@@ -6,10 +6,10 @@ import android.Manifest
 import android.content.ContentValues
 import android.content.pm.PackageManager
 import android.icu.text.SimpleDateFormat
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.MediaStore
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageCapture
@@ -20,9 +20,9 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.util.Consumer
 import app.pivo.android.basicsdk.PivoSdk
+import com.elvishew.xlog.XLog
 import kotlinx.android.synthetic.main.activity_camera.*
 import kotlinx.coroutines.*
-import java.lang.Exception
 import java.lang.Runnable
 import java.util.*
 import java.util.concurrent.ExecutorService
@@ -58,7 +58,7 @@ class CameraActivity : AppCompatActivity() {
             ortEnv = OrtEnvironment.getEnvironment()
             startCamera()
         } else {
-            appendToLog("Permissions were not granted.")
+            XLog.tag(TAG).e("Permissions were not granted.")
             ActivityCompat.requestPermissions(
                 this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS
             )
@@ -76,7 +76,7 @@ class CameraActivity : AppCompatActivity() {
                 Toast.makeText(this, msg, Toast.LENGTH_SHORT)
                     .show()
                 // update app internal recording state
-                appendToLog(msg)
+                XLog.tag(TAG).i(msg)
             }
             is VideoRecordEvent.Finalize -> {
                 val msg = if (!event.hasError()) {
@@ -91,7 +91,7 @@ class CameraActivity : AppCompatActivity() {
                 }
                 Toast.makeText(this, msg, Toast.LENGTH_SHORT)
                     .show()
-                appendToLog(msg)
+                XLog.tag(TAG).i(msg)
             }
         }
     }
@@ -128,7 +128,7 @@ class CameraActivity : AppCompatActivity() {
             //                                          int[] grantResults)
             // to handle the case where the user grants the permission. See the documentation
             // for ActivityCompat#requestPermissions for more details.
-            appendToLog("Not all permissions granted.")
+            XLog.tag(TAG).e("Not all permissions granted.")
             return
         }
         recording = videoCapture?.output
@@ -187,8 +187,7 @@ class CameraActivity : AppCompatActivity() {
                 preview.setSurfaceProvider(viewFinder.surfaceProvider)
             } catch (ex: Exception) {
                 if (ex.message != null) {
-                    appendToLog(ex.message!!)
-                    appendToLog(ex.toString())
+                    XLog.tag(TAG).d("Camera setup failed with exception", ex)
                 }
             }
         }, ContextCompat.getMainExecutor(this))
@@ -201,11 +200,9 @@ class CameraActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         backgroundExecutor.shutdown()
-        appendToLog("Background executor shut down")
         ortEnv?.close()
-        appendToLog("Ort Environment now closed")
         ProcessCameraProvider.getInstance(this).get().unbindAll()
-        appendToLog("Camera provider has unbind all it's components.")
+        XLog.tag(TAG).i("OnDestroy called")
 
     }
 
@@ -218,7 +215,7 @@ class CameraActivity : AppCompatActivity() {
         if (requestCode == REQUEST_CODE_PERMISSIONS) {
             if (allPermissionsGranted()) {
                 startCamera()
-                appendToLog("Camera started")
+                XLog.tag(TAG).i("Camera started")
             } else {
                 Toast.makeText(
                     this,
@@ -301,8 +298,12 @@ class CameraActivity : AppCompatActivity() {
             }
             inference_time_value.text = "${result.processTimeMs}ms"
         }
-        if (result.detectedObjects.isEmpty()) return
+        if (result.detectedObjects.isEmpty()) {
+            XLog.tag(TAG).i("No appropriate objects found")
+            return
+        }
         val bestBallX = result.detectedObjects[0].centerX
+        XLog.tag(TAG).d("Found objects. The best is at %f", bestBallX)
         handlePivoPod(bestBallX)
     }
 
@@ -333,17 +334,17 @@ class CameraActivity : AppCompatActivity() {
                     ORTAnalyzer(createOrtSession(), ::updateUIAndCameraFOV)
                 )
             } catch (e: Exception) {
-                appendToLog("Analyzer setup failed. Using model best2.pt")
+                XLog.tag(TAG).d("Analyzer setup failed. Using model best2.pt", e)
             }
             if (imageAnalysis != null)
-                appendToLog("Analyzer has been successfully set up.")
+                XLog.tag(TAG).i("Analyzer has been successfully set up.")
             else
-                appendToLog("Analyzer is null.")
+                XLog.tag(TAG).e("Analyzer is null.")
         }
     }
 
     companion object {
-        const val TAG = "ORTImageClassifier"
+        const val TAG = "Camera activity"
         private const val REQUEST_CODE_PERMISSIONS = 10
         private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO)
         private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"

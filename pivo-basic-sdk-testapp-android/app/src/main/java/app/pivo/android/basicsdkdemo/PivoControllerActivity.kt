@@ -2,19 +2,16 @@ package app.pivo.android.basicsdkdemo
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.widget.AdapterView
 import android.widget.AdapterView.OnItemSelectedListener
 import android.widget.ArrayAdapter
 import androidx.appcompat.app.AppCompatActivity
-import io.reactivex.functions.Consumer
 import app.pivo.android.basicsdk.PivoSdk
 import app.pivo.android.basicsdk.events.PivoEvent
 import app.pivo.android.basicsdk.events.PivoEventBus
-import app.pivo.android.basicsdkdemo.R
-import com.polidea.rxandroidble.RxBleClient
-import com.polidea.rxandroidble.internal.RxBleLog
+import com.elvishew.xlog.XLog
+import io.reactivex.functions.Consumer
 import kotlinx.android.synthetic.main.activity_pivo_controller.*
 
 
@@ -64,7 +61,7 @@ class PivoControllerActivity : AppCompatActivity() {
         speed_list_view.adapter= ArrayAdapter<Int>(this, android.R.layout.simple_spinner_item, speedList)
         speed_list_view.onItemSelectedListener = object : OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                Log.e(TAG, "onSpeedChange: ${speedList[position]} save: ${save_speed_view.isChecked}")
+                XLog.tag(TAG).i("Speed item selected. onSpeedChange: ${speedList[position]} save: ${save_speed_view.isChecked}")
                 PivoSdk.getInstance().setSpeed(speedList[position])
             }
 
@@ -78,33 +75,38 @@ class PivoControllerActivity : AppCompatActivity() {
         PivoEventBus.subscribe(
             PivoEventBus.CONNECTION_FAILURE,this, Consumer {
                 if (it is PivoEvent.ConnectionFailure){
+                    XLog.tag(TAG).i("PivoPod Connection failure")
                     finish()
                 }
             })
         //subscribe pivo remote controller event
         PivoEventBus.subscribe(
             PivoEventBus.REMOTE_CONTROLLER, this, Consumer {
-            when(it){
-                is PivoEvent.RCCamera->notification_view.text = "CAMERA"
-                is PivoEvent.RCMode->notification_view.text = "MODE"
-                is PivoEvent.RCStop->notification_view.text = "STOP"
-                is PivoEvent.RCRightContinuous->notification_view.text = "RIGHT_CONTINUOUS"
-                is PivoEvent.RCLeftContinuous->notification_view.text = "LEFT_CONTINUOUS"
-                is PivoEvent.RCLeftPressed->notification_view.text = "LEFT_PRESSED"
-                is PivoEvent.RCLeftRelease->notification_view.text = "LEFT_RELEASE"
-                is PivoEvent.RCRightPressed->notification_view.text = "RIGHT_PRESSED"
-                is PivoEvent.RCRightRelease->notification_view.text = "RIGHT_RELEASE"
-                is PivoEvent.RCSpeedUpPressed->notification_view.text = "SPEED_UP_PRESSED: ${it.level}"
-                is PivoEvent.RCSpeedDownPressed->notification_view.text = "SPEED_DOWN_PRESSED: ${it.level}"
-                is PivoEvent.RCSpeedUpRelease->notification_view.text = "SPEED_UP_RELEASE: ${it.level}"
-                is PivoEvent.RCSpeedDownRelease->notification_view.text = "SPEED_DOWN_RELEASE: ${it.level}"
-                is PivoEvent.RCSpeed->notification_view.text = "SPEED: ${it.level}"
-            }
+                val eventName = when(it){
+                    is PivoEvent.RCCamera->notification_view.text = "CAMERA"
+                    is PivoEvent.RCMode->notification_view.text = "MODE"
+                    is PivoEvent.RCStop->notification_view.text = "STOP"
+                    is PivoEvent.RCRightContinuous->notification_view.text = "RIGHT_CONTINUOUS"
+                    is PivoEvent.RCLeftContinuous->notification_view.text = "LEFT_CONTINUOUS"
+                    is PivoEvent.RCLeftPressed->notification_view.text = "LEFT_PRESSED"
+                    is PivoEvent.RCLeftRelease->notification_view.text = "LEFT_RELEASE"
+                    is PivoEvent.RCRightPressed->notification_view.text = "RIGHT_PRESSED"
+                    is PivoEvent.RCRightRelease->notification_view.text = "RIGHT_RELEASE"
+                    is PivoEvent.RCSpeedUpPressed->notification_view.text = "SPEED_UP_PRESSED: ${it.level}"
+                    is PivoEvent.RCSpeedDownPressed->notification_view.text = "SPEED_DOWN_PRESSED: ${it.level}"
+                    is PivoEvent.RCSpeedUpRelease->notification_view.text = "SPEED_UP_RELEASE: ${it.level}"
+                    is PivoEvent.RCSpeedDownRelease->notification_view.text = "SPEED_DOWN_RELEASE: ${it.level}"
+                    is PivoEvent.RCSpeed->notification_view.text = "SPEED: ${it.level}"
+                    else -> "error"
+                }
+                XLog.tag(TAG).i("Chosen option = $eventName")
+                eventName
         })
         //subscribe to name change event
         PivoEventBus.subscribe(
             PivoEventBus.NAME_CHANGED, this, Consumer {
             if (it is PivoEvent.NameChanged){
+                XLog.tag(TAG).i("PivoPod name was changed to ${it.name}")
                 notification_view.text = "Name: ${it.name}"
             }
         })

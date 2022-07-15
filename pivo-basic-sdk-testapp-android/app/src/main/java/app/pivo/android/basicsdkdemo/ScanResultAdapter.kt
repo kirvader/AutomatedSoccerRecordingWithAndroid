@@ -1,12 +1,12 @@
 package app.pivo.android.basicsdkdemo
 
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import app.pivo.android.basicsdk.util.PivoDevice
+import com.elvishew.xlog.XLog
 import java.util.*
 
 /**
@@ -49,7 +49,7 @@ class ScanResultsAdapter : RecyclerView.Adapter<ScanResultsAdapter.ViewHolder?>(
     }
 
     fun addScanResult(scanDevice: PivoDevice) {
-        Log.e( TAG,"Found: ${scanDevice.name}")
+        XLog.tag(TAG).e( TAG,"Found: ${scanDevice.name}")
         for (i in data.indices) {
             if (data[i].macAddress == scanDevice.macAddress) {
                 data[i] = scanDevice
