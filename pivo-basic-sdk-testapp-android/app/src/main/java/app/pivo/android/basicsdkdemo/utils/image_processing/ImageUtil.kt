@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package app.pivo.android.basicsdkdemo
+package app.pivo.android.basicsdkdemo.utils.image_processing
 
 import android.graphics.*
 import androidx.camera.core.ImageProxy
@@ -37,8 +37,8 @@ fun preProcess(bitmap: Bitmap): FloatBuffer {
     val stride = IMAGE_SIZE_X * IMAGE_SIZE_Y
     val bmpData = IntArray(stride)
     bitmap.getPixels(bmpData, 0, bitmap.width, 0, 0, bitmap.width, bitmap.height)
-    for (i in 0..IMAGE_SIZE_X - 1) {
-        for (j in 0..IMAGE_SIZE_Y - 1) {
+    for (i in 0 until IMAGE_SIZE_X) {
+        for (j in 0 until IMAGE_SIZE_Y) {
             val idx = IMAGE_SIZE_Y * i + j
             val pixelValue = bmpData[idx]
             imgData.put(idx, (pixelValue shr 16 and 0xFF) / 255.0F)

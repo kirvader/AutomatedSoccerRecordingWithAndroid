@@ -3,28 +3,27 @@
 
 package app.pivo.android.basicsdkdemo
 
-import ai.onnxruntime.*
+import ai.onnxruntime.OnnxTensor
+import ai.onnxruntime.OrtEnvironment
+import ai.onnxruntime.OrtSession
 import android.graphics.Bitmap
 import android.graphics.Matrix
 import android.os.SystemClock
 import android.util.Log
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
-import app.pivo.android.basicsdkdemo.CameraActivity.Companion.TAG
+import app.pivo.android.basicsdkdemo.activities.CameraActivity.Companion.TAG
+import app.pivo.android.basicsdkdemo.utils.image_processing.preProcess
+import app.pivo.android.basicsdkdemo.utils.image_processing.toBitmap
+import app.pivo.android.basicsdkdemo.utils.pod.ClassifiedBox
+import app.pivo.android.basicsdkdemo.utils.pod.Point
 import java.util.*
 
-data class ClassifiedBox(
-    val centerX: Float,
-    val centerY: Float,
-    val width: Float,
-    val height: Float,
-    val classId: Int,
-    val confidence: Float
-)
+
 
 internal data class Result(
-        var detectedObjects: List<ClassifiedBox> = listOf(),
-        var processTimeMs: Long = 0
+    var detectedObjects: List<ClassifiedBox> = listOf(),
+    var processTimeMs: Long = 0
 ) {}
 
 internal class ORTAnalyzer(
@@ -77,11 +76,12 @@ internal class ORTAnalyzer(
             val classId = maxScoreInd - 5
             if (classId != importantClassId) continue
             result.add(ClassifiedBox(
-                record[0] / IMAGE_WIDTH,
-                record[1] / IMAGE_HEIGHT,
+                Point(record[0] / IMAGE_WIDTH,
+                record[1] / IMAGE_HEIGHT),
                 record[2] / IMAGE_WIDTH,
                 record[3] / IMAGE_HEIGHT,
-                classId, confidence))
+                classId, confidence)
+            )
         }
         return result
     }
@@ -117,7 +117,7 @@ internal class ORTAnalyzer(
 
                             val arr = ((output?.get(0)?.value) as Array<Array<FloatArray>>)[0]
 
-                            val balls = getAllObjectsByClass(arr, 32)
+                            val balls = getAllObjectsByClass(arr, 0)
 
                             result.detectedObjects = getTop3(balls)
                         }

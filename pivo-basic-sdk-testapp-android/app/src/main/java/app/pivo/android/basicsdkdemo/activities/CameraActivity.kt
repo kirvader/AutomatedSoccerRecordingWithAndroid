@@ -1,17 +1,18 @@
-package app.pivo.android.basicsdkdemo
+package app.pivo.android.basicsdkdemo.activities
 
 import ai.onnxruntime.OrtEnvironment
 import ai.onnxruntime.OrtSession
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
+import android.icu.text.SimpleDateFormat
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.AspectRatio
+import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
@@ -21,6 +22,11 @@ import androidx.camera.video.Quality
 import androidx.camera.video.QualitySelector
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.util.Consumer
+import app.pivo.android.basicsdkdemo.ORTAnalyzer
+import app.pivo.android.basicsdkdemo.R
+import app.pivo.android.basicsdkdemo.Result
+import app.pivo.android.basicsdkdemo.appendToLog
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import app.pivo.android.basicsdk.PivoSdk
@@ -28,13 +34,11 @@ import app.pivo.android.basicsdk.events.PivoEvent
 import app.pivo.android.basicsdk.events.PivoEventBus
 import com.nabinbhandari.android.permissions.PermissionHandler
 import com.nabinbhandari.android.permissions.Permissions
-import io.reactivex.functions.Consumer
 import kotlinx.android.synthetic.main.activity_camera.*
 import kotlinx.coroutines.*
 import java.lang.Runnable
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
-import kotlin.math.abs
 import kotlin.math.pow
 
 class CameraActivity : AppCompatActivity() {
@@ -51,6 +55,9 @@ class CameraActivity : AppCompatActivity() {
 
     private lateinit var pivoScanResultsAdapter: ScanResultsAdapter
 
+    private val pivoPodController: PodController = PodController()
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_camera)
@@ -59,6 +66,7 @@ class CameraActivity : AppCompatActivity() {
             ortEnv = OrtEnvironment.getEnvironment()
             startCamera()
         } else {
+            appendToLog("Permissions were not granted.")
             ActivityCompat.requestPermissions(
                 this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS
             )
@@ -203,41 +211,11 @@ class CameraActivity : AppCompatActivity() {
 
     private fun getBoxInfo(box: ClassifiedBox): String {
         val strPosition =
-            "(${round(box.centerX.toDouble(), 2)};${round(box.centerY.toDouble(), 2)})"
+            "(${round(box.center.x.toDouble(), 2)};${round(box.center.y.toDouble(), 2)})"
         val strConfidence = "conf: ${round((box.confidence * 100).toDouble(), 2)}"
         return "$strPosition $strConfidence"
     }
 
-    // translates x to [-1; 1]
-    private fun normalizeBoxCoord(x: Float): Float = x * 2.0F - 1.0F
-
-    private fun handlePivoPod(box_x: Float) {
-        // normalizing
-        val x = normalizeBoxCoord(box_x)
-        val abs_val = abs(x)
-        var angle = 0
-        var speed = 0
-
-        when {
-            abs_val >= 0.6F -> {
-                angle = 10
-                speed = 10
-            }
-            abs_val >= 0.2F -> {
-                angle = 5
-                speed = 20
-            }
-            else -> {
-                PivoSdk.getInstance().stop()
-                return
-            }
-        }
-        if (x < 0) {
-            PivoSdk.getInstance().turnLeft(angle, speed)
-        } else {
-            PivoSdk.getInstance().turnRight(angle, speed)
-        }
-    }
 
     private fun updateUIAndCameraFOV(result: Result) {
         runOnUiThread {
@@ -264,9 +242,18 @@ class CameraActivity : AppCompatActivity() {
             }
             inference_time_value.text = "${result.processTimeMs}ms"
         }
-        if (result.detectedObjects.isEmpty()) return
-        val bestBallX = result.detectedObjects[0].centerX
-        handlePivoPod(bestBallX)
+        if (result.detectedObjects.isEmpty())
+        {
+            pivoPodController.updateObjectCurrentPosition(
+                Point(0.5f, 0.5f),
+                result.processTimeMs / 1000.0f
+            )
+            return
+        }
+        pivoPodController.updateObjectCurrentPosition(
+            result.detectedObjects[0],
+            result.processTimeMs / 1000.0f
+        )
     }
 
     // Read MobileNet V2 classification labels
@@ -275,7 +262,7 @@ class CameraActivity : AppCompatActivity() {
 
     // Read ort model into a ByteArray, run in background
     private suspend fun readModel(): ByteArray = withContext(Dispatchers.IO) {
-        val modelID = R.raw.best2
+        val modelID = R.raw.yolov5s
         resources.openRawResource(modelID).readBytes()
     }
 
