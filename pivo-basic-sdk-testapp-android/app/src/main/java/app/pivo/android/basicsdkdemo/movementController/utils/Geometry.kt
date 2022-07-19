@@ -1,15 +1,15 @@
-package app.pivo.android.basicsdkdemo.movementController
+package app.pivo.android.basicsdkdemo.movementController.utils
 
 import kotlin.math.*
 import kotlin.system.exitProcess
 
-fun convertGradToRadian(phi: Double) = phi / 180 * PI
-fun convertRadianToGrad(phi: Double) = phi / PI * 180
+fun convertGradToRadian(phi: Float): Float = phi / 180.0f * PI.toFloat()
+fun convertRadianToGrad(phi: Float) = phi / PI.toFloat() * 180.0f
 
 class PolarPoint(
-    val d: Double = 0.0,
-    val phi: Double = 0.0,
-    val h: Double = 0.0
+    val d: Float = 0.0f,
+    val phi: Float = 0.0f,
+    val h: Float = 0.0f
 ) {
     fun getXProjection() = d * cos(phi)
     fun getYProjection() = d * sin(phi)
@@ -19,17 +19,17 @@ class PolarPoint(
 }
 
 class CartesianPoint(
-    val x: Double = 0.0,
-    val y: Double = 0.0,
-    val h: Double = 0.0
+    val x: Float = 0.0f,
+    val y: Float = 0.0f,
+    val h: Float = 0.0f
 ) {
     fun getLength() = sqrt(x * x + y * y)
 
     fun toPolar(): PolarPoint = PolarPoint(getLength(), getAngle(), h)
 
-    private fun getAngle(): Double = atan2(y, x)
+    private fun getAngle(): Float = atan2(y, x)
 
-    operator fun div(d: Double): CartesianPoint {
+    operator fun div(d: Float): CartesianPoint {
         try {
             return CartesianPoint(x / d, y / d, h / d)
         } catch (ex: Exception) {
@@ -44,7 +44,7 @@ class CartesianPoint(
     operator fun plus(other: CartesianPoint): CartesianPoint =
         CartesianPoint(x + other.x, y + other.y, h + other.h)
 
-    operator fun times(d: Double): CartesianPoint =
+    operator fun times(d: Float): CartesianPoint =
         CartesianPoint(x * d, y * d, h * d)
 }
 
@@ -62,7 +62,9 @@ class Point {
         this.cartesianPoint = cartesianPoint
     }
 
-    operator fun div(d: Double): Point = Point(cartesianPoint / d)
+    fun getAngle() = polarPoint.phi
+
+    operator fun div(d: Float): Point = Point(cartesianPoint / d)
 
     operator fun minus(other: Point): Point =
         Point(cartesianPoint - other.cartesianPoint)
@@ -70,6 +72,6 @@ class Point {
     operator fun plus(other: Point): Point =
         Point(cartesianPoint + other.cartesianPoint)
 
-    operator fun times(d: Double) = Point(cartesianPoint * d)
+    operator fun times(d: Float) = Point(cartesianPoint * d)
 
 }

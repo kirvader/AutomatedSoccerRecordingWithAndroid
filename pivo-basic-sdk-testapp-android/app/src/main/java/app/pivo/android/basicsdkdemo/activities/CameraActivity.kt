@@ -19,13 +19,13 @@ import androidx.camera.video.*
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.util.Consumer
+import app.pivo.android.basicsdk.PivoSdk
 import app.pivo.android.basicsdkdemo.ORTAnalyzer
 import app.pivo.android.basicsdkdemo.R
 import app.pivo.android.basicsdkdemo.Result
 import app.pivo.android.basicsdkdemo.appendToLog
-import app.pivo.android.basicsdkdemo.utils.pod.ClassifiedBox
-import app.pivo.android.basicsdkdemo.utils.pod.PodController
-import app.pivo.android.basicsdkdemo.utils.pod.Point
+import app.pivo.android.basicsdkdemo.utils.ClassifiedBox
+import app.pivo.android.basicsdkdemo.utils.PodMovementController
 import kotlinx.android.synthetic.main.activity_camera.*
 import kotlinx.coroutines.*
 import java.lang.Runnable
@@ -52,8 +52,7 @@ class CameraActivity : AppCompatActivity() {
 
     private var recording: Recording? = null
 
-
-    private val pivoPodController: PodController = PodController()
+    private lateinit var pivoPodController: PodMovementController
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -73,6 +72,9 @@ class CameraActivity : AppCompatActivity() {
         videoCaptureButton.setOnClickListener {
             toggleCameraRecording()
         }
+
+        val supportedSpeeds = PivoSdk.getInstance().supportedSpeeds.filter { it in 20..200 }
+        pivoPodController = PodMovementController(supportedSpeeds)
     }
 
     private val recordingListener = Consumer<VideoRecordEvent> { event ->
@@ -281,16 +283,10 @@ class CameraActivity : AppCompatActivity() {
         }
         if (result.detectedObjects.isEmpty())
         {
-            pivoPodController.updateObjectCurrentPosition(
-                Point(0.5f, 0.5f),
-                result.processTimeMs / 1000.0f
-            )
+            pivoPodController.updateTargetWithClassifiedBox(null, result.processTimeMs / 1000.0f)
             return
         }
-        pivoPodController.updateObjectCurrentPosition(
-            result.detectedObjects[0],
-            result.processTimeMs / 1000.0f
-        )
+        pivoPodController.updateTargetWithClassifiedBox(result.detectedObjects[0], result.processTimeMs / 1000.0f)
     }
 
     // Read MobileNet V2 classification labels

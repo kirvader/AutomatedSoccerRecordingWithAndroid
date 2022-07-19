@@ -1,5 +1,7 @@
 package app.pivo.android.basicsdkdemo.movementController
 
+import app.pivo.android.basicsdkdemo.movementController.utils.Point
+
 
 /**
  * @param endPoint - point in which ball was found
@@ -8,7 +10,7 @@ package app.pivo.android.basicsdkdemo.movementController
 class SegmentInfo(
     val endPoint: Point? = null,
     val startPoint: Point? = null,
-    val time: Double = 1.0
+    val time: Float = 1.0f
 ) {
     fun getAverageSpeed() =
         if (endPoint != null && startPoint != null) {
@@ -27,7 +29,7 @@ class BallModel {
     private var lastVelocities: MutableList<Point?> = mutableListOf(null, null)
     private var lastAcceleration: Point? = null
 
-    fun updateModelState(point: Point?, segmentTime: Double) {
+    fun updateModelState(point: Point?, segmentTime: Float) {
         lastSegments[0] = lastSegments[1]
         lastSegments.add(
             SegmentInfo(
@@ -42,18 +44,20 @@ class BallModel {
 
         if (lastVelocities.fold(true) { acc, p -> acc && (p != null) }) {
             lastAcceleration =
-                (lastVelocities[1]!! - lastVelocities[0]!!) / (lastSegments[0].time + lastSegments[1].time) * 2.0
+                (lastVelocities[1]!! - lastVelocities[0]!!) / getAverageSegmentTime()
         } else {
             lastAcceleration = null
         }
     }
+
+    fun getAverageSegmentTime(): Float = (lastSegments[0].time + lastSegments[1].time) / 2.0f
 
     /**
      * @return returns approximated ball position after segmentsQuantity of frames
      */
     fun getApproximatedBallPosition(segmentsQuantity: Int = 2): Point? {
 
-        val segmentAverageTime = lastSegments.sumOf { it.time } / 2
+        val segmentAverageTime = getAverageSegmentTime()
 
         val averageTime = segmentAverageTime * segmentsQuantity
         if (lastAcceleration != null) {
@@ -62,7 +66,7 @@ class BallModel {
             // parameters for 2 consecutive segments including velocity and last position
             return lastSegments.last().endPoint!! +
                     lastVelocities.last()!! * averageTime +
-                    lastAcceleration!! * averageTime * averageTime / 2.0
+                    lastAcceleration!! * averageTime * averageTime / 2.0f
         }
         if (lastVelocities[1] != null) {
 
