@@ -13,10 +13,10 @@ import android.util.Log
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import app.pivo.android.basicsdkdemo.activities.CameraActivity.Companion.TAG
+import app.pivo.android.basicsdkdemo.utils.ClassifiedBox
+import app.pivo.android.basicsdkdemo.utils.ScreenPoint
 import app.pivo.android.basicsdkdemo.utils.image_processing.preProcess
 import app.pivo.android.basicsdkdemo.utils.image_processing.toBitmap
-import app.pivo.android.basicsdkdemo.utils.pod.ClassifiedBox
-import app.pivo.android.basicsdkdemo.utils.pod.Point
 import java.util.*
 
 
@@ -76,7 +76,7 @@ internal class ORTAnalyzer(
             val classId = maxScoreInd - 5
             if (classId != importantClassId) continue
             result.add(ClassifiedBox(
-                Point(record[0] / IMAGE_WIDTH,
+                ScreenPoint(record[0] / IMAGE_WIDTH,
                 record[1] / IMAGE_HEIGHT),
                 record[2] / IMAGE_WIDTH,
                 record[3] / IMAGE_HEIGHT,
@@ -117,7 +117,7 @@ internal class ORTAnalyzer(
 
                             val arr = ((output?.get(0)?.value) as Array<Array<FloatArray>>)[0]
 
-                            val balls = getAllObjectsByClass(arr, 0)
+                            val balls = getAllObjectsByClass(arr, 32)
 
                             result.detectedObjects = getTop3(balls)
                         }
