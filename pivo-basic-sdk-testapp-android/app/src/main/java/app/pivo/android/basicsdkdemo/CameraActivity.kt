@@ -3,28 +3,35 @@ package app.pivo.android.basicsdkdemo
 import ai.onnxruntime.OrtEnvironment
 import ai.onnxruntime.OrtSession
 import android.Manifest
-import android.content.ContentValues
 import android.content.pm.PackageManager
-import android.icu.text.SimpleDateFormat
-import androidx.appcompat.app.AppCompatActivity
+import android.os.Build
 import android.os.Bundle
-import android.provider.MediaStore
+import android.util.Log
+import android.view.View
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
+import androidx.camera.core.AspectRatio
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
-import androidx.camera.core.ImageCapture
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.camera.video.*
+import androidx.camera.video.FallbackStrategy
+import androidx.camera.video.Quality
+import androidx.camera.video.QualitySelector
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.core.util.Consumer
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import app.pivo.android.basicsdk.PivoSdk
+import app.pivo.android.basicsdk.events.PivoEvent
+import app.pivo.android.basicsdk.events.PivoEventBus
+import com.nabinbhandari.android.permissions.PermissionHandler
+import com.nabinbhandari.android.permissions.Permissions
+import io.reactivex.functions.Consumer
 import kotlinx.android.synthetic.main.activity_camera.*
 import kotlinx.coroutines.*
-import java.lang.Exception
 import java.lang.Runnable
-import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import kotlin.math.abs
@@ -32,23 +39,17 @@ import kotlin.math.pow
 
 class CameraActivity : AppCompatActivity() {
 
-    private var mediaStoreOutputOptions: MediaStoreOutputOptions? = null
-    private var recorder: Recorder? = null
     private var selector: QualitySelector? = null
-    private val cameraExecutor: ExecutorService by lazy { Executors.newSingleThreadExecutor() }
 
     private val backgroundExecutor: ExecutorService by lazy { Executors.newWorkStealingPool() }
     private val labelData: List<String> by lazy { readLabels() }
     private val scope = CoroutineScope(Job() + Dispatchers.Default)
 
     private var ortEnv: OrtEnvironment? = null
-    private var imageCapture: ImageCapture? = null
     private var imageAnalysis: ImageAnalysis? = null
-    private var videoCapture: VideoCapture<Recorder>? = null
-
-    private var recording: Recording? = null
 
 
+    private lateinit var pivoScanResultsAdapter: ScanResultsAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -64,82 +65,60 @@ class CameraActivity : AppCompatActivity() {
             )
         }
 
-        videoCaptureButton.setOnClickListener {
-            toggleCameraRecording()
+        videoCaptureButton.setOnClickListener {  }
+
+        scanPivoButton.setOnClickListener{
+            scanPivo()
         }
     }
 
-    private val recordingListener = Consumer<VideoRecordEvent> { event ->
-        when(event) {
-            is VideoRecordEvent.Start -> {
-                val msg = "Capture Started"
-                Toast.makeText(this, msg, Toast.LENGTH_SHORT)
-                    .show()
-                // update app internal recording state
-                appendToLog(msg)
-            }
-            is VideoRecordEvent.Finalize -> {
-                val msg = if (!event.hasError()) {
-                    "Video capture succeeded: ${event.outputResults.outputUri}"
-                    // TODO() handle succeeding here
-                } else {
-                    // update app state when the capture failed.
-                    recording?.close()
-                    recording = null
+    private fun scanPivo() {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Pivo scan results")
+        val dialogLayout = layoutInflater.inflate(R.layout.pivo_scan_results, null)
+        val scanResults = dialogLayout.findViewById<RecyclerView>(R.id.scan_results)
 
-                    "Video capture ends with error: ${event.error}"
+
+        //initialize device scan adapter
+        pivoScanResultsAdapter = ScanResultsAdapter()
+        pivoScanResultsAdapter.setOnAdapterItemClickListener(object :
+            ScanResultsAdapter.OnAdapterItemClickListener {
+            override fun onAdapterViewClick(view: View?) {
+                val scanResult = pivoScanResultsAdapter.getItemAtPosition(
+                    scanResults.getChildAdapterPosition(view!!)
+                )
+                if (scanResult != null) {
+                    PivoSdk.getInstance().connectTo(scanResult)
                 }
-                Toast.makeText(this, msg, Toast.LENGTH_SHORT)
-                    .show()
-                appendToLog(msg)
             }
-        }
-    }
-    private fun toggleCameraRecording() {
-        if (recording != null) {
-            stopCapturing()
-        } else {
-            startCapture()
-        }
-    }
+        })
 
-    private fun startCapture() {
-        val name = "CameraX-recording-" +
-                SimpleDateFormat(FILENAME_FORMAT, Locale.US)
-                    .format(System.currentTimeMillis()) + ".mp4"
-        val contentValues = ContentValues().apply {
-            put(MediaStore.Video.Media.DISPLAY_NAME, name)
+        PivoEventBus.subscribe(
+            PivoEventBus.CONNECTION_COMPLETED, this, Consumer {
+                if (it is PivoEvent.ConnectionComplete) {
+                    Log.e(TAG, "CONNECTION_COMPLETED")
+                }
+            })
+        //subscribe to get scan device
+        PivoEventBus.subscribe(
+            PivoEventBus.SCAN_DEVICE, this, Consumer {
+                if (it is PivoEvent.Scanning) {
+
+                    Log.e(TAG, "Result for scanning is updated")
+                    pivoScanResultsAdapter.addScanResult(it.device)
+                }
+            })
+
+        scanResults.apply {
+            setHasFixedSize(true)
+            layoutManager = LinearLayoutManager(this@CameraActivity)
+            adapter = pivoScanResultsAdapter
         }
 
-        mediaStoreOutputOptions = MediaStoreOutputOptions
-            .Builder(this.contentResolver, MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
-            .setContentValues(contentValues)
-            .build()
+        checkPermission()
 
-        if (ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.RECORD_AUDIO
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            appendToLog("Not all permissions granted.")
-            return
-        }
-        recording = videoCapture?.output
-            ?.prepareRecording(this, mediaStoreOutputOptions!!)
-            ?.withAudioEnabled()
-            ?.start(ContextCompat.getMainExecutor(this), recordingListener)!!
-    }
-
-    private fun stopCapturing() {
-        recording?.stop()
-        recording = null
+        builder.setView(dialogLayout)
+        builder.show()
     }
 
     private fun startCamera() {
@@ -154,19 +133,8 @@ class CameraActivity : AppCompatActivity() {
                         FallbackStrategy.higherQualityOrLowerThan(Quality.SD)
                     )
 
-                recorder = Recorder.Builder()
-                    .setExecutor(cameraExecutor).setQualitySelector(selector!!)
-                    .build()
-
-                videoCapture = VideoCapture.withOutput(recorder!!)
-
-                // Preview
                 val preview = Preview.Builder()
-//                .setTargetAspectRatio(AspectRatio.RATIO_16_9)
-                    .build()
-
-                imageCapture = ImageCapture.Builder()
-//                .setTargetAspectRatio(AspectRatio.RATIO_16_9)
+                    .setTargetAspectRatio(AspectRatio.RATIO_16_9)
                     .build()
 
                 val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
@@ -181,14 +149,14 @@ class CameraActivity : AppCompatActivity() {
                 cameraProvider.unbindAll()
 
                 cameraProvider.bindToLifecycle(
-                    this, cameraSelector, preview, videoCapture, imageAnalysis
+                    this, cameraSelector, preview, imageAnalysis
                 )
 
                 preview.setSurfaceProvider(viewFinder.surfaceProvider)
             } catch (ex: Exception) {
                 if (ex.message != null) {
-                    appendToLog(ex.message!!)
-                    appendToLog(ex.toString())
+//                    appendToLog(ex.message!!)
+//                    appendToLog(ex.toString())
                 }
             }
         }, ContextCompat.getMainExecutor(this))
@@ -239,8 +207,9 @@ class CameraActivity : AppCompatActivity() {
         return kotlin.math.round(number * multiplier) / multiplier
     }
 
-    private fun getBoxInfo(box: ClassifiedBox) : String {
-        val strPosition = "(${round(box.centerX.toDouble(), 2)};${round(box.centerY.toDouble(), 2)})"
+    private fun getBoxInfo(box: ClassifiedBox): String {
+        val strPosition =
+            "(${round(box.centerX.toDouble(), 2)};${round(box.centerY.toDouble(), 2)})"
         val strConfidence = "conf: ${round((box.confidence * 100).toDouble(), 2)}"
         return "$strPosition $strConfidence"
     }
@@ -324,7 +293,7 @@ class CameraActivity : AppCompatActivity() {
 
     // Create a new ORT session and then change the ImageAnalysis.Analyzer
     // This part is done in background to avoid blocking the UI
-    private fun setORTAnalyzer(){
+    private fun setORTAnalyzer() {
         scope.launch {
             imageAnalysis?.clearAnalyzer()
             try {
@@ -342,10 +311,37 @@ class CameraActivity : AppCompatActivity() {
         }
     }
 
+    //check permissions if they're granted start scanning, otherwise ask to user to grant permissions
+    private fun checkPermission() {// alternative Permission library Dexter
+        Permissions.check(this,
+            permissionList, null, null,
+            object : PermissionHandler() {
+                override fun onGranted() {
+                    PivoSdk.getInstance().scan()
+                }
+            })
+    }
+
+    //permissions which are required for bluetooth
+    private var permissionList = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        arrayOf(
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION,
+            Manifest.permission.BLUETOOTH,
+            Manifest.permission.BLUETOOTH_ADMIN,
+            Manifest.permission.BLUETOOTH_SCAN,
+            Manifest.permission.CAMERA,
+            Manifest.permission.RECORD_AUDIO
+        )
+    } else {
+        TODO("VERSION.SDK_INT < S")
+    }
+
     companion object {
         const val TAG = "ORTImageClassifier"
         private const val REQUEST_CODE_PERMISSIONS = 10
-        private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO)
+        private val REQUIRED_PERMISSIONS =
+            arrayOf(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO)
         private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
     }
 }

@@ -1,20 +1,18 @@
 package app.pivo.android.basicsdkdemo
 
 import android.Manifest
-import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.View
-import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
+import app.pivo.android.basicsdk.PivoSdk
+import app.pivo.android.basicsdk.events.PivoEvent
+import app.pivo.android.basicsdk.events.PivoEventBus
 import com.nabinbhandari.android.permissions.PermissionHandler
 import com.nabinbhandari.android.permissions.Permissions
 import io.reactivex.functions.Consumer
-import app.pivo.android.basicsdk.PivoSdk
-import app.pivo.android.basicsdk.events.PivoEventBus
-import app.pivo.android.basicsdk.events.PivoEvent
 import kotlinx.android.synthetic.main.activity_pivo_scanning.*
 
 class PivoScanningActivity : AppCompatActivity() {
@@ -66,7 +64,7 @@ class PivoScanningActivity : AppCompatActivity() {
             scanning_bar.visibility = View.INVISIBLE
             if (it is PivoEvent.ConnectionComplete){
                 Log.e(TAG, "CONNECTION_COMPLETED")
-                appendToLog("Connection to PIVO POD completed successfully. Going to the next step.")
+//                appendToLog("Connection to PIVO POD completed successfully. Going to the next step.")
                 openController()
             }
         })
@@ -89,7 +87,8 @@ class PivoScanningActivity : AppCompatActivity() {
 
     //open pivo controller screen
     private fun openController(){
-        startActivity(Intent(this, PivoControllerActivity::class.java))
+//        startActivity(Intent(this, PivoControllerActivity::class.java))
+        finishActivity(0)
     }
 
     //check permissions if they're granted start scanning, otherwise ask to user to grant permissions
