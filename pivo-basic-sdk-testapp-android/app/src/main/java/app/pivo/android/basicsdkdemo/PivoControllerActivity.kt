@@ -10,14 +10,12 @@ import androidx.appcompat.app.AppCompatActivity
 import app.pivo.android.basicsdk.PivoSdk
 import app.pivo.android.basicsdk.events.PivoEvent
 import app.pivo.android.basicsdk.events.PivoEventBus
-import com.elvishew.xlog.XLog
+import app.pivo.android.basicsdkdemo.utils.createLogger
 import io.reactivex.functions.Consumer
 import kotlinx.android.synthetic.main.activity_pivo_controller.*
 
 
 class PivoControllerActivity : AppCompatActivity() {
-
-    private val TAG = "PivoControllerActivity"
 
     private fun openCameraActivity(){
         startActivity(Intent(this, CameraActivity::class.java))
@@ -61,7 +59,7 @@ class PivoControllerActivity : AppCompatActivity() {
         speed_list_view.adapter= ArrayAdapter<Int>(this, android.R.layout.simple_spinner_item, speedList)
         speed_list_view.onItemSelectedListener = object : OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                XLog.tag(TAG).i("Speed item selected. onSpeedChange: ${speedList[position]} save: ${save_speed_view.isChecked}")
+                LOG.i("Speed item selected. onSpeedChange: ${speedList[position]} save: ${save_speed_view.isChecked}")
                 PivoSdk.getInstance().setSpeed(speedList[position])
             }
 
@@ -75,7 +73,7 @@ class PivoControllerActivity : AppCompatActivity() {
         PivoEventBus.subscribe(
             PivoEventBus.CONNECTION_FAILURE,this, Consumer {
                 if (it is PivoEvent.ConnectionFailure){
-                    XLog.tag(TAG).i("PivoPod Connection failure")
+                    LOG.i("PivoPod Connection failure")
                     finish()
                 }
             })
@@ -99,14 +97,14 @@ class PivoControllerActivity : AppCompatActivity() {
                     is PivoEvent.RCSpeed->notification_view.text = "SPEED: ${it.level}"
                     else -> "error"
                 }
-                XLog.tag(TAG).i("Chosen option = $eventName")
+                LOG.i("Chosen option = $eventName")
                 eventName
         })
         //subscribe to name change event
         PivoEventBus.subscribe(
             PivoEventBus.NAME_CHANGED, this, Consumer {
             if (it is PivoEvent.NameChanged){
-                XLog.tag(TAG).i("PivoPod name was changed to ${it.name}")
+                LOG.i("PivoPod name was changed to ${it.name}")
                 notification_view.text = "Name: ${it.name}"
             }
         })
@@ -134,5 +132,9 @@ class PivoControllerActivity : AppCompatActivity() {
         super.onPause()
         //unregister before stopping the activity
         PivoEventBus.unregister(this)
+    }
+
+    companion object {
+        private val LOG = createLogger<PivoControllerActivity>()
     }
 }

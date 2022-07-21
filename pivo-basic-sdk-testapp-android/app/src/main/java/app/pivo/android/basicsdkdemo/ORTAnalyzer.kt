@@ -3,14 +3,14 @@
 
 package app.pivo.android.basicsdkdemo
 
-import ai.onnxruntime.*
+import ai.onnxruntime.OnnxTensor
+import ai.onnxruntime.OrtEnvironment
+import ai.onnxruntime.OrtSession
 import android.graphics.Bitmap
 import android.graphics.Matrix
 import android.os.SystemClock
-import android.util.Log
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
-import app.pivo.android.basicsdkdemo.CameraActivity.Companion.TAG
 import java.util.*
 
 data class ClassifiedBox(
@@ -110,7 +110,6 @@ internal class ORTAnalyzer(
                 val startTime = SystemClock.uptimeMillis()
                 tensor.use {
                     val output = ortSession?.run(Collections.singletonMap(inputName, tensor))
-                    Log.e( TAG, (output == null).toString())
                     if (output?.get(0)?.value != null) {
                         output.use {
                             result.processTimeMs = SystemClock.uptimeMillis() - startTime

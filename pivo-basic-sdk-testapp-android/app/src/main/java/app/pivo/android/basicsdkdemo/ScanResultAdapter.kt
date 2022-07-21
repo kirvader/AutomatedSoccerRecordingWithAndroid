@@ -6,7 +6,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import app.pivo.android.basicsdk.util.PivoDevice
-import com.elvishew.xlog.XLog
+import app.pivo.android.basicsdkdemo.utils.createLogger
 import java.util.*
 
 /**
@@ -49,7 +49,7 @@ class ScanResultsAdapter : RecyclerView.Adapter<ScanResultsAdapter.ViewHolder?>(
     }
 
     fun addScanResult(scanDevice: PivoDevice) {
-        XLog.tag(TAG).e( TAG,"Found: ${scanDevice.name}")
+        LOG.e( TAG,"Found: ${scanDevice.name}")
         for (i in data.indices) {
             if (data[i].macAddress == scanDevice.macAddress) {
                 data[i] = scanDevice
@@ -101,6 +101,7 @@ class ScanResultsAdapter : RecyclerView.Adapter<ScanResultsAdapter.ViewHolder?>(
     }
 
     companion object {
+        private val LOG = createLogger<ScanResultsAdapter>()
         private val SORTING_COMPARATOR =
             Comparator { lhs: PivoDevice, rhs: PivoDevice ->
                 lhs.macAddress.compareTo(rhs.macAddress)

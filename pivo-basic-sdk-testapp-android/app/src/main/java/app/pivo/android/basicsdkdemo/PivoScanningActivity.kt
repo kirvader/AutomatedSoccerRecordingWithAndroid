@@ -10,7 +10,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import app.pivo.android.basicsdk.PivoSdk
 import app.pivo.android.basicsdk.events.PivoEvent
 import app.pivo.android.basicsdk.events.PivoEventBus
-import com.elvishew.xlog.XLog
+import app.pivo.android.basicsdkdemo.utils.createLogger
 import com.nabinbhandari.android.permissions.PermissionHandler
 import com.nabinbhandari.android.permissions.Permissions
 import io.reactivex.functions.Consumer
@@ -18,7 +18,6 @@ import kotlinx.android.synthetic.main.activity_pivo_scanning.*
 
 class PivoScanningActivity : AppCompatActivity() {
 
-    private val TAG = "ScanActivity"
     private lateinit var resultAdapter: ScanResultsAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -56,7 +55,7 @@ class PivoScanningActivity : AppCompatActivity() {
             PivoSdk.getInstance().stopScan()
             resultAdapter.clearScanResults()
         }
-        XLog.tag(TAG).i("Screen layout functionality setup")
+        LOG.i("Screen layout functionality setup")
     }
 
 
@@ -67,7 +66,7 @@ class PivoScanningActivity : AppCompatActivity() {
             PivoEventBus.CONNECTION_COMPLETED, this, Consumer {
             scanning_bar.visibility = View.INVISIBLE
             if (it is PivoEvent.ConnectionComplete){
-                XLog.tag(TAG).d("CONNECTION_COMPLETED.")
+                LOG.d("CONNECTION_COMPLETED.")
                 openController()
             }
         })
@@ -76,7 +75,7 @@ class PivoScanningActivity : AppCompatActivity() {
             PivoEventBus.SCAN_DEVICE, this, Consumer {
             if (it is PivoEvent.Scanning){
 
-                XLog.tag(TAG).i("Result for scanning is updated")
+                LOG.i("Result for scanning is updated")
                 resultAdapter.addScanResult(it.device)
             }
         })
@@ -101,7 +100,7 @@ class PivoScanningActivity : AppCompatActivity() {
                 override fun onGranted() {
                     scanning_bar.visibility = View.VISIBLE
                     PivoSdk.getInstance().scan()
-                    XLog.tag(TAG).i("All permissions granted")
+                    LOG.i("All permissions granted")
                 }
             })
     }
@@ -118,6 +117,10 @@ class PivoScanningActivity : AppCompatActivity() {
             )
     } else {
         TODO("VERSION.SDK_INT < S")
+    }
+
+    companion object {
+        private val LOG = createLogger<PivoScanningActivity>()
     }
 
 }
