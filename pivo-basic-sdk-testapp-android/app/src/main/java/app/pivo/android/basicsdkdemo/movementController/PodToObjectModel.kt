@@ -2,9 +2,14 @@ package app.pivo.android.basicsdkdemo.movementController
 
 import app.pivo.android.basicsdkdemo.movementController.utils.Point
 
-open class PodToObjectModel(protected val podMovementModel: PodMovementModel) {
+class DeviceToObjectModel {
 
     protected val ballModel: BallModel = BallModel()
+    protected val deviceRotatingController: DeviceRotatingControllerBase = DeviceRotatingControllerBase()
+
+    fun initializeRotationDevice(rotateDeviceImplementation: RotateDeviceInterface) {
+        deviceRotatingController.initializeRotateDevice(rotateDeviceImplementation)
+    }
 
     fun updateTargetPosition(point: Point?, timeFromLastSegmentUpdate: Float) {
 
@@ -12,6 +17,6 @@ open class PodToObjectModel(protected val podMovementModel: PodMovementModel) {
 
         val targetPosition = ballModel.getApproximatedBallPosition(2) ?: return
 
-        podMovementModel.updateAndMovePodToTargetPosition(targetPosition, ballModel.getAverageSegmentTime())
+        deviceRotatingController.updateAndMovePodToTargetPosition(targetPosition, ballModel.getAverageSegmentTime())
     }
 }
