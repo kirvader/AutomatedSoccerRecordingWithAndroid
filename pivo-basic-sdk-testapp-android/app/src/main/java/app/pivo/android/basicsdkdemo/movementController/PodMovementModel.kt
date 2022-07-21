@@ -10,27 +10,30 @@ import kotlin.math.min
  * @param PODSpeeds - keys: subset of available speeds, sec/ 1 rotation
  */
 open class PodMovementModel(PODSpeeds: List<Int>) {
-    protected var lastDirection: Float = 0.0f
-    protected var lastFOV: Float = 90.0f
-    protected var currentPODRotationSpeed: Float = 0.0f
-    protected var lastRotationLeftover: Float = 0.0f
 
-    private val ballModel: BallModel = BallModel()
-
-    class PodSpeedPair(var secPerRotation: Int) {
+    private class PodSpeedPair(var secPerRotation: Int) {
         var gradPerSecond: Float = 1.0f
 
         init {
             this.gradPerSecond = 1.0f / secPerRotation
         }
     }
+
+    private var lastDirection: Float = 0.0f
+    private var lastFOV: Float = 90.0f
+    private var currentPODRotationSpeed: Float = 0.0f
+    private var lastRotationLeftover: Float = 0.0f
     private var podSpeedsMapping: MutableList<PodSpeedPair> = mutableListOf()
+
+    private var lastUpdateTime = System.currentTimeMillis()
 
     init {
         for (speedSecPerRotation in PODSpeeds) {
             podSpeedsMapping.add(PodSpeedPair(speedSecPerRotation))
         }
     }
+
+    fun getLastDirection() = lastDirection
 
     private fun getTheMostAppropriateSpeed(deltaGradAngle: Float, averageSegmentTime: Float): Int {
         val absDeltaAngle = abs(deltaGradAngle)
@@ -48,27 +51,40 @@ open class PodMovementModel(PODSpeeds: List<Int>) {
         return speedWithLeastLeftover
     }
 
-    fun updateTargetPosition(point: Point?, timeFromLastSegmentUpdate: Float) {
+    open fun moveBy(speed: Int, orientedAngle: Int) {
+        println("With speed = $speed, pod is rotating by the angle = $orientedAngle")
+    }
 
-        val podTraveledRotation = min(currentPODRotationSpeed * timeFromLastSegmentUpdate, lastRotationLeftover)
+    private fun updateCurrentState() {
+        val currentTime = System.currentTimeMillis()
+        val deltaTime = (currentTime - lastUpdateTime) / 1000.0f
+        lastUpdateTime = currentTime
+
+        val podTraveledRotation = min(currentPODRotationSpeed * deltaTime, lastRotationLeftover)
         lastRotationLeftover -= podTraveledRotation
         lastDirection += podTraveledRotation
+    }
 
-        ballModel.updateModelState(point, timeFromLastSegmentUpdate)
-
-        val targetPosition = ballModel.getApproximatedBallPosition(2) ?: return
-
+    private fun movePodToSeeTargetPosition(targetPosition: Point, averageSegmentTime: Float) {
         val deltaGradAngle = convertRadianToGrad(targetPosition.getAngle()) - lastDirection
         lastRotationLeftover = deltaGradAngle
 
-        val newPODSpeedSecPerRotation = getTheMostAppropriateSpeed(deltaGradAngle, ballModel.getAverageSegmentTime())
-        onMove(newPODSpeedSecPerRotation, lastRotationLeftover.toInt())
+        val newPODSpeedSecPerRotation = getTheMostAppropriateSpeed(deltaGradAngle, averageSegmentTime)
+        moveBy(newPODSpeedSecPerRotation, lastRotationLeftover.toInt())
 
         currentPODRotationSpeed = 1.0f / newPODSpeedSecPerRotation
-
     }
 
-    open fun onMove(speed: Int, orientedAngle: Int) {
-        println("With speed = $speed, pod is rotating by the angle = $orientedAngle")
+    fun updateAndMovePodToTargetPosition(targetPosition: Point, averageSegmentTime: Float) {
+        updateCurrentState()
+        movePodToSeeTargetPosition(targetPosition, averageSegmentTime)
+    }
+
+    fun updateAndMovePodBy(speed: Int, orientedAngle: Int) { // if we will want to control it manually
+        updateCurrentState()
+        moveBy(speed, orientedAngle)
+
+        lastRotationLeftover = orientedAngle.toFloat()
+        currentPODRotationSpeed = 1.0f / speed
     }
 }
