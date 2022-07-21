@@ -2,89 +2,84 @@ package app.pivo.android.basicsdkdemo.movementController
 
 import app.pivo.android.basicsdkdemo.movementController.utils.Point
 import app.pivo.android.basicsdkdemo.movementController.utils.convertRadianToGrad
-import kotlin.math.abs
 import kotlin.math.min
 
 
-/**
- * @param PODSpeeds - keys: subset of available speeds, sec/ 1 rotation
- */
-open class PodMovementModel(PODSpeeds: List<Int>) {
-
-    private class PodSpeedPair(var secPerRotation: Int) {
-        var gradPerSecond: Float = 1.0f
-
-        init {
-            this.gradPerSecond = 1.0f / secPerRotation
-        }
-    }
-
-    private var lastDirection: Float = 0.0f
-    private var lastFOV: Float = 90.0f
+open class DeviceRotatingControllerBase {
+    private var lastUpdatedDirection: Float = 0.0f
     private var currentPODRotationSpeed: Float = 0.0f
-    private var lastRotationLeftover: Float = 0.0f
-    private var podSpeedsMapping: MutableList<PodSpeedPair> = mutableListOf()
-
+    private var lastUpdatedRotationLeftover: Float = 0.0f
     private var lastUpdateTime = System.currentTimeMillis()
 
-    init {
-        for (speedSecPerRotation in PODSpeeds) {
-            podSpeedsMapping.add(PodSpeedPair(speedSecPerRotation))
-        }
+    private lateinit var rotateDevice: RotateDeviceInterface
+
+    fun initializeRotateDevice(rotateDeviceImplementation: RotateDeviceInterface) {
+        rotateDevice = rotateDeviceImplementation
     }
 
-    fun getLastDirection() = lastDirection
+    fun getLastDirection() = lastUpdatedDirection
 
-    private fun getTheMostAppropriateSpeed(deltaGradAngle: Float, averageSegmentTime: Float): Int {
-        val absDeltaAngle = abs(deltaGradAngle)
-
-        var speedWithLeastLeftover = podSpeedsMapping[0].secPerRotation
-        var leftoverOfBestResult = abs(absDeltaAngle - averageSegmentTime * podSpeedsMapping[0].gradPerSecond)
-
-        for (i in 1..podSpeedsMapping.lastIndex) {
-            val curSpeedLeftover = abs(absDeltaAngle - averageSegmentTime * podSpeedsMapping[i].gradPerSecond)
-            if (curSpeedLeftover < leftoverOfBestResult) {
-                leftoverOfBestResult = curSpeedLeftover
-                speedWithLeastLeftover = podSpeedsMapping[i].secPerRotation
-            }
-        }
-        return speedWithLeastLeftover
-    }
-
-    open fun moveBy(speed: Int, orientedAngle: Int) {
-        println("With speed = $speed, pod is rotating by the angle = $orientedAngle")
-    }
-
+    /**
+     * Updated inner state of controller. Such parameters as current time, current rotation left to perform, current rotation.
+     */
     private fun updateCurrentState() {
         val currentTime = System.currentTimeMillis()
         val deltaTime = (currentTime - lastUpdateTime) / 1000.0f
         lastUpdateTime = currentTime
 
-        val podTraveledRotation = min(currentPODRotationSpeed * deltaTime, lastRotationLeftover)
-        lastRotationLeftover -= podTraveledRotation
-        lastDirection += podTraveledRotation
+        val podTraveledRotation = min(currentPODRotationSpeed * deltaTime, lastUpdatedRotationLeftover)
+        lastUpdatedRotationLeftover -= podTraveledRotation
+        lastUpdatedDirection += podTraveledRotation
     }
 
-    private fun movePodToSeeTargetPosition(targetPosition: Point, averageSegmentTime: Float) {
-        val deltaGradAngle = convertRadianToGrad(targetPosition.getAngle()) - lastDirection
-        lastRotationLeftover = deltaGradAngle
+    /**
+     * @param targetPosition position of tracked object in 3D coordinate system where (0, 0, 0) is device position
+     */
+    private fun rotatePodToSeeTargetPosition(targetPosition: Point, averageSegmentTime: Float) {
+        val deltaGradAngle = convertRadianToGrad(targetPosition.getAngle()) - lastUpdatedDirection
+        lastUpdatedRotationLeftover = deltaGradAngle
 
-        val newPODSpeedSecPerRotation = getTheMostAppropriateSpeed(deltaGradAngle, averageSegmentTime)
-        moveBy(newPODSpeedSecPerRotation, lastRotationLeftover.toInt())
+        if (averageSegmentTime == 0.0f)
+            return // TODO throw something or notice user about it
 
-        currentPODRotationSpeed = 1.0f / newPODSpeedSecPerRotation
+        if (!this::rotateDevice.isInitialized)
+        {
+            // TODO throw something or notice user about it
+            return
+        }
+        val speedOfEvenMovement = deltaGradAngle / averageSegmentTime
+        val availableAppropriateSpeed = rotateDevice.getTheMostAppropriateSpeedFromAvailable(speedOfEvenMovement)
+        rotateDevice.rotateBy(availableAppropriateSpeed, lastUpdatedRotationLeftover)
+
+        // To make sure we are storing an exact same speed as device using in real life
+        currentPODRotationSpeed = rotateDevice.getGradPerSecSpeedFromAvailable(speedOfEvenMovement)
     }
 
+    /**
+     * 1. Updating inner state of device
+     * 2. Setting up speed and angle to turn device to see target position(3D with zero at device position) at the center
+     */
     fun updateAndMovePodToTargetPosition(targetPosition: Point, averageSegmentTime: Float) {
         updateCurrentState()
-        movePodToSeeTargetPosition(targetPosition, averageSegmentTime)
+        rotatePodToSeeTargetPosition(targetPosition, averageSegmentTime)
     }
 
-    fun updateAndMovePodBy(speed: Int, orientedAngle: Int) { // if we will want to control it manually
-        updateCurrentState()
-        moveBy(speed, orientedAngle)
 
-        lastRotationLeftover = orientedAngle.toFloat()
-        currentPODRotationSpeed = 1.0f / speed
+    /**
+     * 1. Updating inner state of device
+     * 2. Setting up an exact  speed and angle
+     */
+    fun updateAndMovePodBy(speed: Float, orientedAngle: Float) { // if we will want to control it manually
+        updateCurrentState()
+        if (!this::rotateDevice.isInitialized)
+        {
+            // TODO throw something or notice user about it
+            return
+        }
+        val availableAppropriateDeviceSpeed = rotateDevice.getGradPerSecSpeedFromAvailable(speed)
+        rotateDevice.rotateBy(availableAppropriateDeviceSpeed, orientedAngle)
+
+        lastUpdatedRotationLeftover = orientedAngle
+        currentPODRotationSpeed = rotateDevice.getGradPerSecSpeedFromAvailable(availableAppropriateDeviceSpeed)
     }
 }
