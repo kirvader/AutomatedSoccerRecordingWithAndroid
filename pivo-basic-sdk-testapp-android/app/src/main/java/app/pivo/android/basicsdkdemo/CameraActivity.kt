@@ -59,7 +59,6 @@ class CameraActivity : AppCompatActivity() {
             ortEnv = OrtEnvironment.getEnvironment()
             startCamera()
         } else {
-            appendToLog("Permissions were not granted.")
             ActivityCompat.requestPermissions(
                 this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS
             )
@@ -155,8 +154,7 @@ class CameraActivity : AppCompatActivity() {
                 preview.setSurfaceProvider(viewFinder.surfaceProvider)
             } catch (ex: Exception) {
                 if (ex.message != null) {
-//                    appendToLog(ex.message!!)
-//                    appendToLog(ex.toString())
+                    Log.e(TAG, ex.toString())
                 }
             }
         }, ContextCompat.getMainExecutor(this))
@@ -169,11 +167,8 @@ class CameraActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         backgroundExecutor.shutdown()
-        appendToLog("Background executor shut down")
         ortEnv?.close()
-        appendToLog("Ort Environment now closed")
         ProcessCameraProvider.getInstance(this).get().unbindAll()
-        appendToLog("Camera provider has unbind all it's components.")
 
     }
 
@@ -186,7 +181,6 @@ class CameraActivity : AppCompatActivity() {
         if (requestCode == REQUEST_CODE_PERMISSIONS) {
             if (allPermissionsGranted()) {
                 startCamera()
-                appendToLog("Camera started")
             } else {
                 Toast.makeText(
                     this,
@@ -287,7 +281,6 @@ class CameraActivity : AppCompatActivity() {
 
     // Create a new ORT session in background
     private suspend fun createOrtSession(): OrtSession? = withContext(Dispatchers.Default) {
-//        appendToLog("Ort env is starting to create")
         ortEnv?.createSession(readModel())
     }
 
@@ -302,12 +295,11 @@ class CameraActivity : AppCompatActivity() {
                     ORTAnalyzer(createOrtSession(), ::updateUIAndCameraFOV)
                 )
             } catch (e: Exception) {
-                appendToLog("Analyzer setup failed. Using model best2.pt")
             }
             if (imageAnalysis != null)
-                appendToLog("Analyzer has been successfully set up.")
+                Log.i(TAG, "Analyzer has been successfully set up.")
             else
-                appendToLog("Analyzer is null.")
+                Log.e(TAG, "Analyzer is null.")
         }
     }
 
