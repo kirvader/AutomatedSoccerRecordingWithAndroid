@@ -10,9 +10,9 @@ import android.os.Bundle
 import android.provider.MediaStore
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.camera.core.AspectRatio
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
-import androidx.camera.core.ImageCapture
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.video.*
@@ -26,6 +26,7 @@ import app.pivo.android.basicsdkdemo.Result
 import app.pivo.android.basicsdkdemo.appendToLog
 import app.pivo.android.basicsdkdemo.utils.ClassifiedBox
 import app.pivo.android.basicsdkdemo.utils.PodMovementController
+import app.pivo.android.basicsdkdemo.utils.PodToObjectController
 import kotlinx.android.synthetic.main.activity_camera.*
 import kotlinx.coroutines.*
 import java.lang.Runnable
@@ -46,13 +47,13 @@ class CameraActivity : AppCompatActivity() {
     private val scope = CoroutineScope(Job() + Dispatchers.Default)
 
     private var ortEnv: OrtEnvironment? = null
-    private var imageCapture: ImageCapture? = null
     private var imageAnalysis: ImageAnalysis? = null
     private var videoCapture: VideoCapture<Recorder>? = null
 
     private var recording: Recording? = null
 
     private lateinit var pivoPodController: PodMovementController
+    private lateinit var podObjectController: PodToObjectController
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -74,7 +75,9 @@ class CameraActivity : AppCompatActivity() {
         }
 
         val supportedSpeeds = PivoSdk.getInstance().supportedSpeeds.filter { it in 20..200 }
+
         pivoPodController = PodMovementController(supportedSpeeds)
+        podObjectController = PodToObjectController(pivoPodController)
     }
 
     private val recordingListener = Consumer<VideoRecordEvent> { event ->
@@ -171,11 +174,7 @@ class CameraActivity : AppCompatActivity() {
 
                 // Preview
                 val preview = Preview.Builder()
-//                .setTargetAspectRatio(AspectRatio.RATIO_16_9)
-                    .build()
-
-                imageCapture = ImageCapture.Builder()
-//                .setTargetAspectRatio(AspectRatio.RATIO_16_9)
+                .setTargetAspectRatio(AspectRatio.RATIO_16_9)
                     .build()
 
                 val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
@@ -283,10 +282,10 @@ class CameraActivity : AppCompatActivity() {
         }
         if (result.detectedObjects.isEmpty())
         {
-            pivoPodController.updateTargetWithClassifiedBox(null, result.processTimeMs / 1000.0f)
+            podObjectController.updateTargetWithClassifiedBox(null, result.processTimeMs / 1000.0f)
             return
         }
-        pivoPodController.updateTargetWithClassifiedBox(result.detectedObjects[0], result.processTimeMs / 1000.0f)
+        podObjectController.updateTargetWithClassifiedBox(result.detectedObjects[0], result.processTimeMs / 1000.0f)
     }
 
     // Read MobileNet V2 classification labels
