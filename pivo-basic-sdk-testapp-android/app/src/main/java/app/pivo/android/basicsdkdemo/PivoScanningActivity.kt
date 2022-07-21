@@ -16,6 +16,8 @@ import com.nabinbhandari.android.permissions.Permissions
 import io.reactivex.functions.Consumer
 import kotlinx.android.synthetic.main.activity_pivo_scanning.*
 
+private val LOG = createLogger<PivoScanningActivity>()
+
 class PivoScanningActivity : AppCompatActivity() {
 
     private lateinit var resultAdapter: ScanResultsAdapter
@@ -117,10 +119,6 @@ class PivoScanningActivity : AppCompatActivity() {
             )
     } else {
         TODO("VERSION.SDK_INT < S")
-    }
-
-    companion object {
-        private val LOG = createLogger<PivoScanningActivity>()
     }
 
 }

@@ -13,6 +13,8 @@ import java.util.*
  * Created by murodjon on 2020/03/12
  */
 
+private val LOG = createLogger<ScanResultsAdapter>()
+
 class ScanResultsAdapter : RecyclerView.Adapter<ScanResultsAdapter.ViewHolder?>() {
     private val TAG = "ScanResultsAdapter"
 
@@ -101,7 +103,7 @@ class ScanResultsAdapter : RecyclerView.Adapter<ScanResultsAdapter.ViewHolder?>(
     }
 
     companion object {
-        private val LOG = createLogger<ScanResultsAdapter>()
+
         private val SORTING_COMPARATOR =
             Comparator { lhs: PivoDevice, rhs: PivoDevice ->
                 lhs.macAddress.compareTo(rhs.macAddress)

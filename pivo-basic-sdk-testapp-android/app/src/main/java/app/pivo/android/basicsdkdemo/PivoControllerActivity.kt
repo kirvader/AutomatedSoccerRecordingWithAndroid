@@ -14,6 +14,7 @@ import app.pivo.android.basicsdkdemo.utils.createLogger
 import io.reactivex.functions.Consumer
 import kotlinx.android.synthetic.main.activity_pivo_controller.*
 
+private val LOG = createLogger<PivoControllerActivity>()
 
 class PivoControllerActivity : AppCompatActivity() {
 
@@ -132,9 +133,5 @@ class PivoControllerActivity : AppCompatActivity() {
         super.onPause()
         //unregister before stopping the activity
         PivoEventBus.unregister(this)
-    }
-
-    companion object {
-        private val LOG = createLogger<PivoControllerActivity>()
     }
 }

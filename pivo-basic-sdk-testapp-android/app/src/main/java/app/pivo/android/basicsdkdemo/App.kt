@@ -11,7 +11,7 @@ import com.elvishew.xlog.printer.Printer
 import com.elvishew.xlog.printer.file.FilePrinter
 import com.elvishew.xlog.printer.file.backup.NeverBackupStrategy
 import com.elvishew.xlog.printer.file.naming.DateFileNameGenerator
-import java.io.*
+import java.io.File
 
 
 /**
@@ -45,10 +45,10 @@ class App : Application() {
 
         val androidPrinter: Printer = AndroidPrinter(true)
 
-        createLogFolder()
+        val logFolder = createLogFolder()
 
         val filePrinter: Printer =
-            FilePrinter.Builder("$externalCacheDir/hawkeye")
+            FilePrinter.Builder(logFolder.path)
                 .fileNameGenerator(DateFileNameGenerator())
                 .backupStrategy(NeverBackupStrategy())
                 .build()
@@ -56,7 +56,7 @@ class App : Application() {
         XLog.init(config, androidPrinter, filePrinter)
     }
 
-    private fun createLogFolder() {
+    private fun createLogFolder(): File {
         val mediaStorageDir = File(externalCacheDir, "hawkeye")
 
         if (!mediaStorageDir.exists()) {
@@ -68,23 +68,9 @@ class App : Application() {
         } else {
             Log.d("App", "Folder ${mediaStorageDir.path} already exists")
         }
+        return mediaStorageDir
 
     }
 
-    private fun getLicenseContent(): String? {
-        var inputStream = assets.open("licenceKey.json").bufferedReader().use { it.readText() }
-        return readFile(inputStream)
-    }
-
-    @Throws(IOException::class)
-    fun readFile(inputStream: InputStream?): String? {
-        val str = StringBuilder()
-        val br = BufferedReader(InputStreamReader(inputStream))
-        var line: String?
-        while (br.readLine().also { line = it } != null) {
-            str.append(line)
-        }
-        br.close()
-        return str.toString()
-    }
+    private fun getLicenseContent(): String = assets.open("licenceKey.json").bufferedReader().use { it.readText() }
 }
