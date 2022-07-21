@@ -11,6 +11,7 @@ import com.elvishew.xlog.printer.Printer
 import com.elvishew.xlog.printer.file.FilePrinter
 import com.elvishew.xlog.printer.file.backup.NeverBackupStrategy
 import com.elvishew.xlog.printer.file.naming.DateFileNameGenerator
+
 import java.io.*
 
 
@@ -56,7 +57,7 @@ class App: Application()
         //initialize PivoSdk
         PivoSdk.init(this)
         try {
-            PivoSdk.getInstance().unlockWithLicenseKey("getLicenseContent()")
+            PivoSdk.getInstance().unlockWithLicenseKey(getLicenseContent())
         } catch (ex: Exception) {
             XLog.d("Pivo key is expired or bad in some other way. Check it and try again.", ex)
         }
