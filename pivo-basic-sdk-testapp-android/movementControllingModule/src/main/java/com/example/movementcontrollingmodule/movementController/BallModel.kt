@@ -1,6 +1,6 @@
-package app.pivo.android.basicsdkdemo.movementController
+package com.example.movementcontrollingmodule.movementController
 
-import app.pivo.android.basicsdkdemo.movementController.utils.Point
+import com.example.movementcontrollingmodule.movementController.utils.Point
 
 
 /**

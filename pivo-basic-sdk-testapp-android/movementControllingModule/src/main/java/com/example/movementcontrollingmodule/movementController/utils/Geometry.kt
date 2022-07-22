@@ -1,4 +1,4 @@
-package app.pivo.android.basicsdkdemo.movementController.utils
+package com.example.movementcontrollingmodule.movementController.utils
 
 import kotlin.math.*
 import kotlin.system.exitProcess

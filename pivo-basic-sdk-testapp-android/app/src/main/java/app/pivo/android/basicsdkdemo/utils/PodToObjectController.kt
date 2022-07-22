@@ -1,9 +1,7 @@
 package app.pivo.android.basicsdkdemo.utils
 
-import app.pivo.android.basicsdkdemo.movementController.PodMovementModel
-import app.pivo.android.basicsdkdemo.movementController.PodToObjectModel
-import app.pivo.android.basicsdkdemo.movementController.utils.Point
-import app.pivo.android.basicsdkdemo.movementController.utils.PolarPoint
+import com.example.movementcontrollingmodule.movementController.utils.*
+
 
 class PodToObjectController(podMovementController: PodMovementModel) :
     PodToObjectModel(podMovementController) {
