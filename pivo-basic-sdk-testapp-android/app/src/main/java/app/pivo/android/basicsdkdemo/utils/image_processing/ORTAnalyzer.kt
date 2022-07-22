@@ -113,13 +113,13 @@ internal class ORTAnalyzer(
                     Log.e( TAG, (output == null).toString())
                     if (output?.get(0)?.value != null) {
                         output.use {
-                            result.processTimeMs = SystemClock.uptimeMillis() - startTime
-
                             val arr = ((output?.get(0)?.value) as Array<Array<FloatArray>>)[0]
 
                             val balls = getAllObjectsByClass(arr, 32)
 
                             result.detectedObjects = getTop3(balls)
+
+                            result.processTimeMs = SystemClock.uptimeMillis() - startTime
                         }
                     }
                 }

@@ -5,13 +5,11 @@ import ai.onnxruntime.OrtSession
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
-import android.icu.text.SimpleDateFormat
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
-import androidx.camera.core.AspectRatio
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.AspectRatio
 import androidx.camera.core.CameraSelector
@@ -23,21 +21,27 @@ import androidx.camera.video.Quality
 import androidx.camera.video.QualitySelector
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.core.util.Consumer
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import app.pivo.android.basicsdk.PivoSdk
+import app.pivo.android.basicsdk.events.PivoEvent
+import app.pivo.android.basicsdk.events.PivoEventBus
 import app.pivo.android.basicsdkdemo.ORTAnalyzer
 import app.pivo.android.basicsdkdemo.R
 import app.pivo.android.basicsdkdemo.Result
-import app.pivo.android.basicsdkdemo.appendToLog
 import app.pivo.android.basicsdkdemo.utils.ClassifiedBox
-import app.pivo.android.basicsdkdemo.utils.PodMovementController
-import app.pivo.android.basicsdkdemo.utils.PodToObjectController
+import app.pivo.android.basicsdkdemo.utils.DeviceToObjectController
+import app.pivo.android.basicsdkdemo.utils.PivoPodRotatingImplementation
+import app.pivo.android.basicsdkdemo.utils.ScanResultsAdapter
+import com.nabinbhandari.android.permissions.PermissionHandler
+import com.nabinbhandari.android.permissions.Permissions
+import io.reactivex.functions.Consumer
 import kotlinx.android.synthetic.main.activity_camera.*
 import kotlinx.coroutines.*
-import java.lang.Runnable
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import kotlin.math.pow
+
 
 class CameraActivity : AppCompatActivity() {
 
@@ -50,9 +54,10 @@ class CameraActivity : AppCompatActivity() {
     private var ortEnv: OrtEnvironment? = null
     private var imageAnalysis: ImageAnalysis? = null
 
+    private val movementController: DeviceToObjectController = DeviceToObjectController()
 
-    private lateinit var pivoPodController: PodMovementController
-    private lateinit var podObjectController: PodToObjectController
+    private lateinit var pivoPodRotatingDevice: PivoPodRotatingImplementation
+
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -63,7 +68,6 @@ class CameraActivity : AppCompatActivity() {
             ortEnv = OrtEnvironment.getEnvironment()
             startCamera()
         } else {
-            appendToLog("Permissions were not granted.")
             ActivityCompat.requestPermissions(
                 this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS
             )
@@ -75,10 +79,9 @@ class CameraActivity : AppCompatActivity() {
             scanPivo()
         }
 
-        val supportedSpeeds = PivoSdk.getInstance().supportedSpeeds.filter { it in 20..200 }
-
-        pivoPodController = PodMovementController(supportedSpeeds)
-        podObjectController = PodToObjectController(pivoPodController)
+        pivoPodRotatingDevice = PivoPodRotatingImplementation(context = applicationContext)
+        movementController.setRotationDevice(pivoPodRotatingDevice)
+        movementController.initRotationDevice()
     }
 
     private fun scanPivo() {
@@ -89,7 +92,7 @@ class CameraActivity : AppCompatActivity() {
 
 
         //initialize device scan adapter
-        pivoScanResultsAdapter = ScanResultsAdapter()
+        val pivoScanResultsAdapter = ScanResultsAdapter()
         pivoScanResultsAdapter.setOnAdapterItemClickListener(object :
             ScanResultsAdapter.OnAdapterItemClickListener {
             override fun onAdapterViewClick(view: View?) {
@@ -134,7 +137,7 @@ class CameraActivity : AppCompatActivity() {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
         val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
 
-        cameraProviderFuture.addListener(Runnable {
+        cameraProviderFuture.addListener({
             try {
                 selector = QualitySelector
                     .from(
@@ -153,7 +156,6 @@ class CameraActivity : AppCompatActivity() {
                     .build()
 
                 setORTAnalyzer()
-
 
                 cameraProvider.unbindAll()
 
@@ -246,10 +248,10 @@ class CameraActivity : AppCompatActivity() {
         }
         if (result.detectedObjects.isEmpty())
         {
-            podObjectController.updateTargetWithClassifiedBox(null, result.processTimeMs / 1000.0f)
+            movementController.updateTargetWithClassifiedBox(null, result.processTimeMs / 1000.0f)
             return
         }
-        podObjectController.updateTargetWithClassifiedBox(result.detectedObjects[0], result.processTimeMs / 1000.0f)
+        movementController.updateTargetWithClassifiedBox(result.detectedObjects[0], result.processTimeMs / 1000.0f)
     }
 
     // Read MobileNet V2 classification labels
@@ -318,5 +320,6 @@ class CameraActivity : AppCompatActivity() {
         private val REQUIRED_PERMISSIONS =
             arrayOf(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO)
         private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
+
     }
 }

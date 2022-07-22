@@ -6,16 +6,20 @@ import kotlin.math.abs
 import kotlin.math.min
 
 
-class DeviceRotatingControllerBase {
+open class DeviceRotatingControllerBase {
     private var lastUpdatedDirection: Float = 0.0f
     private var currentPODRotationSpeed: Float = 0.0f
     private var lastUpdatedRotationLeftover: Float = 0.0f
     private var lastUpdateTime = System.currentTimeMillis()
 
-    private lateinit var rotateDevice: RotateDeviceInterface
+    private lateinit var rotationDevice: RotateDeviceInterface
 
-    fun initializeRotateDevice(rotateDeviceImplementation: RotateDeviceInterface) {
-        rotateDevice = rotateDeviceImplementation
+    fun setRotationDevice(rotateDeviceImplementation: RotateDeviceInterface) {
+        rotationDevice = rotateDeviceImplementation
+    }
+
+    fun initRotationDevice() {
+        rotationDevice.init()
     }
 
     fun getLastDirection() = lastUpdatedDirection
@@ -28,7 +32,8 @@ class DeviceRotatingControllerBase {
         val deltaTime = (currentTime - lastUpdateTime) / 1000.0f
         lastUpdateTime = currentTime
 
-        val podTraveledRotation = min(currentPODRotationSpeed * deltaTime, lastUpdatedRotationLeftover)
+        val podTraveledRotation =
+            min(currentPODRotationSpeed * deltaTime, lastUpdatedRotationLeftover)
         lastUpdatedRotationLeftover -= podTraveledRotation
         lastUpdatedDirection += podTraveledRotation
     }
@@ -43,17 +48,17 @@ class DeviceRotatingControllerBase {
         if (averageSegmentTime == 0.0f)
             return // TODO throw something or notice user about it
 
-        if (!this::rotateDevice.isInitialized)
-        {
+        if (!this::rotationDevice.isInitialized) {
             // TODO throw something or notice user about it
             return
         }
         val speedOfEvenMovement = abs(deltaGradAngle / averageSegmentTime)
-        val availableAppropriateSpeed = rotateDevice.getTheMostAppropriateSpeedFromAvailable(speedOfEvenMovement)
-        rotateDevice.rotateBy(availableAppropriateSpeed, lastUpdatedRotationLeftover)
+        val availableAppropriateSpeed =
+            rotationDevice.getTheMostAppropriateSpeedFromAvailable(speedOfEvenMovement)
+        rotationDevice.rotateBy(availableAppropriateSpeed, lastUpdatedRotationLeftover)
 
         // To make sure we are storing an exact same speed as device using in real life
-        currentPODRotationSpeed = rotateDevice.getGradPerSecSpeedFromAvailable(speedOfEvenMovement)
+        currentPODRotationSpeed = rotationDevice.getGradPerSecSpeedFromAvailable(speedOfEvenMovement)
     }
 
     /**
@@ -70,17 +75,20 @@ class DeviceRotatingControllerBase {
      * 1. Updating inner state of device
      * 2. Setting up an exact  speed and angle
      */
-    fun updateAndMovePodBy(speed: Float, orientedAngle: Float) { // if we will want to control it manually
+    fun updateAndMovePodBy(
+        speed: Float,
+        orientedAngle: Float
+    ) { // if we will want to control it manually
         updateCurrentState()
-        if (!this::rotateDevice.isInitialized)
-        {
+        if (!this::rotationDevice.isInitialized) {
             // TODO throw something or notice user about it
             return
         }
-        val availableAppropriateDeviceSpeed = rotateDevice.getGradPerSecSpeedFromAvailable(speed)
-        rotateDevice.rotateBy(availableAppropriateDeviceSpeed, orientedAngle)
+        val availableAppropriateDeviceSpeed = rotationDevice.getGradPerSecSpeedFromAvailable(speed)
+        rotationDevice.rotateBy(availableAppropriateDeviceSpeed, orientedAngle)
 
         lastUpdatedRotationLeftover = orientedAngle
-        currentPODRotationSpeed = rotateDevice.getGradPerSecSpeedFromAvailable(availableAppropriateDeviceSpeed)
+        currentPODRotationSpeed =
+            rotationDevice.getGradPerSecSpeedFromAvailable(availableAppropriateDeviceSpeed)
     }
 }

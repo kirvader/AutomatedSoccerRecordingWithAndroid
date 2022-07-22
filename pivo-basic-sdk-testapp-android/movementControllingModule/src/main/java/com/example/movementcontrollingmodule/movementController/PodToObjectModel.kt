@@ -2,13 +2,17 @@ package com.example.movementcontrollingmodule.movementController
 
 import com.example.movementcontrollingmodule.movementController.utils.Point
 
-class DeviceToObjectModel {
+open class DeviceToObjectControllerBase {
 
     protected val ballModel: BallModel = BallModel()
     protected val deviceRotatingController: DeviceRotatingControllerBase = DeviceRotatingControllerBase()
 
-    fun initializeRotationDevice(rotateDeviceImplementation: RotateDeviceInterface) {
-        deviceRotatingController.initializeRotateDevice(rotateDeviceImplementation)
+    fun setRotationDevice(rotateDeviceImplementation: RotateDeviceInterface) {
+        deviceRotatingController.setRotationDevice(rotateDeviceImplementation)
+    }
+
+    fun initRotationDevice() {
+        deviceRotatingController.initRotationDevice()
     }
 
     fun updateTargetPosition(point: Point?, timeFromLastSegmentUpdate: Float) {

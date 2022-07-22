@@ -1,11 +1,11 @@
 package app.pivo.android.basicsdkdemo.utils
 
-import com.example.movementcontrollingmodule.movementController.utils.*
+import com.example.movementcontrollingmodule.movementController.DeviceToObjectControllerBase
+import com.example.movementcontrollingmodule.movementController.utils.Point
+import com.example.movementcontrollingmodule.movementController.utils.PolarPoint
 
 
-class PodToObjectController(podMovementController: PodMovementModel) :
-    PodToObjectModel(podMovementController) {
-
+class DeviceToObjectController : DeviceToObjectControllerBase() {
 
     fun updateTargetWithClassifiedBox(box: ClassifiedBox?, timeFromLastSegmentUpdate: Float) {
         if (box == null)
@@ -21,7 +21,7 @@ class PodToObjectController(podMovementController: PodMovementModel) :
         val ballPlaneHeight = ballDiam * 1.0f / box.height
         val height = box.center.y * ballPlaneHeight
 
-        updateTargetPosition(Point(PolarPoint(distance, podMovementModel.getLastDirection() + deltaAngle, height)), timeFromLastSegmentUpdate)
+        updateTargetPosition(Point(PolarPoint(distance, deviceRotatingController.getLastDirection() + deltaAngle, height)), timeFromLastSegmentUpdate)
     }
 
     companion object {

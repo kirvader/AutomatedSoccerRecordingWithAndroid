@@ -63,6 +63,8 @@ class Point {
     }
 
     fun getAngle() = polarPoint.phi
+    fun getDistance() = polarPoint.d
+    fun getHeight() = polarPoint.h
 
     operator fun div(d: Float): Point = Point(cartesianPoint / d)
 
