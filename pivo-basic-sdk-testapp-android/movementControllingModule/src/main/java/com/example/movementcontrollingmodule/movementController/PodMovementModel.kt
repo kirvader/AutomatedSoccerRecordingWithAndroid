@@ -1,11 +1,12 @@
-package app.pivo.android.basicsdkdemo.movementController
+package com.example.movementcontrollingmodule.movementController
 
-import app.pivo.android.basicsdkdemo.movementController.utils.Point
-import app.pivo.android.basicsdkdemo.movementController.utils.convertRadianToGrad
+import com.example.movementcontrollingmodule.movementController.utils.Point
+import com.example.movementcontrollingmodule.movementController.utils.convertRadianToGrad
+import kotlin.math.abs
 import kotlin.math.min
 
 
-open class DeviceRotatingControllerBase {
+class DeviceRotatingControllerBase {
     private var lastUpdatedDirection: Float = 0.0f
     private var currentPODRotationSpeed: Float = 0.0f
     private var lastUpdatedRotationLeftover: Float = 0.0f
@@ -47,7 +48,7 @@ open class DeviceRotatingControllerBase {
             // TODO throw something or notice user about it
             return
         }
-        val speedOfEvenMovement = deltaGradAngle / averageSegmentTime
+        val speedOfEvenMovement = abs(deltaGradAngle / averageSegmentTime)
         val availableAppropriateSpeed = rotateDevice.getTheMostAppropriateSpeedFromAvailable(speedOfEvenMovement)
         rotateDevice.rotateBy(availableAppropriateSpeed, lastUpdatedRotationLeftover)
 
