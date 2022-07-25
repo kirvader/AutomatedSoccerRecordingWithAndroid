@@ -43,10 +43,7 @@ class CameraActivity : AppCompatActivity() {
     private var imageAnalysis: ImageAnalysis? = null
 
     private val movementControllerDevice: DeviceToObjectController = DeviceToObjectController()
-
     private lateinit var pivoPodRotatingDevice: PivoPodRotatingImplementation
-
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -63,13 +60,13 @@ class CameraActivity : AppCompatActivity() {
 
         videoCaptureButton.setOnClickListener {  }
 
-        scanPivoButton.setOnClickListener{
-            DeviceToObjectController.scanForDevices(this, layoutInflater)
-        }
-
         pivoPodRotatingDevice = PivoPodRotatingImplementation(context = applicationContext)
         movementControllerDevice.setRotationDevice(pivoPodRotatingDevice)
         movementControllerDevice.initRotationDevice()
+
+        scanPivoButton.setOnClickListener{
+            pivoPodRotatingDevice.scanForPivoDevices(this, layoutInflater)
+        }
     }
 
     private fun startCamera() {
