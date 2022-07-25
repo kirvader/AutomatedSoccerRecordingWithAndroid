@@ -2,17 +2,16 @@ package com.example.movementcontrollingmodule.movementController
 
 import com.example.movementcontrollingmodule.movementController.utils.Point
 
-open class TrackingSystemControllerBase {
-
-    protected val ballMovementModel: BallMovementModel = BallMovementModel()
-    protected val deviceRotatingController: DeviceRotatingControllerBase = DeviceRotatingControllerBase()
-
-    fun setRotationDevice(rotateDeviceImplementation: RotatableDevice) {
-        deviceRotatingController.setRotationDevice(rotateDeviceImplementation)
+open class TrackingSystemControllerBase(rotatableDevice: RotatableDevice) {
+    init {
+        setRotatableDevice(rotatableDevice)
     }
 
-    fun initRotationDevice() {
-        deviceRotatingController.initRotationDevice()
+    protected val ballMovementModel: BallMovementModel = BallMovementModel()
+    protected val deviceRotatableController: DeviceRotatingControllerBase = DeviceRotatingControllerBase()
+
+    fun setRotatableDevice(rotatableDevice: RotatableDevice) {
+        deviceRotatableController.setRotatableDevice(rotatableDevice)
     }
 
     fun updateTargetPosition(point: Point?, timeFromLastSegmentUpdate: Float) {
@@ -21,6 +20,6 @@ open class TrackingSystemControllerBase {
 
         val targetPosition = ballMovementModel.getApproximatedBallPosition(2) ?: return
 
-        deviceRotatingController.updateAndMovePodToTargetPosition(targetPosition, ballMovementModel.getAverageSegmentTime())
+        deviceRotatableController.updateAndMovePodToTargetPosition(targetPosition, ballMovementModel.getAverageSegmentTime())
     }
 }

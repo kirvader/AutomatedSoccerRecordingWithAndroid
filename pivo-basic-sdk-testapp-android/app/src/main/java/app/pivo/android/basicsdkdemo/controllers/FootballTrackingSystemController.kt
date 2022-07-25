@@ -1,11 +1,14 @@
 package app.pivo.android.basicsdkdemo.utils
 
+import com.example.movementcontrollingmodule.movementController.RotatableDevice
 import com.example.movementcontrollingmodule.movementController.TrackingSystemControllerBase
 import com.example.movementcontrollingmodule.movementController.utils.Point
 import com.example.movementcontrollingmodule.movementController.utils.PolarPoint
 
 
-class FootballTrackingSystemController : TrackingSystemControllerBase() {
+class FootballTrackingSystemController(rotatableDevice: RotatableDevice) : TrackingSystemControllerBase(
+    rotatableDevice
+) {
 
     fun updateTargetWithClassifiedBox(box: ClassifiedBox?, timeFromLastSegmentUpdate: Float) {
         if (box == null)
@@ -21,7 +24,7 @@ class FootballTrackingSystemController : TrackingSystemControllerBase() {
         val ballPlaneHeight = ballDiam * 1.0f / box.height
         val height = box.center.y * ballPlaneHeight
 
-        updateTargetPosition(Point(PolarPoint(distance, deviceRotatingController.getLastDirection() + deltaAngle, height)), timeFromLastSegmentUpdate)
+        updateTargetPosition(Point(PolarPoint(distance, deviceRotatableController.getLastDirection() + deltaAngle, height)), timeFromLastSegmentUpdate)
     }
 
     companion object {

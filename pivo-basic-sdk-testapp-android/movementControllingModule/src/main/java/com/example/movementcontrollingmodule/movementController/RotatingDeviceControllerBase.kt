@@ -14,12 +14,8 @@ open class DeviceRotatingControllerBase {
 
     private lateinit var rotationDevice: RotatableDevice
 
-    fun setRotationDevice(rotateDeviceImplementation: RotatableDevice) {
-        rotationDevice = rotateDeviceImplementation
-    }
-
-    fun initRotationDevice() {
-        rotationDevice.init()
+    fun setRotatableDevice(rotatableDeviceImplementation: RotatableDevice) {
+        rotationDevice = rotatableDeviceImplementation
     }
 
     fun getLastDirection() = lastUpdatedDirection

@@ -20,12 +20,12 @@ import androidx.core.content.ContextCompat
 import app.pivo.android.basicsdkdemo.ORTAnalyzer
 import app.pivo.android.basicsdkdemo.R
 import app.pivo.android.basicsdkdemo.Result
-import app.pivo.android.basicsdkdemo.devices.rotating.DefaultRotatableDeviceImpl
-import app.pivo.android.basicsdkdemo.devices.rotating.PivoPodRotatableDeviceImpl
+import app.pivo.android.basicsdkdemo.devices.rotating.DefaultDevice
+import app.pivo.android.basicsdkdemo.devices.rotating.PivoPodDevice
 import app.pivo.android.basicsdkdemo.utils.ClassifiedBox
 import app.pivo.android.basicsdkdemo.utils.FootballTrackingSystemController
+import app.pivo.android.basicsdkdemo.utils.RuntimeUtils
 import app.pivo.android.basicsdkdemo.utils.createLogger
-import app.pivo.android.basicsdkdemo.utils.isEmulator
 import kotlinx.android.synthetic.main.activity_camera.*
 import kotlinx.coroutines.*
 import java.util.concurrent.ExecutorService
@@ -46,9 +46,8 @@ class CameraActivity : AppCompatActivity() {
     private var ortEnv: OrtEnvironment? = null
     private var imageAnalysis: ImageAnalysis? = null
 
-    private val movementControllerDevice: FootballTrackingSystemController = FootballTrackingSystemController()
-    private lateinit var pivoPodRotatingDevice: PivoPodRotatableDeviceImpl
-    private var defaultRotatingDeviceImpl: DefaultRotatableDeviceImpl = DefaultRotatableDeviceImpl()
+    private var device = DefaultDevice()
+    private var movementControllerDevice: FootballTrackingSystemController = FootballTrackingSystemController(device)
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -65,19 +64,17 @@ class CameraActivity : AppCompatActivity() {
             )
         }
 
-        videoCaptureButton.setOnClickListener {  }
+        videoCaptureButton.setOnClickListener { }
 
-        pivoPodRotatingDevice = PivoPodRotatableDeviceImpl(context = applicationContext)
-        if (isEmulator()) {
-            movementControllerDevice.setRotationDevice(defaultRotatingDeviceImpl)
-        } else {
-            movementControllerDevice.setRotationDevice(pivoPodRotatingDevice)
-        }
+        //movementControllerDevice = FootballTrackingSystemController(device)
+        // movementControllerDevice.setRotatableDevice(App.device)
 
-        movementControllerDevice.initRotationDevice()
-
-        scanPivoButton.setOnClickListener{
-            pivoPodRotatingDevice.scanForPivoDevices(this, layoutInflater)
+        scanPivoButton.setOnClickListener {
+            if (RuntimeUtils.isEmulator()) {
+                LOG.i("Scan button pressed")
+            } else {
+                PivoPodDevice.scanForPivoDevices(this, layoutInflater)
+            }
         }
     }
 
@@ -196,14 +193,19 @@ class CameraActivity : AppCompatActivity() {
             }
             inference_time_value.text = "${result.processTimeMs}ms"
         }
-        if (result.detectedObjects.isEmpty())
-        {
+        if (result.detectedObjects.isEmpty()) {
             LOG.i("No appropriate objects found")
-            movementControllerDevice.updateTargetWithClassifiedBox(null, result.processTimeMs / 1000.0f)
+            movementControllerDevice.updateTargetWithClassifiedBox(
+                null,
+                result.processTimeMs / 1000.0f
+            )
             return
         }
         LOG.d("Found objects. The best is at x = %f", result.detectedObjects[0].center.x)
-        movementControllerDevice.updateTargetWithClassifiedBox(result.detectedObjects[0], result.processTimeMs / 1000.0f)
+        movementControllerDevice.updateTargetWithClassifiedBox(
+            result.detectedObjects[0],
+            result.processTimeMs / 1000.0f
+        )
     }
 
     // Read MobileNet V2 classification labels
@@ -243,7 +245,8 @@ class CameraActivity : AppCompatActivity() {
 
     companion object {
         private const val REQUEST_CODE_PERMISSIONS = 10
-        private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO)
+        private val REQUIRED_PERMISSIONS =
+            arrayOf(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO)
         private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
     }
 }
