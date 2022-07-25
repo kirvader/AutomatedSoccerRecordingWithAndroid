@@ -128,6 +128,13 @@ class PivoPodRotatingImplementation(private val context: Context) : RotateDevice
             Manifest.permission.RECORD_AUDIO
         )
     } else {
-        TODO("VERSION.SDK_INT < S")
+        arrayOf(
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION,
+            Manifest.permission.BLUETOOTH,
+            Manifest.permission.BLUETOOTH_ADMIN,
+            Manifest.permission.CAMERA,
+            Manifest.permission.RECORD_AUDIO
+        )
     }
 }

@@ -21,9 +21,7 @@ import androidx.core.content.ContextCompat
 import app.pivo.android.basicsdkdemo.ORTAnalyzer
 import app.pivo.android.basicsdkdemo.R
 import app.pivo.android.basicsdkdemo.Result
-import app.pivo.android.basicsdkdemo.utils.ClassifiedBox
-import app.pivo.android.basicsdkdemo.utils.DeviceToObjectController
-import app.pivo.android.basicsdkdemo.utils.PivoPodRotatingImplementation
+import app.pivo.android.basicsdkdemo.utils.*
 import kotlinx.android.synthetic.main.activity_camera.*
 import kotlinx.coroutines.*
 import java.util.concurrent.ExecutorService
@@ -44,6 +42,8 @@ class CameraActivity : AppCompatActivity() {
 
     private val movementControllerDevice: DeviceToObjectController = DeviceToObjectController()
     private lateinit var pivoPodRotatingDevice: PivoPodRotatingImplementation
+    private var defaultRotatingDevice: DefaultRotatingDevice = DefaultRotatingDevice()
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,7 +61,12 @@ class CameraActivity : AppCompatActivity() {
         videoCaptureButton.setOnClickListener {  }
 
         pivoPodRotatingDevice = PivoPodRotatingImplementation(context = applicationContext)
-        movementControllerDevice.setRotationDevice(pivoPodRotatingDevice)
+        if (isEmulator()) {
+            movementControllerDevice.setRotationDevice(defaultRotatingDevice)
+        } else {
+            movementControllerDevice.setRotationDevice(pivoPodRotatingDevice)
+        }
+
         movementControllerDevice.initRotationDevice()
 
         scanPivoButton.setOnClickListener{
