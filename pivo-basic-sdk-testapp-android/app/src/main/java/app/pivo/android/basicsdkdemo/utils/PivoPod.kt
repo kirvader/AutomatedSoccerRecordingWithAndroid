@@ -5,7 +5,6 @@ import app.pivo.android.basicsdk.PivoSdk
 import com.example.movementcontrollingmodule.movementController.RotateDeviceInterface
 import kotlin.math.abs
 
-
 class PivoPodRotatingImplementation(private val context: Context) : RotateDeviceInterface {
     private lateinit var availableSpeeds: List<Int>
 

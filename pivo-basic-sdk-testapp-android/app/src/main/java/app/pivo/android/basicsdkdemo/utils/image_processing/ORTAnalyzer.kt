@@ -12,7 +12,6 @@ import android.os.SystemClock
 import android.util.Log
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
-import app.pivo.android.basicsdkdemo.activities.CameraActivity.Companion.TAG
 import app.pivo.android.basicsdkdemo.utils.ClassifiedBox
 import app.pivo.android.basicsdkdemo.utils.ScreenPoint
 import app.pivo.android.basicsdkdemo.utils.image_processing.preProcess
@@ -133,5 +132,9 @@ internal class ORTAnalyzer(
     // We can switch analyzer in the app, need to make sure the native resources are freed
     protected fun finalize() {
         ortSession?.close()
+    }
+
+    companion object {
+        private const val TAG = "ORTAnalyzer"
     }
 }

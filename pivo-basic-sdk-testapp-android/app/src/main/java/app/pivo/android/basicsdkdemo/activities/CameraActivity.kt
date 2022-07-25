@@ -4,12 +4,9 @@ import ai.onnxruntime.OrtEnvironment
 import ai.onnxruntime.OrtSession
 import android.Manifest
 import android.content.pm.PackageManager
-import android.os.Build
 import android.os.Bundle
 import android.util.Log
-import android.view.View
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.AspectRatio
 import androidx.camera.core.CameraSelector
@@ -21,21 +18,12 @@ import androidx.camera.video.Quality
 import androidx.camera.video.QualitySelector
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import app.pivo.android.basicsdk.PivoSdk
-import app.pivo.android.basicsdk.events.PivoEvent
-import app.pivo.android.basicsdk.events.PivoEventBus
 import app.pivo.android.basicsdkdemo.ORTAnalyzer
 import app.pivo.android.basicsdkdemo.R
 import app.pivo.android.basicsdkdemo.Result
 import app.pivo.android.basicsdkdemo.utils.ClassifiedBox
 import app.pivo.android.basicsdkdemo.utils.DeviceToObjectController
 import app.pivo.android.basicsdkdemo.utils.PivoPodRotatingImplementation
-import app.pivo.android.basicsdkdemo.utils.ScanResultsAdapter
-import com.nabinbhandari.android.permissions.PermissionHandler
-import com.nabinbhandari.android.permissions.Permissions
-import io.reactivex.functions.Consumer
 import kotlinx.android.synthetic.main.activity_camera.*
 import kotlinx.coroutines.*
 import java.util.concurrent.ExecutorService
@@ -54,7 +42,7 @@ class CameraActivity : AppCompatActivity() {
     private var ortEnv: OrtEnvironment? = null
     private var imageAnalysis: ImageAnalysis? = null
 
-    private val movementController: DeviceToObjectController = DeviceToObjectController()
+    private val movementControllerDevice: DeviceToObjectController = DeviceToObjectController()
 
     private lateinit var pivoPodRotatingDevice: PivoPodRotatingImplementation
 
@@ -76,61 +64,12 @@ class CameraActivity : AppCompatActivity() {
         videoCaptureButton.setOnClickListener {  }
 
         scanPivoButton.setOnClickListener{
-            scanPivo()
+            DeviceToObjectController.scanForDevices(this, layoutInflater)
         }
 
         pivoPodRotatingDevice = PivoPodRotatingImplementation(context = applicationContext)
-        movementController.setRotationDevice(pivoPodRotatingDevice)
-        movementController.initRotationDevice()
-    }
-
-    private fun scanPivo() {
-        val builder = AlertDialog.Builder(this)
-        builder.setTitle("Pivo scan results")
-        val dialogLayout = layoutInflater.inflate(R.layout.pivo_scan_results, null)
-        val scanResults = dialogLayout.findViewById<RecyclerView>(R.id.scan_results)
-
-
-        //initialize device scan adapter
-        val pivoScanResultsAdapter = ScanResultsAdapter()
-        pivoScanResultsAdapter.setOnAdapterItemClickListener(object :
-            ScanResultsAdapter.OnAdapterItemClickListener {
-            override fun onAdapterViewClick(view: View?) {
-                val scanResult = pivoScanResultsAdapter.getItemAtPosition(
-                    scanResults.getChildAdapterPosition(view!!)
-                )
-                if (scanResult != null) {
-                    PivoSdk.getInstance().connectTo(scanResult)
-                }
-            }
-        })
-
-        PivoEventBus.subscribe(
-            PivoEventBus.CONNECTION_COMPLETED, this, Consumer {
-                if (it is PivoEvent.ConnectionComplete) {
-                    Log.e(TAG, "CONNECTION_COMPLETED")
-                }
-            })
-        //subscribe to get scan device
-        PivoEventBus.subscribe(
-            PivoEventBus.SCAN_DEVICE, this, Consumer {
-                if (it is PivoEvent.Scanning) {
-
-                    Log.e(TAG, "Result for scanning is updated")
-                    pivoScanResultsAdapter.addScanResult(it.device)
-                }
-            })
-
-        scanResults.apply {
-            setHasFixedSize(true)
-            layoutManager = LinearLayoutManager(this@CameraActivity)
-            adapter = pivoScanResultsAdapter
-        }
-
-        checkPermission()
-
-        builder.setView(dialogLayout)
-        builder.show()
+        movementControllerDevice.setRotationDevice(pivoPodRotatingDevice)
+        movementControllerDevice.initRotationDevice()
     }
 
     private fun startCamera() {
@@ -248,10 +187,10 @@ class CameraActivity : AppCompatActivity() {
         }
         if (result.detectedObjects.isEmpty())
         {
-            movementController.updateTargetWithClassifiedBox(null, result.processTimeMs / 1000.0f)
+            movementControllerDevice.updateTargetWithClassifiedBox(null, result.processTimeMs / 1000.0f)
             return
         }
-        movementController.updateTargetWithClassifiedBox(result.detectedObjects[0], result.processTimeMs / 1000.0f)
+        movementControllerDevice.updateTargetWithClassifiedBox(result.detectedObjects[0], result.processTimeMs / 1000.0f)
     }
 
     // Read MobileNet V2 classification labels
@@ -288,31 +227,9 @@ class CameraActivity : AppCompatActivity() {
         }
     }
 
-    //check permissions if they're granted start scanning, otherwise ask to user to grant permissions
-    private fun checkPermission() {// alternative Permission library Dexter
-        Permissions.check(this,
-            permissionList, null, null,
-            object : PermissionHandler() {
-                override fun onGranted() {
-                    PivoSdk.getInstance().scan()
-                }
-            })
-    }
 
-    //permissions which are required for bluetooth
-    private var permissionList = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        arrayOf(
-            Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.ACCESS_COARSE_LOCATION,
-            Manifest.permission.BLUETOOTH,
-            Manifest.permission.BLUETOOTH_ADMIN,
-            Manifest.permission.BLUETOOTH_SCAN,
-            Manifest.permission.CAMERA,
-            Manifest.permission.RECORD_AUDIO
-        )
-    } else {
-        TODO("VERSION.SDK_INT < S")
-    }
+
+
 
     companion object {
         const val TAG = "ORTImageClassifier"
