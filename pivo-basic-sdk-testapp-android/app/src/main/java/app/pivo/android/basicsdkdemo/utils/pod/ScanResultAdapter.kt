@@ -1,12 +1,12 @@
 package app.pivo.android.basicsdkdemo.utils
 
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import app.pivo.android.basicsdk.util.PivoDevice
+import app.pivo.android.basicsdkdemo.utils.createLogger
 import app.pivo.android.basicsdkdemo.R
 import java.util.*
 
@@ -14,9 +14,9 @@ import java.util.*
  * Created by murodjon on 2020/03/12
  */
 
-class ScanResultsAdapter : RecyclerView.Adapter<ScanResultsAdapter.ViewHolder?>() {
-    private val TAG = "ScanResultsAdapter"
+private val LOG = createLogger<ScanResultsAdapter>()
 
+class ScanResultsAdapter : RecyclerView.Adapter<ScanResultsAdapter.ViewHolder?>() {
     class ViewHolder(itemView: View) :
         RecyclerView.ViewHolder(itemView) {
         var deviceNAme: TextView
@@ -50,7 +50,7 @@ class ScanResultsAdapter : RecyclerView.Adapter<ScanResultsAdapter.ViewHolder?>(
     }
 
     fun addScanResult(scanDevice: PivoDevice) {
-        Log.e( TAG,"Found: ${scanDevice.name}")
+        LOG.e("Found: ${scanDevice.name}")
         for (i in data.indices) {
             if (data[i].macAddress == scanDevice.macAddress) {
                 data[i] = scanDevice

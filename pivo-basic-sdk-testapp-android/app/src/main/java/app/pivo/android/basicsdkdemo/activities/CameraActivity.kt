@@ -4,11 +4,13 @@ import ai.onnxruntime.OrtEnvironment
 import ai.onnxruntime.OrtSession
 import android.Manifest
 import android.content.pm.PackageManager
+import android.icu.text.SimpleDateFormat
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.AspectRatio
+import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
@@ -22,12 +24,19 @@ import app.pivo.android.basicsdkdemo.ORTAnalyzer
 import app.pivo.android.basicsdkdemo.R
 import app.pivo.android.basicsdkdemo.Result
 import app.pivo.android.basicsdkdemo.utils.*
+import androidx.core.util.Consumer
+import app.pivo.android.basicsdk.PivoSdk
+import app.pivo.android.basicsdkdemo.utils.createLogger
 import kotlinx.android.synthetic.main.activity_camera.*
 import kotlinx.coroutines.*
+import java.lang.Runnable
+import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import kotlin.math.pow
 
+
+private val LOG = createLogger<CameraActivity>()
 
 class CameraActivity : AppCompatActivity() {
 
@@ -53,6 +62,7 @@ class CameraActivity : AppCompatActivity() {
             ortEnv = OrtEnvironment.getEnvironment()
             startCamera()
         } else {
+            LOG.e("Permissions were not granted.")
             ActivityCompat.requestPermissions(
                 this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS
             )
@@ -122,6 +132,7 @@ class CameraActivity : AppCompatActivity() {
         backgroundExecutor.shutdown()
         ortEnv?.close()
         ProcessCameraProvider.getInstance(this).get().unbindAll()
+        LOG.i("OnDestroy called")
 
     }
 
@@ -134,6 +145,7 @@ class CameraActivity : AppCompatActivity() {
         if (requestCode == REQUEST_CODE_PERMISSIONS) {
             if (allPermissionsGranted()) {
                 startCamera()
+                LOG.i("Camera started")
             } else {
                 Toast.makeText(
                     this,
@@ -189,9 +201,11 @@ class CameraActivity : AppCompatActivity() {
         }
         if (result.detectedObjects.isEmpty())
         {
+            LOG.i("No appropriate objects found")
             movementControllerDevice.updateTargetWithClassifiedBox(null, result.processTimeMs / 1000.0f)
             return
         }
+        LOG.d("Found objects. The best is at x = %f", result.detectedObjects[0].center.x)
         movementControllerDevice.updateTargetWithClassifiedBox(result.detectedObjects[0], result.processTimeMs / 1000.0f)
     }
 
@@ -221,24 +235,19 @@ class CameraActivity : AppCompatActivity() {
                     ORTAnalyzer(createOrtSession(), ::updateUIAndCameraFOV)
                 )
             } catch (e: Exception) {
+                LOG.d("Analyzer setup failed. Using model best2.pt", e)
             }
             if (imageAnalysis != null)
-                Log.i(TAG, "Analyzer has been successfully set up.")
+                LOG.i("Analyzer has been successfully set up.")
             else
-                Log.e(TAG, "Analyzer is null.")
+                LOG.e("Analyzer is null.")
         }
     }
-
-
-
-
 
     companion object {
         const val TAG = "ORTImageClassifier"
         private const val REQUEST_CODE_PERMISSIONS = 10
-        private val REQUIRED_PERMISSIONS =
-            arrayOf(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO)
+        private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO)
         private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
-
     }
 }
