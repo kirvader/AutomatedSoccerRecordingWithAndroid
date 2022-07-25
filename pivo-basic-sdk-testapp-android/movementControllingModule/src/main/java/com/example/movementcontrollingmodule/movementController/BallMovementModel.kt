@@ -23,7 +23,7 @@ class SegmentInfo(
 }
 
 
-class BallModel {
+class BallMovementModel {
     private var lastSegments: MutableList<SegmentInfo> =
         mutableListOf(SegmentInfo(), SegmentInfo())
     private var lastVelocities: MutableList<Point?> = mutableListOf(null, null)

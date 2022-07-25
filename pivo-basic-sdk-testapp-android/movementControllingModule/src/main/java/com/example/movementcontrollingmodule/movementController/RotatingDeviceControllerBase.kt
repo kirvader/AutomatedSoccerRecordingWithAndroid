@@ -12,9 +12,9 @@ open class DeviceRotatingControllerBase {
     private var lastUpdatedRotationLeftover: Float = 0.0f
     private var lastUpdateTime = System.currentTimeMillis()
 
-    private lateinit var rotationDevice: RotateDeviceInterface
+    private lateinit var rotationDevice: RotatingDevice
 
-    fun setRotationDevice(rotateDeviceImplementation: RotateDeviceInterface) {
+    fun setRotationDevice(rotateDeviceImplementation: RotatingDevice) {
         rotationDevice = rotateDeviceImplementation
     }
 
@@ -46,10 +46,9 @@ open class DeviceRotatingControllerBase {
         lastUpdatedRotationLeftover = deltaGradAngle
 
         if (averageSegmentTime == 0.0f)
-            return // TODO throw something or notice user about it
+            return
 
         if (!this::rotationDevice.isInitialized) {
-            // TODO throw something or notice user about it
             return
         }
         val speedOfEvenMovement = abs(deltaGradAngle / averageSegmentTime)

@@ -4,13 +4,10 @@ import ai.onnxruntime.OrtEnvironment
 import ai.onnxruntime.OrtSession
 import android.Manifest
 import android.content.pm.PackageManager
-import android.icu.text.SimpleDateFormat
 import android.os.Bundle
-import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.AspectRatio
-import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
@@ -23,14 +20,14 @@ import androidx.core.content.ContextCompat
 import app.pivo.android.basicsdkdemo.ORTAnalyzer
 import app.pivo.android.basicsdkdemo.R
 import app.pivo.android.basicsdkdemo.Result
-import app.pivo.android.basicsdkdemo.utils.*
-import androidx.core.util.Consumer
-import app.pivo.android.basicsdk.PivoSdk
+import app.pivo.android.basicsdkdemo.devices.rotating.DefaultRotatingDeviceImpl
+import app.pivo.android.basicsdkdemo.devices.rotating.PivoPodRotatingImpl
+import app.pivo.android.basicsdkdemo.utils.ClassifiedBox
+import app.pivo.android.basicsdkdemo.utils.FootballTrackingSystemController
 import app.pivo.android.basicsdkdemo.utils.createLogger
+import app.pivo.android.basicsdkdemo.utils.isEmulator
 import kotlinx.android.synthetic.main.activity_camera.*
 import kotlinx.coroutines.*
-import java.lang.Runnable
-import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import kotlin.math.pow
@@ -49,9 +46,9 @@ class CameraActivity : AppCompatActivity() {
     private var ortEnv: OrtEnvironment? = null
     private var imageAnalysis: ImageAnalysis? = null
 
-    private val movementControllerDevice: DeviceToObjectController = DeviceToObjectController()
-    private lateinit var pivoPodRotatingDevice: PivoPodRotatingImplementation
-    private var defaultRotatingDevice: DefaultRotatingDevice = DefaultRotatingDevice()
+    private val movementControllerDevice: FootballTrackingSystemController = FootballTrackingSystemController()
+    private lateinit var pivoPodRotatingDevice: PivoPodRotatingImpl
+    private var defaultRotatingDeviceImpl: DefaultRotatingDeviceImpl = DefaultRotatingDeviceImpl()
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -70,9 +67,9 @@ class CameraActivity : AppCompatActivity() {
 
         videoCaptureButton.setOnClickListener {  }
 
-        pivoPodRotatingDevice = PivoPodRotatingImplementation(context = applicationContext)
+        pivoPodRotatingDevice = PivoPodRotatingImpl(context = applicationContext)
         if (isEmulator()) {
-            movementControllerDevice.setRotationDevice(defaultRotatingDevice)
+            movementControllerDevice.setRotationDevice(defaultRotatingDeviceImpl)
         } else {
             movementControllerDevice.setRotationDevice(pivoPodRotatingDevice)
         }
@@ -117,7 +114,7 @@ class CameraActivity : AppCompatActivity() {
                 preview.setSurfaceProvider(viewFinder.surfaceProvider)
             } catch (ex: Exception) {
                 if (ex.message != null) {
-                    Log.e(TAG, ex.toString())
+                    LOG.e(ex.toString())
                 }
             }
         }, ContextCompat.getMainExecutor(this))
@@ -245,7 +242,6 @@ class CameraActivity : AppCompatActivity() {
     }
 
     companion object {
-        const val TAG = "ORTImageClassifier"
         private const val REQUEST_CODE_PERMISSIONS = 10
         private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO)
         private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"

@@ -1,11 +1,11 @@
 package app.pivo.android.basicsdkdemo.utils
 
-import com.example.movementcontrollingmodule.movementController.DeviceToObjectControllerBase
+import com.example.movementcontrollingmodule.movementController.TrackingSystemControllerBase
 import com.example.movementcontrollingmodule.movementController.utils.Point
 import com.example.movementcontrollingmodule.movementController.utils.PolarPoint
 
 
-class DeviceToObjectController : DeviceToObjectControllerBase() {
+class FootballTrackingSystemController : TrackingSystemControllerBase() {
 
     fun updateTargetWithClassifiedBox(box: ClassifiedBox?, timeFromLastSegmentUpdate: Float) {
         if (box == null)

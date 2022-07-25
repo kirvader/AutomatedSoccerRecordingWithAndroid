@@ -1,9 +1,8 @@
-package app.pivo.android.basicsdkdemo.utils
+package app.pivo.android.basicsdkdemo.devices.rotating
 
 import android.Manifest
 import android.content.Context
 import android.os.Build
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import androidx.appcompat.app.AlertDialog
@@ -13,14 +12,17 @@ import app.pivo.android.basicsdk.PivoSdk
 import app.pivo.android.basicsdk.events.PivoEvent
 import app.pivo.android.basicsdk.events.PivoEventBus
 import app.pivo.android.basicsdkdemo.R
-import app.pivo.android.basicsdkdemo.activities.CameraActivity
-import com.example.movementcontrollingmodule.movementController.RotateDeviceInterface
+import app.pivo.android.basicsdkdemo.utils.ScanResultsAdapter
+import app.pivo.android.basicsdkdemo.utils.createLogger
+import com.example.movementcontrollingmodule.movementController.RotatingDevice
 import com.nabinbhandari.android.permissions.PermissionHandler
 import com.nabinbhandari.android.permissions.Permissions
 import io.reactivex.functions.Consumer
 import kotlin.math.abs
 
-class PivoPodRotatingImplementation(private val context: Context) : RotateDeviceInterface {
+private val LOG = createLogger<PivoPodRotatingImpl>()
+
+class PivoPodRotatingImpl(private val context: Context) : RotatingDevice {
     private lateinit var availableSpeeds: List<Int>
 
     private fun getLicenseContent(context: Context): String = context.assets.open("licenceKey.json").bufferedReader().use { it.readText() }
@@ -80,15 +82,14 @@ class PivoPodRotatingImplementation(private val context: Context) : RotateDevice
         PivoEventBus.subscribe(
             PivoEventBus.CONNECTION_COMPLETED, context, Consumer {
                 if (it is PivoEvent.ConnectionComplete) {
-                    Log.e(CameraActivity.TAG, "CONNECTION_COMPLETED")
+                    LOG.e("CONNECTION_COMPLETED")
                 }
             })
         //subscribe to get scan device
         PivoEventBus.subscribe(
             PivoEventBus.SCAN_DEVICE, context, Consumer {
                 if (it is PivoEvent.Scanning) {
-
-                    Log.e(CameraActivity.TAG, "Result for scanning is updated")
+                    LOG.e("Result for scanning is updated")
                     pivoScanResultsAdapter.addScanResult(it.device)
                 }
             })

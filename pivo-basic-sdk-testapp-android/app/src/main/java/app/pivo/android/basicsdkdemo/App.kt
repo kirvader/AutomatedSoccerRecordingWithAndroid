@@ -2,7 +2,6 @@ package app.pivo.android.basicsdkdemo
 
 import android.app.Application
 import android.util.Log
-import app.pivo.android.basicsdk.PivoSdk
 import com.elvishew.xlog.LogConfiguration
 import com.elvishew.xlog.LogLevel
 import com.elvishew.xlog.XLog
@@ -20,18 +19,7 @@ import java.io.File
 class App : Application() {
     override fun onCreate() {
         super.onCreate()
-
         setupXLog()
-
-        //initialize PivoSdk
-        PivoSdk.init(this)
-        try {
-            PivoSdk.getInstance().unlockWithLicenseKey(getLicenseContent())
-        } catch (ex: Exception) {
-            XLog.e("Pivo key is expired or bad in some other way. Check it and try again.", ex)
-        }
-
-
     }
 
     private fun setupXLog() {
@@ -71,6 +59,4 @@ class App : Application() {
         return mediaStorageDir
 
     }
-
-    private fun getLicenseContent(): String = assets.open("licenceKey.json").bufferedReader().use { it.readText() }
 }
