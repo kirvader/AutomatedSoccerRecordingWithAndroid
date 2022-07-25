@@ -1,6 +1,6 @@
 package com.example.movementcontrollingmodule.movementController
 
-interface RotatingDevice {
+interface RotatableDevice {
 
     /**
      * device initialization method

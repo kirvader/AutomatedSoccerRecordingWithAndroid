@@ -20,8 +20,8 @@ import androidx.core.content.ContextCompat
 import app.pivo.android.basicsdkdemo.ORTAnalyzer
 import app.pivo.android.basicsdkdemo.R
 import app.pivo.android.basicsdkdemo.Result
-import app.pivo.android.basicsdkdemo.devices.rotating.DefaultRotatingDeviceImpl
-import app.pivo.android.basicsdkdemo.devices.rotating.PivoPodRotatingImpl
+import app.pivo.android.basicsdkdemo.devices.rotating.DefaultRotatableDeviceImpl
+import app.pivo.android.basicsdkdemo.devices.rotating.PivoPodRotatableDeviceImpl
 import app.pivo.android.basicsdkdemo.utils.ClassifiedBox
 import app.pivo.android.basicsdkdemo.utils.FootballTrackingSystemController
 import app.pivo.android.basicsdkdemo.utils.createLogger
@@ -47,8 +47,8 @@ class CameraActivity : AppCompatActivity() {
     private var imageAnalysis: ImageAnalysis? = null
 
     private val movementControllerDevice: FootballTrackingSystemController = FootballTrackingSystemController()
-    private lateinit var pivoPodRotatingDevice: PivoPodRotatingImpl
-    private var defaultRotatingDeviceImpl: DefaultRotatingDeviceImpl = DefaultRotatingDeviceImpl()
+    private lateinit var pivoPodRotatingDevice: PivoPodRotatableDeviceImpl
+    private var defaultRotatingDeviceImpl: DefaultRotatableDeviceImpl = DefaultRotatableDeviceImpl()
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -67,7 +67,7 @@ class CameraActivity : AppCompatActivity() {
 
         videoCaptureButton.setOnClickListener {  }
 
-        pivoPodRotatingDevice = PivoPodRotatingImpl(context = applicationContext)
+        pivoPodRotatingDevice = PivoPodRotatableDeviceImpl(context = applicationContext)
         if (isEmulator()) {
             movementControllerDevice.setRotationDevice(defaultRotatingDeviceImpl)
         } else {

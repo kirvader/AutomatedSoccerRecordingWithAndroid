@@ -12,9 +12,9 @@ open class DeviceRotatingControllerBase {
     private var lastUpdatedRotationLeftover: Float = 0.0f
     private var lastUpdateTime = System.currentTimeMillis()
 
-    private lateinit var rotationDevice: RotatingDevice
+    private lateinit var rotationDevice: RotatableDevice
 
-    fun setRotationDevice(rotateDeviceImplementation: RotatingDevice) {
+    fun setRotationDevice(rotateDeviceImplementation: RotatableDevice) {
         rotationDevice = rotateDeviceImplementation
     }
 

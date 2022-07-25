@@ -7,7 +7,7 @@ open class TrackingSystemControllerBase {
     protected val ballMovementModel: BallMovementModel = BallMovementModel()
     protected val deviceRotatingController: DeviceRotatingControllerBase = DeviceRotatingControllerBase()
 
-    fun setRotationDevice(rotateDeviceImplementation: RotatingDevice) {
+    fun setRotationDevice(rotateDeviceImplementation: RotatableDevice) {
         deviceRotatingController.setRotationDevice(rotateDeviceImplementation)
     }
 

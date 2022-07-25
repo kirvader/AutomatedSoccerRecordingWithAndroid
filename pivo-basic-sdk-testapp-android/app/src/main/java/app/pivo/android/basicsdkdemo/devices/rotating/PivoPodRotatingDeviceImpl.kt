@@ -14,15 +14,15 @@ import app.pivo.android.basicsdk.events.PivoEventBus
 import app.pivo.android.basicsdkdemo.R
 import app.pivo.android.basicsdkdemo.utils.ScanResultsAdapter
 import app.pivo.android.basicsdkdemo.utils.createLogger
-import com.example.movementcontrollingmodule.movementController.RotatingDevice
+import com.example.movementcontrollingmodule.movementController.RotatableDevice
 import com.nabinbhandari.android.permissions.PermissionHandler
 import com.nabinbhandari.android.permissions.Permissions
 import io.reactivex.functions.Consumer
 import kotlin.math.abs
 
-private val LOG = createLogger<PivoPodRotatingImpl>()
+private val LOG = createLogger<PivoPodRotatableDeviceImpl>()
 
-class PivoPodRotatingImpl(private val context: Context) : RotatingDevice {
+class PivoPodRotatableDeviceImpl(private val context: Context) : RotatableDevice {
     private lateinit var availableSpeeds: List<Int>
 
     private fun getLicenseContent(context: Context): String = context.assets.open("licenceKey.json").bufferedReader().use { it.readText() }
