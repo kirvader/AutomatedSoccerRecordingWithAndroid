@@ -2,7 +2,14 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/ball-tracker.iml" filepath="$PROJECT_DIR$/.idea/ball-tracker.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/PivoBasicSDKTestApp.iml" filepath="$PROJECT_DIR$/.idea/modules/PivoBasicSDKTestApp.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/PivoBasicSDKTestApp.app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/PivoBasicSDKTestApp.app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/PivoBasicSDKTestApp.app.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/app/PivoBasicSDKTestApp.app.androidTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/PivoBasicSDKTestApp.app.main.iml" filepath="$PROJECT_DIR$/.idea/modules/app/PivoBasicSDKTestApp.app.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/PivoBasicSDKTestApp.app.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/app/PivoBasicSDKTestApp.app.unitTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/movementControllingModule/PivoBasicSDKTestApp.movement.iml" filepath="$PROJECT_DIR$/.idea/modules/movementControllingModule/PivoBasicSDKTestApp.movement.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/movement/PivoBasicSDKTestApp.movement.main.iml" filepath="$PROJECT_DIR$/.idea/modules/movement/PivoBasicSDKTestApp.movement.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/movement/PivoBasicSDKTestApp.movement.test.iml" filepath="$PROJECT_DIR$/.idea/modules/movement/PivoBasicSDKTestApp.movement.test.iml" />
     </modules>
   </component>
 </project>
