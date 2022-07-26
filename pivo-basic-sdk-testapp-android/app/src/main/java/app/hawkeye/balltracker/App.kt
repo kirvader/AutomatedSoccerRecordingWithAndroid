@@ -1,9 +1,9 @@
-package app.pivo.android.basicsdkdemo
+package app.hawkeye.balltracker
 
 import android.app.Application
 import android.util.Log
-import app.pivo.android.basicsdkdemo.devices.rotating.PivoPodDevice
-import app.pivo.android.basicsdkdemo.utils.RuntimeUtils
+import app.hawkeye.balltracker.rotating.PivoPodDevice
+import app.hawkeye.balltracker.utils.RuntimeUtils
 import com.elvishew.xlog.LogConfiguration
 import com.elvishew.xlog.LogLevel
 import com.elvishew.xlog.XLog
@@ -12,7 +12,7 @@ import com.elvishew.xlog.printer.Printer
 import com.elvishew.xlog.printer.file.FilePrinter
 import com.elvishew.xlog.printer.file.backup.NeverBackupStrategy
 import com.elvishew.xlog.printer.file.naming.DateFileNameGenerator
-import com.example.movementcontrollingmodule.movement.RotatableDevice
+import com.hawkeye.movement.RotatableDevice
 import java.io.File
 
 

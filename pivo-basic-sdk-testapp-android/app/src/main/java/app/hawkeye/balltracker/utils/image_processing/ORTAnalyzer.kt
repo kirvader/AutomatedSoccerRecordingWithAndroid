@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-package app.pivo.android.basicsdkdemo
+package app.hawkeye.balltracker.utils.image_processing
 
 import ai.onnxruntime.OnnxTensor
 import ai.onnxruntime.OrtEnvironment
@@ -11,22 +11,20 @@ import android.graphics.Matrix
 import android.os.SystemClock
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
-import app.pivo.android.basicsdkdemo.utils.ClassifiedBox
-import app.pivo.android.basicsdkdemo.utils.ScreenPoint
-import app.pivo.android.basicsdkdemo.utils.image_processing.preProcess
-import app.pivo.android.basicsdkdemo.utils.image_processing.toBitmap
+import app.hawkeye.balltracker.utils.ClassifiedBox
+import app.hawkeye.balltracker.utils.ScreenPoint
 import java.util.*
 
 
 
-internal data class Result(
+data class ModelResult(
     var detectedObjects: List<ClassifiedBox> = listOf(),
     var processTimeMs: Long = 0
-) {}
+)
 
 internal class ORTAnalyzer(
         private val ortSession: OrtSession?,
-        private val callBack: (Result) -> Unit
+        private val callBack: (ModelResult) -> Unit
 ) : ImageAnalysis.Analyzer {
 
     // Get index of top 3 values
@@ -73,7 +71,8 @@ internal class ORTAnalyzer(
             if (record[maxScoreInd] < SCORE_THRESHOLD) continue
             val classId = maxScoreInd - 5
             if (classId != importantClassId) continue
-            result.add(ClassifiedBox(
+            result.add(
+                ClassifiedBox(
                 ScreenPoint(record[0] / IMAGE_WIDTH,
                 record[1] / IMAGE_HEIGHT),
                 record[2] / IMAGE_WIDTH,
@@ -97,7 +96,7 @@ internal class ORTAnalyzer(
         val bitmap = rawBitmap?.rotate(image.imageInfo.rotationDegrees.toFloat())
 
         if (bitmap != null) {
-            val result = Result()
+            val modelResult = ModelResult()
 
             val imgData = preProcess(bitmap)
             val inputName = ortSession?.inputNames?.iterator()?.next()
@@ -114,14 +113,14 @@ internal class ORTAnalyzer(
 
                             val balls = getAllObjectsByClass(arr, 32)
 
-                            result.detectedObjects = getTop3(balls)
+                            modelResult.detectedObjects = getTop3(balls)
 
-                            result.processTimeMs = SystemClock.uptimeMillis() - startTime
+                            modelResult.processTimeMs = SystemClock.uptimeMillis() - startTime
                         }
                     }
                 }
             }
-            callBack(result)
+            callBack(modelResult)
         }
 
         image.close()

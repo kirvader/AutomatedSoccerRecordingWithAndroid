@@ -1,4 +1,4 @@
-package com.example.movementcontrollingmodule.movement
+package com.hawkeye.movement
 
 interface RotatableDevice {
     /**

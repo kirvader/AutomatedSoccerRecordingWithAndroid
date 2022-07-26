@@ -1,4 +1,4 @@
-package com.example.movementcontrollingmodule.movement.utils
+package com.hawkeye.movement.utils
 
 import kotlin.math.*
 import kotlin.system.exitProcess

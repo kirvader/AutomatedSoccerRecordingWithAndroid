@@ -1,9 +1,10 @@
-package app.pivo.android.basicsdkdemo.utils
+package app.hawkeye.balltracker.controllers
 
-import com.example.movementcontrollingmodule.movement.RotatableDevice
-import com.example.movementcontrollingmodule.movement.TrackingSystemControllerBase
-import com.example.movementcontrollingmodule.movement.utils.Point
-import com.example.movementcontrollingmodule.movement.utils.PolarPoint
+import app.hawkeye.balltracker.utils.ClassifiedBox
+import com.hawkeye.movement.RotatableDevice
+import com.hawkeye.movement.TrackingSystemControllerBase
+import com.hawkeye.movement.utils.Point
+import com.hawkeye.movement.utils.PolarPoint
 
 
 class FootballTrackingSystemController(rotatableDevice: RotatableDevice) : TrackingSystemControllerBase(

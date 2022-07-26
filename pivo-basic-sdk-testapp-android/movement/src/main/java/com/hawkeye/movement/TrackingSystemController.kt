@@ -1,6 +1,6 @@
-package com.example.movementcontrollingmodule.movement
+package com.hawkeye.movement
 
-import com.example.movementcontrollingmodule.movement.utils.Point
+import com.hawkeye.movement.utils.Point
 
 open class TrackingSystemControllerBase(rotatableDevice: RotatableDevice) {
     protected val ballMovementModel: BallMovementModel = BallMovementModel()

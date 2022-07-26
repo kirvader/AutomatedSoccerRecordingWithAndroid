@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package app.pivo.android.basicsdkdemo.utils.image_processing
+package app.hawkeye.balltracker.utils.image_processing
 
 import android.graphics.*
 import androidx.camera.core.ImageProxy

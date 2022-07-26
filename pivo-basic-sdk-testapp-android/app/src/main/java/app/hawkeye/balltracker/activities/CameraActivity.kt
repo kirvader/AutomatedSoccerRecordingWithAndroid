@@ -1,4 +1,4 @@
-package app.pivo.android.basicsdkdemo.activities
+package app.hawkeye.balltracker.activities
 
 import ai.onnxruntime.OrtEnvironment
 import ai.onnxruntime.OrtSession
@@ -17,15 +17,15 @@ import androidx.camera.video.Quality
 import androidx.camera.video.QualitySelector
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import app.pivo.android.basicsdkdemo.App
-import app.pivo.android.basicsdkdemo.ORTAnalyzer
-import app.pivo.android.basicsdkdemo.R
-import app.pivo.android.basicsdkdemo.Result
-import app.pivo.android.basicsdkdemo.devices.rotating.PivoPodDevice
-import app.pivo.android.basicsdkdemo.utils.ClassifiedBox
-import app.pivo.android.basicsdkdemo.utils.FootballTrackingSystemController
-import app.pivo.android.basicsdkdemo.utils.RuntimeUtils
-import app.pivo.android.basicsdkdemo.utils.createLogger
+import app.hawkeye.balltracker.App
+import app.hawkeye.balltracker.R
+import app.hawkeye.balltracker.controllers.FootballTrackingSystemController
+import app.hawkeye.balltracker.rotating.PivoPodDevice
+import app.hawkeye.balltracker.utils.ClassifiedBox
+import app.hawkeye.balltracker.utils.RuntimeUtils
+import app.hawkeye.balltracker.utils.createLogger
+import app.hawkeye.balltracker.utils.image_processing.ModelResult
+import app.hawkeye.balltracker.utils.image_processing.ORTAnalyzer
 import kotlinx.android.synthetic.main.activity_camera.*
 import kotlinx.coroutines.*
 import java.util.concurrent.ExecutorService
@@ -165,7 +165,7 @@ class CameraActivity : AppCompatActivity() {
     }
 
 
-    private fun updateUIAndCameraFOV(result: Result) {
+    private fun updateUIAndCameraFOV(result: ModelResult) {
         runOnUiThread {
             if (result.detectedObjects.isNotEmpty()) {
                 detected_item_1.text = labelData[result.detectedObjects[0].classId]

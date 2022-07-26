@@ -1,7 +1,7 @@
-package com.example.movementcontrollingmodule.movement
+package com.hawkeye.movement
 
-import com.example.movementcontrollingmodule.movement.utils.Point
-import com.example.movementcontrollingmodule.movement.utils.convertRadianToGrad
+import com.hawkeye.movement.utils.Point
+import com.hawkeye.movement.utils.convertRadianToGrad
 import kotlin.math.abs
 import kotlin.math.min
 

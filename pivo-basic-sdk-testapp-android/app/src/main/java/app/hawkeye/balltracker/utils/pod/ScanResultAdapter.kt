@@ -1,13 +1,13 @@
-package app.pivo.android.basicsdkdemo.utils
+package app.hawkeye.balltracker.utils.pod
 
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import app.hawkeye.balltracker.R
 import app.pivo.android.basicsdk.util.PivoDevice
-import app.pivo.android.basicsdkdemo.utils.createLogger
-import app.pivo.android.basicsdkdemo.R
+import app.hawkeye.balltracker.utils.createLogger
 import java.util.*
 
 /**

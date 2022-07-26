@@ -1,4 +1,4 @@
-package app.pivo.android.basicsdkdemo.utils
+package app.hawkeye.balltracker.utils
 
 data class ScreenPoint(
     val x: Float,

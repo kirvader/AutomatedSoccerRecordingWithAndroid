@@ -1,4 +1,4 @@
-package app.pivo.android.basicsdkdemo.devices.rotating
+package app.hawkeye.balltracker.rotating
 
 import android.Manifest
 import android.content.Context
@@ -8,13 +8,13 @@ import android.view.View
 import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import app.hawkeye.balltracker.R
+import app.hawkeye.balltracker.utils.createLogger
+import app.hawkeye.balltracker.utils.pod.ScanResultsAdapter
 import app.pivo.android.basicsdk.PivoSdk
 import app.pivo.android.basicsdk.events.PivoEvent
 import app.pivo.android.basicsdk.events.PivoEventBus
-import app.pivo.android.basicsdkdemo.R
-import app.pivo.android.basicsdkdemo.utils.ScanResultsAdapter
-import app.pivo.android.basicsdkdemo.utils.createLogger
-import com.example.movementcontrollingmodule.movement.RotatableDevice
+import com.hawkeye.movement.RotatableDevice
 import com.nabinbhandari.android.permissions.PermissionHandler
 import com.nabinbhandari.android.permissions.Permissions
 import kotlin.math.abs
