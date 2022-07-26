@@ -2,7 +2,6 @@ package app.pivo.android.basicsdkdemo
 
 import android.app.Application
 import android.util.Log
-import app.pivo.android.basicsdkdemo.devices.rotating.DefaultDevice
 import app.pivo.android.basicsdkdemo.devices.rotating.PivoPodDevice
 import app.pivo.android.basicsdkdemo.utils.RuntimeUtils
 import com.elvishew.xlog.LogConfiguration
@@ -13,7 +12,7 @@ import com.elvishew.xlog.printer.Printer
 import com.elvishew.xlog.printer.file.FilePrinter
 import com.elvishew.xlog.printer.file.backup.NeverBackupStrategy
 import com.elvishew.xlog.printer.file.naming.DateFileNameGenerator
-import com.example.movementcontrollingmodule.movementController.RotatableDevice
+import com.example.movementcontrollingmodule.movement.RotatableDevice
 import java.io.File
 
 
@@ -22,12 +21,14 @@ import java.io.File
  */
 class App : Application() {
     override fun onCreate() {
-        if (!RuntimeUtils.isEmulator()) {
-            device = PivoPodDevice(this)
-        }
-
         super.onCreate()
         setupXLog()
+
+        device = if (!RuntimeUtils.isEmulator()) {
+            PivoPodDevice(this)
+        } else {
+            RotatableDevice.Dummy
+        }
     }
 
     private fun setupXLog() {
@@ -68,6 +69,8 @@ class App : Application() {
     }
 
     companion object {
-        var device: RotatableDevice = DefaultDevice()  // always should work
+        private lateinit var device: RotatableDevice
+
+        fun getRotatableDevice() = device
     }
 }

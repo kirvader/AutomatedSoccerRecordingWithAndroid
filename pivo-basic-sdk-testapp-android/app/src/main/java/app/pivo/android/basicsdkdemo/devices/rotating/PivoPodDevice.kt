@@ -14,10 +14,9 @@ import app.pivo.android.basicsdk.events.PivoEventBus
 import app.pivo.android.basicsdkdemo.R
 import app.pivo.android.basicsdkdemo.utils.ScanResultsAdapter
 import app.pivo.android.basicsdkdemo.utils.createLogger
-import com.example.movementcontrollingmodule.movementController.RotatableDevice
+import com.example.movementcontrollingmodule.movement.RotatableDevice
 import com.nabinbhandari.android.permissions.PermissionHandler
 import com.nabinbhandari.android.permissions.Permissions
-import io.reactivex.functions.Consumer
 import kotlin.math.abs
 
 private val LOG = createLogger<PivoPodDevice>()
@@ -29,23 +28,24 @@ class PivoPodDevice(context: Context) : RotatableDevice {
 
     init {
         PivoSdk.init(context)
-        PivoSdk.getInstance().unlockWithLicenseKey(getLicenseContent(context))
+        sdk = PivoSdk.getInstance()
+        sdk.unlockWithLicenseKey(getLicenseContent(context))
 
-        availableSpeeds = PivoSdk.getInstance().supportedSpeeds.filter { it in 20..200 }
+        availableSpeeds = sdk.supportedSpeeds.filter { it in 20..200 }
     }
 
     override fun rotateBy(speed: Float, orientedAngle: Float) {
         if (orientedAngle > 0) {
-            PivoSdk.getInstance().turnRight(abs(orientedAngle.toInt()))
+            sdk.turnRight(abs(orientedAngle.toInt()))
         } else if (orientedAngle < 0) {
-            PivoSdk.getInstance().turnLeft(abs(orientedAngle.toInt()))
+            sdk.turnLeft(abs(orientedAngle.toInt()))
         } else {
-            PivoSdk.getInstance().stop()
+            sdk.stop()
         }
     }
 
     override fun stop() {
-        PivoSdk.getInstance().stop()
+        sdk.stop()
     }
 
     override fun getTheMostAppropriateSpeedFromAvailable(speed: Float): Float {
@@ -57,6 +57,8 @@ class PivoPodDevice(context: Context) : RotatableDevice {
     }
 
     companion object {
+        private lateinit var sdk: PivoSdk
+
         fun scanForPivoDevices(context: Context, layoutInflater: LayoutInflater) {
             val builder = AlertDialog.Builder(context)
             builder.setTitle("Pivo scan results")
@@ -72,25 +74,27 @@ class PivoPodDevice(context: Context) : RotatableDevice {
                         scanResults.getChildAdapterPosition(view!!)
                     )
                     if (scanResult != null) {
-                        PivoSdk.getInstance().connectTo(scanResult)
+                        sdk.connectTo(scanResult)
                     }
                 }
             })
 
             PivoEventBus.subscribe(
-                PivoEventBus.CONNECTION_COMPLETED, context, Consumer {
-                    if (it is PivoEvent.ConnectionComplete) {
-                        LOG.e("CONNECTION_COMPLETED")
-                    }
-                })
+                PivoEventBus.CONNECTION_COMPLETED, context
+            ) {
+                if (it is PivoEvent.ConnectionComplete) {
+                    LOG.e("CONNECTION_COMPLETED")
+                }
+            }
             //subscribe to get scan device
             PivoEventBus.subscribe(
-                PivoEventBus.SCAN_DEVICE, context, Consumer {
-                    if (it is PivoEvent.Scanning) {
-                        LOG.e("Result for scanning is updated")
-                        pivoScanResultsAdapter.addScanResult(it.device)
-                    }
-                })
+                PivoEventBus.SCAN_DEVICE, context
+            ) {
+                if (it is PivoEvent.Scanning) {
+                    LOG.e("Result for scanning is updated")
+                    pivoScanResultsAdapter.addScanResult(it.device)
+                }
+            }
 
             scanResults.apply {
                 setHasFixedSize(true)
@@ -110,7 +114,7 @@ class PivoPodDevice(context: Context) : RotatableDevice {
                 permissionList, null, null,
                 object : PermissionHandler() {
                     override fun onGranted() {
-                        PivoSdk.getInstance().scan()
+                        sdk.scan()
                     }
                 })
         }

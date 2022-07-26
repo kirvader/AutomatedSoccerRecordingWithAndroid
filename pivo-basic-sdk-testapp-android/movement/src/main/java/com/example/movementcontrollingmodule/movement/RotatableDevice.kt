@@ -1,4 +1,4 @@
-package com.example.movementcontrollingmodule.movementController
+package com.example.movementcontrollingmodule.movement
 
 interface RotatableDevice {
     /**
@@ -22,4 +22,15 @@ interface RotatableDevice {
      * @param availableDeviceSpeed one of the devices speed
      */
     fun getGradPerSecSpeedFromAvailable(availableDeviceSpeed: Float): Float
+
+    object Dummy : RotatableDevice {
+        override fun rotateBy(speed: Float, orientedAngle: Float) {}
+
+        override fun stop() {}
+
+        override fun getTheMostAppropriateSpeedFromAvailable(speed: Float): Float = speed
+
+        override fun getGradPerSecSpeedFromAvailable(availableDeviceSpeed: Float): Float =
+            availableDeviceSpeed
+    }
 }

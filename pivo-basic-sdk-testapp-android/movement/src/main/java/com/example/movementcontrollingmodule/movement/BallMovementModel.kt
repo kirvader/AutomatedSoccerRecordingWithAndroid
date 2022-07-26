@@ -1,6 +1,6 @@
-package com.example.movementcontrollingmodule.movementController
+package com.example.movementcontrollingmodule.movement
 
-import com.example.movementcontrollingmodule.movementController.utils.Point
+import com.example.movementcontrollingmodule.movement.utils.Point
 
 
 /**

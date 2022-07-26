@@ -1,9 +1,9 @@
 package app.pivo.android.basicsdkdemo.utils
 
-import com.example.movementcontrollingmodule.movementController.RotatableDevice
-import com.example.movementcontrollingmodule.movementController.TrackingSystemControllerBase
-import com.example.movementcontrollingmodule.movementController.utils.Point
-import com.example.movementcontrollingmodule.movementController.utils.PolarPoint
+import com.example.movementcontrollingmodule.movement.RotatableDevice
+import com.example.movementcontrollingmodule.movement.TrackingSystemControllerBase
+import com.example.movementcontrollingmodule.movement.utils.Point
+import com.example.movementcontrollingmodule.movement.utils.PolarPoint
 
 
 class FootballTrackingSystemController(rotatableDevice: RotatableDevice) : TrackingSystemControllerBase(

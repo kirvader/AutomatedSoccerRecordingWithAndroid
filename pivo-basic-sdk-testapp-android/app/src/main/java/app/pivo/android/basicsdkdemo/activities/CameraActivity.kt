@@ -17,10 +17,10 @@ import androidx.camera.video.Quality
 import androidx.camera.video.QualitySelector
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import app.pivo.android.basicsdkdemo.App
 import app.pivo.android.basicsdkdemo.ORTAnalyzer
 import app.pivo.android.basicsdkdemo.R
 import app.pivo.android.basicsdkdemo.Result
-import app.pivo.android.basicsdkdemo.devices.rotating.DefaultDevice
 import app.pivo.android.basicsdkdemo.devices.rotating.PivoPodDevice
 import app.pivo.android.basicsdkdemo.utils.ClassifiedBox
 import app.pivo.android.basicsdkdemo.utils.FootballTrackingSystemController
@@ -46,8 +46,8 @@ class CameraActivity : AppCompatActivity() {
     private var ortEnv: OrtEnvironment? = null
     private var imageAnalysis: ImageAnalysis? = null
 
-    private var device = DefaultDevice()
-    private var movementControllerDevice: FootballTrackingSystemController = FootballTrackingSystemController(device)
+    private var movementControllerDevice: FootballTrackingSystemController = FootballTrackingSystemController(
+        App.getRotatableDevice())
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -65,9 +65,6 @@ class CameraActivity : AppCompatActivity() {
         }
 
         videoCaptureButton.setOnClickListener { }
-
-        //movementControllerDevice = FootballTrackingSystemController(device)
-        // movementControllerDevice.setRotatableDevice(App.device)
 
         scanPivoButton.setOnClickListener {
             if (RuntimeUtils.isEmulator()) {

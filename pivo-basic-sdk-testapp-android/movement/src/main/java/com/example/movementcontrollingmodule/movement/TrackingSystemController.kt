@@ -1,16 +1,13 @@
-package com.example.movementcontrollingmodule.movementController
+package com.example.movementcontrollingmodule.movement
 
-import com.example.movementcontrollingmodule.movementController.utils.Point
+import com.example.movementcontrollingmodule.movement.utils.Point
 
 open class TrackingSystemControllerBase(rotatableDevice: RotatableDevice) {
-    init {
-        setRotatableDevice(rotatableDevice)
-    }
-
     protected val ballMovementModel: BallMovementModel = BallMovementModel()
     protected val deviceRotatableController: DeviceRotatingControllerBase = DeviceRotatingControllerBase()
 
-    fun setRotatableDevice(rotatableDevice: RotatableDevice) {
+
+    init {
         deviceRotatableController.setRotatableDevice(rotatableDevice)
     }
 
