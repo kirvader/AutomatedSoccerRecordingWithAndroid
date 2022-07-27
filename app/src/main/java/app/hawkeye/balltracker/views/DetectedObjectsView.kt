@@ -9,11 +9,14 @@ class DetectedObjectsView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
     private val lastDetectedObjectPaint = Paint(0).apply {
-        color = 0x101010
-        maskFilter = BlurMaskFilter(8f, BlurMaskFilter.Blur.NORMAL)
+        style = Paint.Style.STROKE
+        textAlign = Paint.Align.CENTER
+        textSize = 55.0f
+        typeface = Typeface.create("", Typeface.BOLD)
+        color = Color.GREEN
     }
     private val currentDetectedObjectPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        style = Paint.Style.FILL
+        style = Paint.Style.STROKE
         textAlign = Paint.Align.CENTER
         textSize = 55.0f
         typeface = Typeface.create("", Typeface.BOLD)
