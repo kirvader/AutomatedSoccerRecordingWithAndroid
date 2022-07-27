@@ -19,6 +19,11 @@
         app:layout_constraintBottom_toTopOf="@id/mylinear"
         app:scaleType="fitStart" />
 
+<!--    <app.hawkeye.balltracker.views.DetectedObjectsView-->
+<!--        -->
+<!--        -->
+<!--         android:layout_height="0dp" android:layout_width="0dp"/>-->
+
     <LinearLayout
         android:id="@+id/mylinear"
         android:layout_width="match_parent"
