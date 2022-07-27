@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -7,28 +7,29 @@
     tools:context="app.hawkeye.balltracker.activities.CameraActivity">
 
 
-
-
     <androidx.camera.view.PreviewView
-        android:id="@+id/viewFinder"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
+        android:id="@+id/cameraPreview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@+id/mylinear"
+        app:layout_constraintBottom_toTopOf="@id/mylinear"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/mylinear"
         app:scaleType="fitStart" />
 
-<!--    <app.hawkeye.balltracker.views.DetectedObjectsView-->
-<!--        -->
-<!--        -->
-<!--         android:layout_height="0dp" android:layout_width="0dp"/>-->
+    <app.hawkeye.balltracker.views.DetectedObjectsView
+        android:id="@+id/detectedObjectsSurface"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@+id/mylinear" />
 
     <LinearLayout
         android:id="@+id/mylinear"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/white"
+        android:layout_alignParentBottom="true"
         android:orientation="vertical"
         android:paddingLeft="10dp"
         android:paddingTop="10dp"
@@ -37,13 +38,11 @@
         app:layout_constraintBottom_toBottomOf="parent">
 
 
-
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:weightSum="2"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:weightSum="2">
 
 
             <Button
@@ -51,7 +50,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Start/stop recording"  />
+                android:text="Start/stop recording" />
 
             <Button
                 android:id="@+id/scanPivoButton"
@@ -133,6 +132,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
             android:layout_marginTop="10dp"
             android:orientation="horizontal">
 
@@ -154,4 +154,4 @@
 
     </LinearLayout>
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+</RelativeLayout>

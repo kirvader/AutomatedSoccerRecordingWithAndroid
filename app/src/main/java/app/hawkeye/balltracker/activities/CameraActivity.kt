@@ -46,8 +46,10 @@ class CameraActivity : AppCompatActivity() {
     private var ortEnv: OrtEnvironment? = null
     private var imageAnalysis: ImageAnalysis? = null
 
-    private var movementControllerDevice: FootballTrackingSystemController = FootballTrackingSystemController(
-        App.getRotatableDevice())
+    private var movementControllerDevice: FootballTrackingSystemController =
+        FootballTrackingSystemController(
+            App.getRotatableDevice()
+        )
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -94,6 +96,7 @@ class CameraActivity : AppCompatActivity() {
                 val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
                 imageAnalysis = ImageAnalysis.Builder()
+                    .setTargetAspectRatio(AspectRatio.RATIO_16_9)
                     .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                     .build()
 
@@ -105,7 +108,7 @@ class CameraActivity : AppCompatActivity() {
                     this, cameraSelector, preview, imageAnalysis
                 )
 
-                preview.setSurfaceProvider(viewFinder.surfaceProvider)
+                preview.setSurfaceProvider(cameraPreview.surfaceProvider)
             } catch (ex: Exception) {
                 if (ex.message != null) {
                     LOG.e(ex.toString())
@@ -203,6 +206,17 @@ class CameraActivity : AppCompatActivity() {
             result.detectedObjects[0],
             result.processTimeMs / 1000.0f
         )
+        detectedObjectsSurface.updateCurrentDetectedObject(
+            if (result.detectedObjects.isNotEmpty()) {
+                result.detectedObjects[0].toRect(
+                    detectedObjectsSurface.measuredWidth,
+                    detectedObjectsSurface.measuredHeight
+                )
+            } else {
+                null
+            }
+        )
+
     }
 
     // Read MobileNet V2 classification labels
