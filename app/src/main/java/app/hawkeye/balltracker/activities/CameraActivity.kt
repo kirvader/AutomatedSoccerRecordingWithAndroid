@@ -39,7 +39,7 @@ class CameraActivity : AppCompatActivity() {
 
     private var selector: QualitySelector? = null
 
-    private val backgroundExecutor: ExecutorService by lazy { Executors.newWorkStealingPool() }
+    private val backgroundExecutor: ExecutorService by lazy { Executors.newSingleThreadExecutor() }
     private val labelData: List<String> by lazy { readLabels() }
     private val scope = CoroutineScope(Job() + Dispatchers.Default)
 
@@ -50,6 +50,8 @@ class CameraActivity : AppCompatActivity() {
         FootballTrackingSystemController(
             App.getRotatableDevice()
         )
+
+    private var recordingInProgress = false //  TODO rollback camera video capture
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -115,6 +117,14 @@ class CameraActivity : AppCompatActivity() {
                 }
             }
         }, ContextCompat.getMainExecutor(this))
+    }
+
+    private fun toggleRecordButton() {
+        if (recordingInProgress) {
+            videoCaptureButton.setText(R.string.stop_recording)
+        } else {
+            videoCaptureButton.setText(R.string.start_recording)
+        }
     }
 
     private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {
