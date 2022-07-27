@@ -125,6 +125,7 @@ class CameraActivity : AppCompatActivity() {
         } else {
             videoCaptureButton.setText(R.string.start_recording)
         }
+        recordingInProgress = !recordingInProgress
     }
 
     private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {
