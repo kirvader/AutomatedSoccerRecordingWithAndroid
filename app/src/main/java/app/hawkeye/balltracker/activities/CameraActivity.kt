@@ -138,7 +138,6 @@ class CameraActivity : AppCompatActivity() {
         ortEnv?.close()
         ProcessCameraProvider.getInstance(this).get().unbindAll()
         LOG.i("OnDestroy called")
-
     }
 
     override fun onRequestPermissionsResult(

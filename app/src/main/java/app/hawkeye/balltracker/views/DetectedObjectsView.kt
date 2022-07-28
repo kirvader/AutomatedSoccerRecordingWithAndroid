@@ -6,8 +6,8 @@ import android.util.AttributeSet
 import android.view.View
 
 private data class ObjectLocations(
-    val previous: Rect? = null,
-    val current: Rect? = null
+    private val previous: Rect? = null,
+    private val current: Rect? = null
 ) {
     fun drawDeltaLocationVector(canvas: Canvas?, vectorPaint: Paint) {
         if (previous == null || current == null) return
@@ -59,9 +59,9 @@ class DetectedObjectsView @JvmOverloads constructor(
         color = Color.RED
     }
 
-    private val trackedObjectLocations = ObjectLocations()
+    private var trackedObjectLocations = ObjectLocations()
     fun updateCurrentDetectedObject(newCurrentLocation: Rect?) {
-        trackedObjectLocations.updateCurrentLocation(newCurrentLocation)
+        trackedObjectLocations = trackedObjectLocations.updateCurrentLocation(newCurrentLocation)
         invalidate()
     }
 
