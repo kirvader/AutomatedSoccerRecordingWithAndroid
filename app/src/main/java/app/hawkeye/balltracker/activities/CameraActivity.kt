@@ -68,7 +68,7 @@ class CameraActivity : AppCompatActivity() {
             )
         }
 
-        videoCaptureButton.setOnClickListener { }
+        videoCaptureButton.setOnClickListener { toggleRecordButton() }
 
         scanPivoButton.setOnClickListener {
             if (RuntimeUtils.isEmulator()) {
