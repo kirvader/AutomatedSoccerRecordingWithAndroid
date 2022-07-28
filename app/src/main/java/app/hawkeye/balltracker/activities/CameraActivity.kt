@@ -3,8 +3,11 @@ package app.hawkeye.balltracker.activities
 import ai.onnxruntime.OrtEnvironment
 import ai.onnxruntime.OrtSession
 import android.Manifest
+import android.content.ContentValues
 import android.content.pm.PackageManager
+import android.icu.text.SimpleDateFormat
 import android.os.Bundle
+import android.provider.MediaStore
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.AspectRatio
@@ -12,11 +15,10 @@ import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.camera.video.FallbackStrategy
-import androidx.camera.video.Quality
-import androidx.camera.video.QualitySelector
+import androidx.camera.video.*
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.util.Consumer
 import app.hawkeye.balltracker.App
 import app.hawkeye.balltracker.R
 import app.hawkeye.balltracker.controllers.FootballTrackingSystemController
@@ -28,6 +30,7 @@ import app.hawkeye.balltracker.utils.image_processing.ModelResult
 import app.hawkeye.balltracker.utils.image_processing.ORTAnalyzer
 import kotlinx.android.synthetic.main.activity_camera.*
 import kotlinx.coroutines.*
+import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import kotlin.math.pow
@@ -37,22 +40,29 @@ private val LOG = createLogger<CameraActivity>()
 
 class CameraActivity : AppCompatActivity() {
 
-    private var selector: QualitySelector? = null
 
+    private var imageAnalysis: ImageAnalysis? = null
+    private var ortEnv: OrtEnvironment? = null
+
+    private var videoCapture: VideoCapture<Recorder>? = null
+    private var recording: Recording? = null
+    private var selector: QualitySelector? = null
+    private var mediaStoreOutputOptions: MediaStoreOutputOptions? = null
+
+    private var recorder: Recorder? = null
+
+    private val cameraExecutor: ExecutorService by lazy { Executors.newSingleThreadExecutor() }
     private val backgroundExecutor: ExecutorService by lazy { Executors.newSingleThreadExecutor() }
-    private val labelData: List<String> by lazy { readLabels() }
     private val scope = CoroutineScope(Job() + Dispatchers.Default)
 
-    private var ortEnv: OrtEnvironment? = null
-    private var imageAnalysis: ImageAnalysis? = null
+    private val labelData: List<String> by lazy { readLabels() }
+
+
 
     private var movementControllerDevice: FootballTrackingSystemController =
         FootballTrackingSystemController(
             App.getRotatableDevice()
         )
-
-    private var recordingInProgress = false //  TODO rollback camera video capture
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -68,7 +78,7 @@ class CameraActivity : AppCompatActivity() {
             )
         }
 
-        videoCaptureButton.setOnClickListener { toggleRecordButton() }
+        videoCaptureButton.setOnClickListener { toggleCameraRecording() }
 
         scanPivoButton.setOnClickListener {
             if (RuntimeUtils.isEmulator()) {
@@ -77,6 +87,71 @@ class CameraActivity : AppCompatActivity() {
                 PivoPodDevice.scanForPivoDevices(this, layoutInflater)
             }
         }
+    }
+
+    private val recordingListener = Consumer<VideoRecordEvent> { event ->
+        when(event) {
+            is VideoRecordEvent.Start -> {
+                val msg = "Capture Started"
+
+                Toast.makeText(this, msg, Toast.LENGTH_SHORT)
+                    .show()
+                LOG.i(msg)
+            }
+            is VideoRecordEvent.Finalize -> {
+                val msg = if (!event.hasError()) {
+                    "Video capture succeeded: ${event.outputResults.outputUri}"
+                } else {
+                    recording?.close()
+                    recording = null
+                    "Video capture ends with error: ${event.error}"
+                }
+                Toast.makeText(this, msg, Toast.LENGTH_SHORT)
+                    .show()
+                LOG.i(msg)
+            }
+        }
+    }
+    private fun toggleCameraRecording() {
+        if (recording != null) {
+            stopCapturing()
+            videoCaptureButton.setText(R.string.start_recording)
+        } else {
+            startCapture()
+            videoCaptureButton.setText(R.string.stop_recording)
+        }
+    }
+
+    private fun startCapture() {
+        val name = "CameraX-recording-" +
+                SimpleDateFormat(FILENAME_FORMAT, Locale.US)
+                    .format(System.currentTimeMillis()) + ".mp4"
+        val contentValues = ContentValues().apply {
+            put(MediaStore.Video.Media.DISPLAY_NAME, name)
+        }
+
+        mediaStoreOutputOptions = MediaStoreOutputOptions
+            .Builder(this.contentResolver, MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
+            .setContentValues(contentValues)
+            .build()
+
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.RECORD_AUDIO
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            LOG.i("Not all permissions granted.")
+            return
+        }
+        recording = videoCapture?.output
+            ?.prepareRecording(this, mediaStoreOutputOptions!!)
+            ?.withAudioEnabled()
+            ?.start(ContextCompat.getMainExecutor(this), recordingListener)!!
+    }
+
+    private fun stopCapturing() {
+        recording?.stop()
+        recording = null
     }
 
     private fun startCamera() {
@@ -90,6 +165,12 @@ class CameraActivity : AppCompatActivity() {
                         Quality.UHD,
                         FallbackStrategy.higherQualityOrLowerThan(Quality.SD)
                     )
+
+                recorder = Recorder.Builder()
+                    .setExecutor(cameraExecutor).setQualitySelector(selector!!)
+                    .build()
+
+                videoCapture = VideoCapture.withOutput(recorder!!)
 
                 val preview = Preview.Builder()
                     .setTargetAspectRatio(AspectRatio.RATIO_16_9)
@@ -107,7 +188,7 @@ class CameraActivity : AppCompatActivity() {
                 cameraProvider.unbindAll()
 
                 cameraProvider.bindToLifecycle(
-                    this, cameraSelector, preview, imageAnalysis
+                    this, cameraSelector, preview, videoCapture, imageAnalysis
                 )
 
                 preview.setSurfaceProvider(cameraPreview.surfaceProvider)
@@ -117,15 +198,6 @@ class CameraActivity : AppCompatActivity() {
                 }
             }
         }, ContextCompat.getMainExecutor(this))
-    }
-
-    private fun toggleRecordButton() {
-        if (recordingInProgress) {
-            videoCaptureButton.setText(R.string.stop_recording)
-        } else {
-            videoCaptureButton.setText(R.string.start_recording)
-        }
-        recordingInProgress = !recordingInProgress
     }
 
     private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {
