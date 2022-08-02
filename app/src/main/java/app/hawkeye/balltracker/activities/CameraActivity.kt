@@ -4,6 +4,7 @@ import ai.onnxruntime.OrtEnvironment
 import ai.onnxruntime.OrtSession
 import android.Manifest
 import android.content.ContentValues
+import android.content.Context
 import android.content.pm.PackageManager
 import android.icu.text.SimpleDateFormat
 import android.os.Bundle
@@ -26,14 +27,16 @@ import app.hawkeye.balltracker.rotating.PivoPodDevice
 import app.hawkeye.balltracker.utils.ClassifiedBox
 import app.hawkeye.balltracker.utils.RuntimeUtils
 import app.hawkeye.balltracker.utils.createLogger
-import app.hawkeye.balltracker.utils.image_processing.ModelResult
+import app.hawkeye.balltracker.utils.image_processing.GoogleMLkitAnalyzer
 import app.hawkeye.balltracker.utils.image_processing.ORTAnalyzer
+import com.google.mlkit.vision.objects.ObjectDetection
+import com.google.mlkit.vision.objects.ObjectDetector
+import com.google.mlkit.vision.objects.defaults.ObjectDetectorOptions
 import kotlinx.android.synthetic.main.activity_camera.*
 import kotlinx.coroutines.*
 import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
-import kotlin.math.pow
 
 
 private val LOG = createLogger<CameraActivity>()
@@ -42,7 +45,10 @@ class CameraActivity : AppCompatActivity() {
 
 
     private var imageAnalysis: ImageAnalysis? = null
+
+    // object detectors
     private var ortEnv: OrtEnvironment? = null
+    private var objectDetector: ObjectDetector? = null
 
     private var videoCapture: VideoCapture<Recorder>? = null
     private var recording: Recording? = null
@@ -57,7 +63,20 @@ class CameraActivity : AppCompatActivity() {
 
     private val labelData: List<String> by lazy { readLabels() }
 
+    // Read MobileNet V2 classification labels
+    private fun readLabels(): List<String> =
+        resources.openRawResource(R.raw.model_classes).bufferedReader().readLines()
 
+    // Read ort model into a ByteArray, run in background
+    private suspend fun readModel(): ByteArray = withContext(Dispatchers.IO) {
+        val modelID = R.raw.yolov5s
+        resources.openRawResource(modelID).readBytes()
+    }
+
+    // Create a new ORT session in background
+    private suspend fun createOrtSession(): OrtSession? = withContext(Dispatchers.Default) {
+        ortEnv?.createSession(readModel())
+    }
 
     private var movementControllerDevice: FootballTrackingSystemController =
         FootballTrackingSystemController(
@@ -183,6 +202,13 @@ class CameraActivity : AppCompatActivity() {
                     .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                     .build()
 
+                val objectDetectorOptions = ObjectDetectorOptions.Builder()
+                    .setDetectorMode(ObjectDetectorOptions.STREAM_MODE)
+                    .enableClassification()
+                    .build()
+
+                objectDetector = ObjectDetection.getClient(objectDetectorOptions)
+
                 setORTAnalyzer()
 
                 cameraProvider.unbindAll()
@@ -237,83 +263,64 @@ class CameraActivity : AppCompatActivity() {
         }
     }
 
-    private fun round(number: Double, decimals: Int): Double {
-        val multiplier = 10.0.pow(decimals)
-        return kotlin.math.round(number * multiplier) / multiplier
-    }
-
-    private fun getBoxInfo(box: ClassifiedBox): String {
-        val strPosition =
-            "(${round(box.center.x.toDouble(), 2)};${round(box.center.y.toDouble(), 2)})"
-        val strConfidence = "conf: ${round((box.confidence * 100).toDouble(), 2)}"
-        return "$strPosition $strConfidence"
-    }
-
-
-    private fun updateUIAndCameraFOV(result: ModelResult) {
+    private fun updateUI(result: List<ClassifiedBox>) {
         runOnUiThread {
-            if (result.detectedObjects.isNotEmpty()) {
-                detected_item_1.text = labelData[result.detectedObjects[0].classId]
-                detected_item_value_1.text = getBoxInfo(result.detectedObjects[0])
+            if (result.isNotEmpty()) {
+                detected_item_1.text = labelData[result[0].classId]
+                detected_item_value_1.text = result[0].getStrInfo()
             } else {
                 detected_item_1.text = "lost"
                 detected_item_value_1.text = ""
             }
-            if (result.detectedObjects.size > 1) {
-                detected_item_2.text = labelData[result.detectedObjects[1].classId]
-                detected_item_value_2.text = getBoxInfo(result.detectedObjects[1])
-            } else {
-                detected_item_2.text = "lost"
-                detected_item_value_2.text = ""
-            }
-            if (result.detectedObjects.size > 2) {
-                detected_item_3.text = labelData[result.detectedObjects[2].classId]
-                detected_item_value_3.text = getBoxInfo(result.detectedObjects[2])
-            } else {
-                detected_item_3.text = "lost"
-                detected_item_value_3.text = ""
-            }
-            inference_time_value.text = "${result.processTimeMs}ms"
+//            inference_time_value.text = "${result.processTimeMs}ms"
+            detectedObjectsSurface.updateCurrentDetectedObject(
+                if (result.isNotEmpty()) {
+                    result[0].toRect(
+                        detectedObjectsSurface.measuredWidth,
+                        detectedObjectsSurface.measuredHeight
+                    )
+                } else {
+                    null
+                }
+            )
         }
-        if (result.detectedObjects.isEmpty()) {
+    }
+
+    private fun updateCameraFOV(result: List<ClassifiedBox>) {
+        if (result.isEmpty()) {
             LOG.i("No appropriate objects found")
             movementControllerDevice.updateTargetWithClassifiedBox(
                 null,
-                result.processTimeMs / 1000.0f
+                0.0f
+//                result.processTimeMs / 1000.0f
             )
             return
         }
-        LOG.d("Found objects. The best is at x = %f", result.detectedObjects[0].center.x)
+        LOG.d("Found objects. The best is at x = %f", result[0].center.x)
         movementControllerDevice.updateTargetWithClassifiedBox(
-            result.detectedObjects[0],
-            result.processTimeMs / 1000.0f
+            result[0],
+            0.0f
+//            result.processTimeMs / 1000.0f
         )
-        detectedObjectsSurface.updateCurrentDetectedObject(
-            if (result.detectedObjects.isNotEmpty()) {
-                result.detectedObjects[0].toRect(
-                    detectedObjectsSurface.measuredWidth,
-                    detectedObjectsSurface.measuredHeight
+    }
+
+    private fun setGoogleMLkitAnalyzer() {
+        scope.launch {
+            imageAnalysis?.clearAnalyzer()
+            try {
+                imageAnalysis?.setAnalyzer(
+                    backgroundExecutor,
+                    GoogleMLkitAnalyzer(objectDetector, detectedObjectsSurface.measuredWidth,
+                        detectedObjectsSurface.measuredHeight, ::updateUI, ::updateCameraFOV)
                 )
-            } else {
-                null
+            } catch (ex: Exception) {
+                LOG.e("Analyzer setup failed. Using google ml kit analyzer", ex)
             }
-        )
-
-    }
-
-    // Read MobileNet V2 classification labels
-    private fun readLabels(): List<String> =
-        resources.openRawResource(R.raw.model_classes).bufferedReader().readLines()
-
-    // Read ort model into a ByteArray, run in background
-    private suspend fun readModel(): ByteArray = withContext(Dispatchers.IO) {
-        val modelID = R.raw.yolov5s
-        resources.openRawResource(modelID).readBytes()
-    }
-
-    // Create a new ORT session in background
-    private suspend fun createOrtSession(): OrtSession? = withContext(Dispatchers.Default) {
-        ortEnv?.createSession(readModel())
+            if (imageAnalysis != null)
+                LOG.i("Analyzer has been successfully set up.")
+            else
+                LOG.e("Analyzer is null.")
+        }
     }
 
     // Create a new ORT session and then change the ImageAnalysis.Analyzer
@@ -324,7 +331,7 @@ class CameraActivity : AppCompatActivity() {
             try {
                 imageAnalysis?.setAnalyzer(
                     backgroundExecutor,
-                    ORTAnalyzer(createOrtSession(), ::updateUIAndCameraFOV)
+                    ORTAnalyzer(createOrtSession(), ::updateUI, ::updateCameraFOV)
                 )
             } catch (e: Exception) {
                 LOG.d("Analyzer setup failed. Using model best2.pt", e)

@@ -16,15 +16,10 @@ import app.hawkeye.balltracker.utils.ScreenPoint
 import java.util.*
 
 
-
-data class ModelResult(
-    var detectedObjects: List<ClassifiedBox> = listOf(),
-    var processTimeMs: Long = 0
-)
-
 internal class ORTAnalyzer(
         private val ortSession: OrtSession?,
-        private val callBack: (ModelResult) -> Unit
+        private val onUpdateUI: (List<ClassifiedBox>) -> Unit,
+        private val onUpdateCameraFOV: (List<ClassifiedBox>) -> Unit
 ) : ImageAnalysis.Analyzer {
 
     // Get index of top 3 values
@@ -96,7 +91,7 @@ internal class ORTAnalyzer(
         val bitmap = rawBitmap?.rotate(image.imageInfo.rotationDegrees.toFloat())
 
         if (bitmap != null) {
-            val modelResult = ModelResult()
+            var modelResult = listOf<ClassifiedBox>()
 
             val imgData = preProcess(bitmap)
             val inputName = ortSession?.inputNames?.iterator()?.next()
@@ -113,14 +108,13 @@ internal class ORTAnalyzer(
 
                             val balls = getAllObjectsByClass(arr, 32)
 
-                            modelResult.detectedObjects = getTop3(balls)
-
-                            modelResult.processTimeMs = SystemClock.uptimeMillis() - startTime
+                            modelResult = getTop3(balls)
                         }
                     }
                 }
             }
-            callBack(modelResult)
+            onUpdateUI(modelResult)
+            onUpdateCameraFOV(modelResult)
         }
 
         image.close()
