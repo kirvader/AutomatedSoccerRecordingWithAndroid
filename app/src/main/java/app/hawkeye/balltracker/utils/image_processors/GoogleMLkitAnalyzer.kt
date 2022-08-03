@@ -1,13 +1,5 @@
-package app.hawkeye.balltracker.utils.image_processing
+package app.hawkeye.balltracker.utils.image_processors
 
-import android.app.Activity
-import android.content.Context.CAMERA_SERVICE
-import android.hardware.camera2.CameraAccessException
-import android.hardware.camera2.CameraCharacteristics
-import android.hardware.camera2.CameraManager
-import android.util.SparseIntArray
-import android.view.Surface
-import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import app.hawkeye.balltracker.utils.ClassifiedBox
 import app.hawkeye.balltracker.utils.ScreenPoint
@@ -16,8 +8,7 @@ import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.objects.DetectedObject
 import com.google.mlkit.vision.objects.ObjectDetector
 
-private val LOG = createLogger<GoogleMLkitAnalyzer>()
-
+private val LOG = createLogger<GoogleMLkitImageProcessor>()
 
 private fun toClassifiedBox(
     detectedObject: DetectedObject?,
@@ -39,45 +30,38 @@ private fun toClassifiedBox(
     )
 }
 
-internal class GoogleMLkitAnalyzer(
+internal class GoogleMLkitImageProcessor(
     private val cameraSurfaceWidth: Int,
     private val cameraSurfaceHeight: Int,
-    private val objectDetector: ObjectDetector?,
-    private val onUpdateUI: (List<ClassifiedBox>) -> Unit,
-    private val onUpdateCameraFOV: (List<ClassifiedBox>) -> Unit
+    private val objectDetector: ObjectDetector?
 
-) : ImageAnalysis.Analyzer {
+) : ImageProcessor {
 
-    override fun analyze(imageProxy: ImageProxy) {
+    override fun processAndCloseImageProxy(imageProxy: ImageProxy): List<ClassifiedBox> {
         @androidx.camera.core.ExperimentalGetImage
         val mediaImage = imageProxy.image
+        var top3AppropriateObjects: List<ClassifiedBox> = listOf()
         if (mediaImage != null) {
             val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
 
-            if (objectDetector == null) return
+            if (objectDetector == null)
+                return listOf()
             objectDetector.process(image)
                 .addOnSuccessListener { detectedObjects ->
-                    val top3AppropriateObjects = detectedObjects.mapNotNull {
+                    top3AppropriateObjects = detectedObjects.mapNotNull {
                         toClassifiedBox(
                             it,
                             cameraSurfaceWidth,
                             cameraSurfaceHeight
                         )
                     }.take(3)
-                    onUpdateUI(top3AppropriateObjects)
-                    onUpdateCameraFOV(top3AppropriateObjects)
                     imageProxy.close()
                 }
                 .addOnFailureListener { e ->
                     LOG.e("Image processor failed to process image", e)
-
                     imageProxy.close()
                 }
         }
-    }
-
-    // We can switch analyzer in the app, need to make sure the native resources are freed
-    protected fun finalize() {
-        objectDetector?.close()
+        return top3AppropriateObjects
     }
 }

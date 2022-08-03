@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package app.hawkeye.balltracker.utils.image_processing
+package app.hawkeye.balltracker.utils.image_processors
 
 import android.graphics.*
 import androidx.camera.core.ImageProxy
 import java.io.ByteArrayOutputStream
 import java.nio.FloatBuffer
 
-const val DIM_BATCH_SIZE = 1;
-const val DIM_PIXEL_SIZE = 3;
-const val IMAGE_SIZE_X = 640;
-const val IMAGE_SIZE_Y = 640;
+const val DIM_BATCH_SIZE = 1
+const val DIM_PIXEL_SIZE = 3
+const val IMAGE_SIZE_X = 640
+const val IMAGE_SIZE_Y = 640
 
 fun preProcess(bitmap: Bitmap): FloatBuffer {
     val imgData = FloatBuffer.allocate(

@@ -1,14 +1,13 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-package app.hawkeye.balltracker.utils.image_processing
+package app.hawkeye.balltracker.utils.image_processors
 
 import ai.onnxruntime.OnnxTensor
 import ai.onnxruntime.OrtEnvironment
 import ai.onnxruntime.OrtSession
 import android.graphics.Bitmap
 import android.graphics.Matrix
-import android.os.SystemClock
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import app.hawkeye.balltracker.utils.ClassifiedBox
@@ -16,11 +15,9 @@ import app.hawkeye.balltracker.utils.ScreenPoint
 import java.util.*
 
 
-internal class ORTAnalyzer(
-        private val ortSession: OrtSession?,
-        private val onUpdateUI: (List<ClassifiedBox>) -> Unit,
-        private val onUpdateCameraFOV: (List<ClassifiedBox>) -> Unit
-) : ImageAnalysis.Analyzer {
+internal class ORTImageProcessor(
+        private val ortSession: OrtSession?
+) : ImageProcessor {
 
     // Get index of top 3 values
     // This is for demo purpose only, there are more efficient algorithms for topK problems
@@ -79,19 +76,19 @@ internal class ORTAnalyzer(
     }
 
     // Rotate the image of the input bitmap
-    fun Bitmap.rotate(degrees: Float): Bitmap {
+    private fun Bitmap.rotate(degrees: Float): Bitmap {
         val matrix = Matrix().apply { postRotate(degrees) }
         return Bitmap.createBitmap(this, 0, 0, width, height, matrix, true)
     }
 
-    override fun analyze(image: ImageProxy) {
-        // Convert the input image to bitmap and resize to 640x640 for model input
-        val imgBitmap = image.toBitmap()
+    override fun processAndCloseImageProxy(imageProxy: ImageProxy): List<ClassifiedBox> {
+
+        val imgBitmap = imageProxy.toBitmap()
         val rawBitmap = imgBitmap?.let { Bitmap.createScaledBitmap(it, 640, 640, false) }
-        val bitmap = rawBitmap?.rotate(image.imageInfo.rotationDegrees.toFloat())
+        val bitmap = rawBitmap?.rotate(imageProxy.imageInfo.rotationDegrees.toFloat())
+        imageProxy.close()
 
         if (bitmap != null) {
-            var modelResult = listOf<ClassifiedBox>()
 
             val imgData = preProcess(bitmap)
             val inputName = ortSession?.inputNames?.iterator()?.next()
@@ -103,24 +100,16 @@ internal class ORTAnalyzer(
                     val output = ortSession?.run(Collections.singletonMap(inputName, tensor))
                     if (output?.get(0)?.value != null) {
                         output.use {
-                            val arr = ((output?.get(0)?.value) as Array<Array<FloatArray>>)[0]
+                            val arr = ((output.get(0)?.value) as Array<Array<FloatArray>>)[0]
 
                             val balls = getAllObjectsByClass(arr, 32)
 
-                            modelResult = getTop3(balls)
+                            return getTop3(balls)
                         }
                     }
                 }
             }
-            onUpdateUI(modelResult)
-            onUpdateCameraFOV(modelResult)
         }
-
-        image.close()
-    }
-
-    // We can switch analyzer in the app, need to make sure the native resources are freed
-    protected fun finalize() {
-        ortSession?.close()
+        return listOf()
     }
 }
