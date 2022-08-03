@@ -34,15 +34,15 @@ private fun toClassifiedBox(
         ),
         width = detectedObject.boundingBox.width() / cameraSurfaceWidth.toFloat(),
         height = detectedObject.boundingBox.height() / cameraSurfaceHeight.toFloat(),
-        classId = if (detectedObject.labels.isNotEmpty()) detectedObject.labels[0].index else 1000,
-        confidence = detectedObject.labels[0].confidence
+        classId = if (detectedObject.labels.isNotEmpty()) detectedObject.labels[0].index else -1,
+        confidence = if (detectedObject.labels.isNotEmpty()) detectedObject.labels[0].confidence else 0.0f
     )
 }
 
 internal class GoogleMLkitAnalyzer(
-    private val objectDetector: ObjectDetector?,
     private val cameraSurfaceWidth: Int,
     private val cameraSurfaceHeight: Int,
+    private val objectDetector: ObjectDetector?,
     private val onUpdateUI: (List<ClassifiedBox>) -> Unit,
     private val onUpdateCameraFOV: (List<ClassifiedBox>) -> Unit
 

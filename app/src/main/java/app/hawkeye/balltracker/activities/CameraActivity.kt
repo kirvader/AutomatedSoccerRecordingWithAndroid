@@ -25,6 +25,7 @@ import app.hawkeye.balltracker.R
 import app.hawkeye.balltracker.controllers.FootballTrackingSystemController
 import app.hawkeye.balltracker.rotating.PivoPodDevice
 import app.hawkeye.balltracker.utils.ClassifiedBox
+import app.hawkeye.balltracker.utils.ImageAnalyzerChoice
 import app.hawkeye.balltracker.utils.RuntimeUtils
 import app.hawkeye.balltracker.utils.createLogger
 import app.hawkeye.balltracker.utils.image_processing.GoogleMLkitAnalyzer
@@ -43,6 +44,8 @@ private val LOG = createLogger<CameraActivity>()
 
 class CameraActivity : AppCompatActivity() {
 
+    private val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+    private var preview: Preview? = null
 
     private var imageAnalysis: ImageAnalysis? = null
 
@@ -63,6 +66,9 @@ class CameraActivity : AppCompatActivity() {
 
     private val labelData: List<String> by lazy { readLabels() }
 
+    private val imageAnalyzerChoises: Queue<ImageAnalyzerChoice> = LinkedList<ImageAnalyzerChoice>()
+
+
     // Read MobileNet V2 classification labels
     private fun readLabels(): List<String> =
         resources.openRawResource(R.raw.model_classes).bufferedReader().readLines()
@@ -73,7 +79,6 @@ class CameraActivity : AppCompatActivity() {
         resources.openRawResource(modelID).readBytes()
     }
 
-    // Create a new ORT session in background
     private suspend fun createOrtSession(): OrtSession? = withContext(Dispatchers.Default) {
         ortEnv?.createSession(readModel())
     }
@@ -97,6 +102,21 @@ class CameraActivity : AppCompatActivity() {
             )
         }
 
+        imageAnalyzerChoises.add(
+            ImageAnalyzerChoice(
+                "ORT Analyzer(YOLO)"
+            ) {
+                bindToCameraProvider(::setORTAnalyzer)
+            }
+        )
+        imageAnalyzerChoises.add(
+            ImageAnalyzerChoice(
+                "Google ML-kit Analyzer"
+            ) {
+                bindToCameraProvider(::setGoogleMLkitAnalyzer)
+            }
+        )
+
         videoCaptureButton.setOnClickListener { toggleCameraRecording() }
 
         scanPivoButton.setOnClickListener {
@@ -106,10 +126,21 @@ class CameraActivity : AppCompatActivity() {
                 PivoPodDevice.scanForPivoDevices(this, layoutInflater)
             }
         }
+
+        imageAnalysisSwitcher.setOnClickListener {
+            val currentImageAnalyzer = imageAnalyzerChoises.element()
+            imageAnalyzerChoises.remove()
+            imageAnalyzerChoises.add(currentImageAnalyzer)
+
+            val newImageAnalyzer = imageAnalyzerChoises.element()
+
+            newImageAnalyzer.setupCurrentImageAnalysisMethod()
+            imageAnalysisSwitcher.text = newImageAnalyzer.imageAnalysisName
+        }
     }
 
     private val recordingListener = Consumer<VideoRecordEvent> { event ->
-        when(event) {
+        when (event) {
             is VideoRecordEvent.Start -> {
                 val msg = "Capture Started"
 
@@ -131,6 +162,7 @@ class CameraActivity : AppCompatActivity() {
             }
         }
     }
+
     private fun toggleCameraRecording() {
         if (recording != null) {
             stopCapturing()
@@ -191,23 +223,14 @@ class CameraActivity : AppCompatActivity() {
 
                 videoCapture = VideoCapture.withOutput(recorder!!)
 
-                val preview = Preview.Builder()
+                preview = Preview.Builder()
                     .setTargetAspectRatio(AspectRatio.RATIO_16_9)
                     .build()
-
-                val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
                 imageAnalysis = ImageAnalysis.Builder()
                     .setTargetAspectRatio(AspectRatio.RATIO_16_9)
                     .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                     .build()
-
-                val objectDetectorOptions = ObjectDetectorOptions.Builder()
-                    .setDetectorMode(ObjectDetectorOptions.STREAM_MODE)
-                    .enableClassification()
-                    .build()
-
-                objectDetector = ObjectDetection.getClient(objectDetectorOptions)
 
                 setORTAnalyzer()
 
@@ -217,7 +240,7 @@ class CameraActivity : AppCompatActivity() {
                     this, cameraSelector, preview, videoCapture, imageAnalysis
                 )
 
-                preview.setSurfaceProvider(cameraPreview.surfaceProvider)
+                preview?.setSurfaceProvider(cameraPreview.surfaceProvider)
             } catch (ex: Exception) {
                 if (ex.message != null) {
                     LOG.e(ex.toString())
@@ -266,13 +289,16 @@ class CameraActivity : AppCompatActivity() {
     private fun updateUI(result: List<ClassifiedBox>) {
         runOnUiThread {
             if (result.isNotEmpty()) {
-                detected_item_1.text = labelData[result[0].classId]
+                if (result[0].classId != -1) {
+                    detected_item_1.text = labelData[result[0].classId]
+                } else {
+                    detected_item_1.text = "some object"
+                }
                 detected_item_value_1.text = result[0].getStrInfo()
             } else {
                 detected_item_1.text = "lost"
                 detected_item_value_1.text = ""
             }
-//            inference_time_value.text = "${result.processTimeMs}ms"
             detectedObjectsSurface.updateCurrentDetectedObject(
                 if (result.isNotEmpty()) {
                     result[0].toRect(
@@ -292,7 +318,6 @@ class CameraActivity : AppCompatActivity() {
             movementControllerDevice.updateTargetWithClassifiedBox(
                 null,
                 0.0f
-//                result.processTimeMs / 1000.0f
             )
             return
         }
@@ -300,18 +325,28 @@ class CameraActivity : AppCompatActivity() {
         movementControllerDevice.updateTargetWithClassifiedBox(
             result[0],
             0.0f
-//            result.processTimeMs / 1000.0f
         )
     }
 
     private fun setGoogleMLkitAnalyzer() {
         scope.launch {
+            val objectDetectorOptions = ObjectDetectorOptions.Builder()
+                .setDetectorMode(ObjectDetectorOptions.STREAM_MODE)
+                .enableClassification()
+                .build()
+            objectDetector = ObjectDetection.getClient(objectDetectorOptions)
+
             imageAnalysis?.clearAnalyzer()
             try {
                 imageAnalysis?.setAnalyzer(
                     backgroundExecutor,
-                    GoogleMLkitAnalyzer(objectDetector, detectedObjectsSurface.measuredWidth,
-                        detectedObjectsSurface.measuredHeight, ::updateUI, ::updateCameraFOV)
+                    GoogleMLkitAnalyzer(
+                        detectedObjectsSurface.measuredWidth,
+                        detectedObjectsSurface.measuredHeight,
+                        objectDetector,
+                        ::updateUI,
+                        ::updateCameraFOV
+                    )
                 )
             } catch (ex: Exception) {
                 LOG.e("Analyzer setup failed. Using google ml kit analyzer", ex)
@@ -341,6 +376,50 @@ class CameraActivity : AppCompatActivity() {
             else
                 LOG.e("Analyzer is null.")
         }
+    }
+
+    private fun bindToCameraProvider(imageAnalyzerSetup: () -> Unit) {
+        val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
+        val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
+
+        cameraProviderFuture.addListener({
+            try {
+                selector = QualitySelector
+                    .from(
+                        Quality.UHD,
+                        FallbackStrategy.higherQualityOrLowerThan(Quality.SD)
+                    )
+
+                recorder = Recorder.Builder()
+                    .setExecutor(cameraExecutor).setQualitySelector(selector!!)
+                    .build()
+
+                videoCapture = VideoCapture.withOutput(recorder!!)
+
+                preview = Preview.Builder()
+                    .setTargetAspectRatio(AspectRatio.RATIO_16_9)
+                    .build()
+
+                imageAnalysis = ImageAnalysis.Builder()
+                    .setTargetAspectRatio(AspectRatio.RATIO_16_9)
+                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                    .build()
+
+                imageAnalyzerSetup()
+
+                cameraProvider.unbindAll()
+
+                cameraProvider.bindToLifecycle(
+                    this, cameraSelector, preview, videoCapture, imageAnalysis
+                )
+
+                preview?.setSurfaceProvider(cameraPreview.surfaceProvider)
+            } catch (ex: Exception) {
+                if (ex.message != null) {
+                    LOG.e(ex.toString())
+                }
+            }
+        }, ContextCompat.getMainExecutor(this))
     }
 
     companion object {

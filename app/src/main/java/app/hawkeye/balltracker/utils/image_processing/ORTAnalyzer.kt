@@ -99,7 +99,6 @@ internal class ORTAnalyzer(
             val env = OrtEnvironment.getEnvironment()
             env.use {
                 val tensor = OnnxTensor.createTensor(env, imgData, shape)
-                val startTime = SystemClock.uptimeMillis()
                 tensor.use {
                     val output = ortSession?.run(Collections.singletonMap(inputName, tensor))
                     if (output?.get(0)?.value != null) {
