@@ -39,5 +39,9 @@
 
     <string name="start_recording">Start recording</string>
     <string name="stop_recording">Stop recording</string>
-    <string name="imageAnalysisSwitcherButtonDefaultValue">imageAnalysisSwitcher</string>
+    <string-array name="available_object_detectors">
+        <item>Google ML-kit</item>
+        <item>YOLO</item>
+    </string-array>
+
 </resources>

@@ -4,11 +4,13 @@ import ai.onnxruntime.OrtEnvironment
 import ai.onnxruntime.OrtSession
 import android.Manifest
 import android.content.ContentValues
-import android.content.Context
 import android.content.pm.PackageManager
 import android.icu.text.SimpleDateFormat
 import android.os.Bundle
 import android.provider.MediaStore
+import android.view.View
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.AspectRatio
@@ -64,80 +66,17 @@ class CameraActivity : AppCompatActivity() {
     private val backgroundExecutor: ExecutorService by lazy { Executors.newSingleThreadExecutor() }
     private val scope = CoroutineScope(Job() + Dispatchers.Default)
 
-    private val labelData: List<String> by lazy { readLabels() }
 
-    private val imageAnalyzerChoises: Queue<ImageAnalyzerChoice> = LinkedList<ImageAnalyzerChoice>()
+    private val imageAnalyzerChoices: Map<Int, () -> Unit> = mapOf(
+        0 to { bindToCameraProvider(::setGoogleMLkitAnalyzer) },
+        1 to { bindToCameraProvider(::setORTAnalyzer) }
+    )
 
-
-    // Read MobileNet V2 classification labels
-    private fun readLabels(): List<String> =
-        resources.openRawResource(R.raw.model_classes).bufferedReader().readLines()
-
-    // Read ort model into a ByteArray, run in background
-    private suspend fun readModel(): ByteArray = withContext(Dispatchers.IO) {
-        val modelID = R.raw.yolov5s
-        resources.openRawResource(modelID).readBytes()
-    }
-
-    private suspend fun createOrtSession(): OrtSession? = withContext(Dispatchers.Default) {
-        ortEnv?.createSession(readModel())
-    }
 
     private var movementControllerDevice: FootballTrackingSystemController =
         FootballTrackingSystemController(
             App.getRotatableDevice()
         )
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_camera)
-        // Request Camera permission
-        if (allPermissionsGranted()) {
-            ortEnv = OrtEnvironment.getEnvironment()
-            startCamera()
-        } else {
-            LOG.e("Permissions were not granted.")
-            ActivityCompat.requestPermissions(
-                this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS
-            )
-        }
-
-        imageAnalyzerChoises.add(
-            ImageAnalyzerChoice(
-                "ORT Analyzer(YOLO)"
-            ) {
-                bindToCameraProvider(::setORTAnalyzer)
-            }
-        )
-        imageAnalyzerChoises.add(
-            ImageAnalyzerChoice(
-                "Google ML-kit Analyzer"
-            ) {
-                bindToCameraProvider(::setGoogleMLkitAnalyzer)
-            }
-        )
-
-        videoCaptureButton.setOnClickListener { toggleCameraRecording() }
-
-        scanPivoButton.setOnClickListener {
-            if (RuntimeUtils.isEmulator()) {
-                LOG.i("Scan button pressed")
-            } else {
-                PivoPodDevice.scanForPivoDevices(this, layoutInflater)
-            }
-        }
-
-        imageAnalysisSwitcher.setOnClickListener {
-            val currentImageAnalyzer = imageAnalyzerChoises.element()
-            imageAnalyzerChoises.remove()
-            imageAnalyzerChoises.add(currentImageAnalyzer)
-
-            val newImageAnalyzer = imageAnalyzerChoises.element()
-
-            newImageAnalyzer.setupCurrentImageAnalysisMethod()
-            imageAnalysisSwitcher.text = newImageAnalyzer.imageAnalysisName
-        }
-    }
 
     private val recordingListener = Consumer<VideoRecordEvent> { event ->
         when (event) {
@@ -161,6 +100,55 @@ class CameraActivity : AppCompatActivity() {
                 LOG.i(msg)
             }
         }
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_camera)
+
+        if (allPermissionsGranted()) {
+            ortEnv = OrtEnvironment.getEnvironment()
+            startCamera()
+        } else {
+            LOG.e("Permissions were not granted.")
+            ActivityCompat.requestPermissions(
+                this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS
+            )
+        }
+
+        videoCaptureButton.setOnClickListener { toggleCameraRecording() }
+
+        scanPivoButton.setOnClickListener {
+            if (RuntimeUtils.isEmulator()) {
+                LOG.i("Scan button pressed")
+            } else {
+                PivoPodDevice.scanForPivoDevices(this, layoutInflater)
+            }
+        }
+
+        ArrayAdapter.createFromResource(
+            this,
+            R.array.available_object_detectors,
+            android.R.layout.simple_spinner_item
+        ).also { adapter ->
+            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+            imageAnalyzerChoiceSpinner.adapter = adapter
+        }
+
+        imageAnalyzerChoiceSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(p0: AdapterView<*>?, p1: View?, p2: Int, p3: Long) {
+                LOG.i("Clicked on Model number $p2")
+                imageAnalyzerChoices[p2]?.invoke()
+            }
+
+            override fun onNothingSelected(p0: AdapterView<*>?) {
+                LOG.i("Model is not changed.")
+            }
+        }
+    }
+
+    private fun startCamera() {
+        bindToCameraProvider(::setORTAnalyzer)
     }
 
     private fun toggleCameraRecording() {
@@ -205,50 +193,6 @@ class CameraActivity : AppCompatActivity() {
         recording = null
     }
 
-    private fun startCamera() {
-        val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
-        val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
-
-        cameraProviderFuture.addListener({
-            try {
-                selector = QualitySelector
-                    .from(
-                        Quality.UHD,
-                        FallbackStrategy.higherQualityOrLowerThan(Quality.SD)
-                    )
-
-                recorder = Recorder.Builder()
-                    .setExecutor(cameraExecutor).setQualitySelector(selector!!)
-                    .build()
-
-                videoCapture = VideoCapture.withOutput(recorder!!)
-
-                preview = Preview.Builder()
-                    .setTargetAspectRatio(AspectRatio.RATIO_16_9)
-                    .build()
-
-                imageAnalysis = ImageAnalysis.Builder()
-                    .setTargetAspectRatio(AspectRatio.RATIO_16_9)
-                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                    .build()
-
-                setORTAnalyzer()
-
-                cameraProvider.unbindAll()
-
-                cameraProvider.bindToLifecycle(
-                    this, cameraSelector, preview, videoCapture, imageAnalysis
-                )
-
-                preview?.setSurfaceProvider(cameraPreview.surfaceProvider)
-            } catch (ex: Exception) {
-                if (ex.message != null) {
-                    LOG.e(ex.toString())
-                }
-            }
-        }, ContextCompat.getMainExecutor(this))
-    }
-
     private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {
         ContextCompat.checkSelfPermission(baseContext, it) == PackageManager.PERMISSION_GRANTED
     }
@@ -288,17 +232,7 @@ class CameraActivity : AppCompatActivity() {
 
     private fun updateUI(result: List<ClassifiedBox>) {
         runOnUiThread {
-            if (result.isNotEmpty()) {
-                if (result[0].classId != -1) {
-                    detected_item_1.text = labelData[result[0].classId]
-                } else {
-                    detected_item_1.text = "some object"
-                }
-                detected_item_value_1.text = result[0].getStrInfo()
-            } else {
-                detected_item_1.text = "lost"
-                detected_item_value_1.text = ""
-            }
+
             detectedObjectsSurface.updateCurrentDetectedObject(
                 if (result.isNotEmpty()) {
                     result[0].toRect(
@@ -358,8 +292,16 @@ class CameraActivity : AppCompatActivity() {
         }
     }
 
-    // Create a new ORT session and then change the ImageAnalysis.Analyzer
-    // This part is done in background to avoid blocking the UI
+
+    private suspend fun readModel(): ByteArray = withContext(Dispatchers.IO) {
+        val modelID = R.raw.yolov5s
+        resources.openRawResource(modelID).readBytes()
+    }
+
+    private suspend fun createOrtSession(): OrtSession? = withContext(Dispatchers.Default) {
+        ortEnv?.createSession(readModel())
+    }
+
     private fun setORTAnalyzer() {
         scope.launch {
             imageAnalysis?.clearAnalyzer()

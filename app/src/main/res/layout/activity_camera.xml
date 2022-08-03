@@ -12,7 +12,10 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_above="@+id/mylinear"
-        app:implementationMode="compatible" />
+        app:implementationMode="compatible">
+
+
+    </androidx.camera.view.PreviewView>
 
     <app.hawkeye.balltracker.views.DetectedObjectsView
         android:id="@+id/detectedObjectsSurface"
@@ -24,8 +27,8 @@
         android:id="@+id/mylinear"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/white"
         android:layout_alignParentBottom="true"
+        android:background="@color/white"
         android:orientation="vertical"
         android:paddingLeft="10dp"
         android:paddingTop="10dp"
@@ -33,6 +36,11 @@
         android:paddingBottom="10dp"
         app:layout_constraintBottom_toBottomOf="parent">
 
+        <Spinner
+            android:id="@+id/imageAnalyzerChoiceSpinner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="bottom" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -56,51 +64,14 @@
                 android:text="Pivo pod scan" />
         </LinearLayout>
 
-        <LinearLayout
+        <TextView
+            android:id="@+id/inference_time_value"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:orientation="horizontal">
+            android:gravity="end"
+            android:textColor="@android:color/black"
+            android:textSize="16sp" />
 
-            <TextView
-                android:id="@+id/detected_item_1"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Detected Item 1"
-                android:textColor="@android:color/black"
-                android:textSize="16sp" />
-
-            <TextView
-                android:id="@+id/detected_item_value_1"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="right"
-                android:textColor="@android:color/black"
-                android:textSize="16sp" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom"
-            android:layout_marginTop="10dp"
-            android:orientation="horizontal">
-
-            <Button
-                android:id="@+id/imageAnalysisSwitcher"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/imageAnalysisSwitcherButtonDefaultValue" />
-
-            <TextView
-                android:id="@+id/inference_time_value"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="end"
-                android:textColor="@android:color/black"
-                android:textSize="16sp" />
-
-        </LinearLayout>
 
     </LinearLayout>
 
