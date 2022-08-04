@@ -4,10 +4,10 @@ import androidx.camera.core.ImageProxy
 import app.hawkeye.balltracker.utils.ClassifiedBox
 
 interface ImageProcessor {
-    fun processAndCloseImageProxy(imageProxy: ImageProxy) : List<ClassifiedBox>
+    fun processImageProxy(imageProxy: ImageProxy) : List<ClassifiedBox>
 
     object Default : ImageProcessor {
-        override fun processAndCloseImageProxy(imageProxy: ImageProxy): List<ClassifiedBox> {
+        override fun processImageProxy(imageProxy: ImageProxy): List<ClassifiedBox> {
             return listOf()
         }
     }

@@ -88,7 +88,7 @@ internal class ORTImageProcessor(
         return Bitmap.createBitmap(this, 0, 0, width, height, matrix, true)
     }
 
-    override fun processAndCloseImageProxy(imageProxy: ImageProxy): List<ClassifiedBox> {
+    override fun processImageProxy(imageProxy: ImageProxy): List<ClassifiedBox> {
 
         val imgBitmap = imageProxy.toBitmap()
         val rawBitmap = imgBitmap?.let { Bitmap.createScaledBitmap(it, 640, 640, false) }

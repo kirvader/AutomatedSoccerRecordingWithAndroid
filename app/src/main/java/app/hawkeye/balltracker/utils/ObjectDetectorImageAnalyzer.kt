@@ -66,7 +66,7 @@ class ObjectDetectorImageAnalyzer(
     override fun analyze(imageProxy: ImageProxy) {
         LOG.i(currentImageProcessorsChoice)
         val result =
-            imageProcessors[currentImageProcessorsChoice]?.processAndCloseImageProxy(imageProxy = imageProxy)
+            imageProcessors[currentImageProcessorsChoice]?.processImageProxy(imageProxy = imageProxy)
 
         imageProxy.close()
 

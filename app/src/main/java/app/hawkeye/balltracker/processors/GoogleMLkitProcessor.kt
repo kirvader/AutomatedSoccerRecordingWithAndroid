@@ -39,7 +39,7 @@ internal class GoogleMLkitImageProcessor(
 
 ) : ImageProcessor {
 
-    override fun processAndCloseImageProxy(imageProxy: ImageProxy): List<ClassifiedBox> {
+    override fun processImageProxy(imageProxy: ImageProxy): List<ClassifiedBox> {
         @androidx.camera.core.ExperimentalGetImage
         val mediaImage = imageProxy.image
         var top3AppropriateObjects: List<ClassifiedBox> = listOf()
