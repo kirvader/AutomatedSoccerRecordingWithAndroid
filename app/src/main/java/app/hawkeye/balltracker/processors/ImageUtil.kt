@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package app.hawkeye.balltracker.utils.image_processors
+package app.hawkeye.balltracker.processors
 
 import android.graphics.*
 import androidx.camera.core.ImageProxy

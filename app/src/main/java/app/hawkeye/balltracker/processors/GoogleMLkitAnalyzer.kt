@@ -1,10 +1,11 @@
-package app.hawkeye.balltracker.utils.image_processors
+package app.hawkeye.balltracker.processors
 
 import androidx.camera.core.ImageProxy
 import app.hawkeye.balltracker.utils.AdaptiveRect
 import app.hawkeye.balltracker.utils.ClassifiedBox
 import app.hawkeye.balltracker.utils.ScreenPoint
 import app.hawkeye.balltracker.utils.createLogger
+import com.google.android.gms.tasks.Tasks.await
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.objects.DetectedObject
 import com.google.mlkit.vision.objects.ObjectDetector
@@ -47,7 +48,7 @@ internal class GoogleMLkitImageProcessor(
 
             if (objectDetector == null)
                 return listOf()
-            objectDetector.process(image)
+            await(objectDetector.process(image)
                 .addOnSuccessListener { detectedObjects ->
                     top3AppropriateObjects = detectedObjects.mapNotNull {
                         toClassifiedBox(
@@ -56,12 +57,10 @@ internal class GoogleMLkitImageProcessor(
                             image.height
                         )
                     }.take(3)
-                    imageProxy.close()
                 }
                 .addOnFailureListener { e ->
                     LOG.e("Image processor failed to process image", e)
-                    imageProxy.close()
-                }
+                })
         }
         return top3AppropriateObjects
     }

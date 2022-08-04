@@ -71,7 +71,7 @@ class CameraActivity : AppCompatActivity() {
             objectDetectorImageAnalyzer = ObjectDetectorImageAnalyzer(
                 applicationContext,
                 ::updateUI,
-                ::updateCameraFOV
+                ::updateCameraState
             )
 
             startCamera()
@@ -299,7 +299,7 @@ class CameraActivity : AppCompatActivity() {
         }
     }
 
-    private fun updateCameraFOV(result: List<ClassifiedBox>) {
+    private fun updateCameraState(result: List<ClassifiedBox>) {
         if (result.isEmpty()) {
             LOG.i("No appropriate objects found")
             movementControllerDevice.updateTargetWithClassifiedBox(

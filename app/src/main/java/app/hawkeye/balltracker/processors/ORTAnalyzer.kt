@@ -1,14 +1,13 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-package app.hawkeye.balltracker.utils.image_processors
+package app.hawkeye.balltracker.processors
 
 import ai.onnxruntime.OnnxTensor
 import ai.onnxruntime.OrtEnvironment
 import ai.onnxruntime.OrtSession
 import android.graphics.Bitmap
 import android.graphics.Matrix
-import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import app.hawkeye.balltracker.utils.AdaptiveRect
 import app.hawkeye.balltracker.utils.ClassifiedBox
@@ -65,7 +64,7 @@ internal class ORTImageProcessor(
             val maxScoreInd = getIndOfMaxValue(record.takeLast(80)) + 5
             if (record[maxScoreInd] < SCORE_THRESHOLD) continue
             val classId = maxScoreInd - 5
-            if (classId != importantClassId) continue
+            if (importantClassId != -1 && classId != importantClassId) continue
             result.add(
                 ClassifiedBox(
                     AdaptiveRect(
@@ -94,7 +93,6 @@ internal class ORTImageProcessor(
         val imgBitmap = imageProxy.toBitmap()
         val rawBitmap = imgBitmap?.let { Bitmap.createScaledBitmap(it, 640, 640, false) }
         val bitmap = rawBitmap?.rotate(imageProxy.imageInfo.rotationDegrees.toFloat())
-        imageProxy.close()
 
         if (bitmap != null) {
 
@@ -110,7 +108,7 @@ internal class ORTImageProcessor(
                         output.use {
                             val arr = ((output.get(0)?.value) as Array<Array<FloatArray>>)[0]
 
-                            val balls = getAllObjectsByClass(arr, 32)
+                            val balls = getAllObjectsByClass(arr, -1)
 
                             return getTop3(balls)
                         }

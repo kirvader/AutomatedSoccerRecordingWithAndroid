@@ -6,9 +6,9 @@ import android.content.Context
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import app.hawkeye.balltracker.R
-import app.hawkeye.balltracker.utils.image_processors.GoogleMLkitImageProcessor
-import app.hawkeye.balltracker.utils.image_processors.ImageProcessor
-import app.hawkeye.balltracker.utils.image_processors.ORTImageProcessor
+import app.hawkeye.balltracker.processors.GoogleMLkitImageProcessor
+import app.hawkeye.balltracker.processors.ImageProcessor
+import app.hawkeye.balltracker.processors.ORTImageProcessor
 import com.google.mlkit.vision.objects.ObjectDetection
 import com.google.mlkit.vision.objects.defaults.ObjectDetectorOptions
 
@@ -29,7 +29,7 @@ enum class ImageProcessorsChoice(private val index: Int) {
 class ObjectDetectorImageAnalyzer(
     context: Context,
     val onUpdateUI: (List<ClassifiedBox>) -> Unit,
-    val onUpdateCameraFOV: (List<ClassifiedBox>) -> Unit
+    val onUpdateCameraState: (List<ClassifiedBox>) -> Unit
 ) : ImageAnalysis.Analyzer {
     private var currentImageProcessorsChoice: ImageProcessorsChoice = ImageProcessorsChoice.None
     private var imageProcessors: Map<ImageProcessorsChoice, ImageProcessor> = mapOf()
@@ -50,13 +50,13 @@ class ObjectDetectorImageAnalyzer(
         )
     }
 
-    private fun readModel(context: Context): ByteArray {
+    private fun readYoloModel(context: Context): ByteArray {
         val modelID = R.raw.yolov5s
         return context.resources.openRawResource(modelID).readBytes()
     }
 
     private fun createOrtSession(context: Context): OrtSession? =
-        OrtEnvironment.getEnvironment()?.createSession(readModel(context))
+        OrtEnvironment.getEnvironment()?.createSession(readYoloModel(context))
 
     fun setCurrentImageProcessor(choice: ImageProcessorsChoice) {
         currentImageProcessorsChoice = choice
@@ -68,11 +68,13 @@ class ObjectDetectorImageAnalyzer(
         val result =
             imageProcessors[currentImageProcessorsChoice]?.processAndCloseImageProxy(imageProxy = imageProxy)
 
+        imageProxy.close()
+
         if (result != null) {
             onUpdateUI(result)
         }
         if (result != null) {
-            onUpdateCameraFOV(result)
+            onUpdateCameraState(result)
         }
     }
 }
