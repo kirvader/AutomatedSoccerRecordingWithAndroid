@@ -17,13 +17,13 @@ class FootballTrackingSystemController(rotatableDevice: RotatableDevice) : Track
             updateTargetPosition(null, timeFromLastSegmentUpdate)
             return
         }
-        val deltaAngle = box.center.x * 90.0f - 45.0f  // relative to lastDirection
+        val deltaAngle = box.adaptiveRect.center.x * 90.0f - 45.0f  // relative to lastDirection
 
-        val ballPlaneWidth = ballDiam * 1.0f / box.width
+        val ballPlaneWidth = ballDiam * 1.0f / box.adaptiveRect.width
         val distance = ballPlaneWidthToDistance * ballPlaneWidth
 
-        val ballPlaneHeight = ballDiam * 1.0f / box.height
-        val height = box.center.y * ballPlaneHeight
+        val ballPlaneHeight = ballDiam * 1.0f / box.adaptiveRect.height
+        val height = box.adaptiveRect.center.y * ballPlaneHeight
 
         updateTargetPosition(Point(PolarPoint(distance, deviceRotatableController.getLastDirection() + deltaAngle, height)), timeFromLastSegmentUpdate)
     }

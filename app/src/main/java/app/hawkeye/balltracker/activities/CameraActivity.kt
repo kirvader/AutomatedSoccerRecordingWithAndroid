@@ -1,7 +1,6 @@
 package app.hawkeye.balltracker.activities
 
-import ai.onnxruntime.OrtEnvironment
-import ai.onnxruntime.OrtSession
+
 import android.Manifest
 import android.content.ContentValues
 import android.content.pm.PackageManager
@@ -27,11 +26,6 @@ import app.hawkeye.balltracker.R
 import app.hawkeye.balltracker.controllers.FootballTrackingSystemController
 import app.hawkeye.balltracker.rotating.PivoPodDevice
 import app.hawkeye.balltracker.utils.*
-import app.hawkeye.balltracker.utils.image_processors.*
-import app.hawkeye.balltracker.utils.image_processors.GoogleMLkitImageProcessor
-import app.hawkeye.balltracker.utils.image_processors.ORTImageProcessor
-import com.google.mlkit.vision.objects.ObjectDetection
-import com.google.mlkit.vision.objects.defaults.ObjectDetectorOptions
 import kotlinx.android.synthetic.main.activity_camera.*
 import kotlinx.coroutines.*
 import java.util.*
@@ -67,12 +61,6 @@ class CameraActivity : AppCompatActivity() {
             App.getRotatableDevice()
         )
 
-    private fun readModel(): ByteArray {
-        val modelID = R.raw.yolov5s
-        return resources.openRawResource(modelID).readBytes()
-    }
-
-    private fun createOrtSession(): OrtSession? = OrtEnvironment.getEnvironment()?.createSession(readModel())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -80,7 +68,11 @@ class CameraActivity : AppCompatActivity() {
 
 
         if (allPermissionsGranted()) {
-            setupImageAnalyzer()
+            objectDetectorImageAnalyzer = ObjectDetectorImageAnalyzer(
+                applicationContext,
+                ::updateUI,
+                ::updateCameraFOV
+            )
 
             startCamera()
         } else {
@@ -122,32 +114,6 @@ class CameraActivity : AppCompatActivity() {
                     LOG.i("Model is not changed.")
                 }
             }
-    }
-
-    private fun setupImageAnalyzer() {
-
-        val objectDetectorOptions = ObjectDetectorOptions.Builder()
-            .setDetectorMode(ObjectDetectorOptions.STREAM_MODE)
-            .enableClassification()
-            .build()
-        val objectDetector = ObjectDetection.getClient(objectDetectorOptions)
-
-
-        objectDetectorImageAnalyzer = ObjectDetectorImageAnalyzer(
-            mapOf(
-                ImageProcessorsChoice.None to ImageProcessor.Default,
-                ImageProcessorsChoice.GoogleML to GoogleMLkitImageProcessor(
-                    detectedObjectsSurface.measuredWidth,
-                    detectedObjectsSurface.measuredHeight,
-                    objectDetector
-                ),
-                ImageProcessorsChoice.ORT_YOLO_V5 to ORTImageProcessor(createOrtSession())
-            ),
-            ::updateUI,
-            ::updateCameraFOV
-        )
-
-
     }
 
     private fun startCamera() {
@@ -322,7 +288,7 @@ class CameraActivity : AppCompatActivity() {
 
             detectedObjectsSurface.updateCurrentDetectedObject(
                 if (result.isNotEmpty()) {
-                    result[0].toRect(
+                    result[0].adaptiveRect.toRect(
                         detectedObjectsSurface.measuredWidth,
                         detectedObjectsSurface.measuredHeight
                     )
@@ -342,7 +308,7 @@ class CameraActivity : AppCompatActivity() {
             )
             return
         }
-        LOG.d("Found objects. The best is at x = %f", result[0].center.x)
+        LOG.d("Found objects. The best is at x = %f", result[0].adaptiveRect.center.x)
         movementControllerDevice.updateTargetWithClassifiedBox(
             result[0],
             0.0f

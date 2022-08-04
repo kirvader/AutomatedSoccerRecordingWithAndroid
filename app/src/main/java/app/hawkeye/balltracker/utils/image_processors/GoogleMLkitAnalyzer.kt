@@ -1,6 +1,7 @@
 package app.hawkeye.balltracker.utils.image_processors
 
 import androidx.camera.core.ImageProxy
+import app.hawkeye.balltracker.utils.AdaptiveRect
 import app.hawkeye.balltracker.utils.ClassifiedBox
 import app.hawkeye.balltracker.utils.ScreenPoint
 import app.hawkeye.balltracker.utils.createLogger
@@ -19,20 +20,20 @@ private fun toClassifiedBox(
         return null
     }
     return ClassifiedBox(
-        ScreenPoint(
-            x = detectedObject.boundingBox.exactCenterX() / cameraSurfaceWidth.toFloat(),
-            y = detectedObject.boundingBox.exactCenterY() / cameraSurfaceHeight.toFloat()
+        AdaptiveRect(
+            ScreenPoint(
+                x = detectedObject.boundingBox.exactCenterX() / cameraSurfaceWidth.toFloat(),
+                y = detectedObject.boundingBox.exactCenterY() / cameraSurfaceHeight.toFloat()
+            ),
+            width = detectedObject.boundingBox.width() / cameraSurfaceWidth.toFloat(),
+            height = detectedObject.boundingBox.height() / cameraSurfaceHeight.toFloat()
         ),
-        width = detectedObject.boundingBox.width() / cameraSurfaceWidth.toFloat(),
-        height = detectedObject.boundingBox.height() / cameraSurfaceHeight.toFloat(),
         classId = if (detectedObject.labels.isNotEmpty()) detectedObject.labels[0].index else -1,
         confidence = if (detectedObject.labels.isNotEmpty()) detectedObject.labels[0].confidence else 0.0f
     )
 }
 
 internal class GoogleMLkitImageProcessor(
-    private val cameraSurfaceWidth: Int,
-    private val cameraSurfaceHeight: Int,
     private val objectDetector: ObjectDetector?
 
 ) : ImageProcessor {
@@ -51,8 +52,8 @@ internal class GoogleMLkitImageProcessor(
                     top3AppropriateObjects = detectedObjects.mapNotNull {
                         toClassifiedBox(
                             it,
-                            cameraSurfaceWidth,
-                            cameraSurfaceHeight
+                            image.width,
+                            image.height
                         )
                     }.take(3)
                     imageProxy.close()

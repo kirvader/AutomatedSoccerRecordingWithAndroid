@@ -10,13 +10,14 @@ import android.graphics.Bitmap
 import android.graphics.Matrix
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
+import app.hawkeye.balltracker.utils.AdaptiveRect
 import app.hawkeye.balltracker.utils.ClassifiedBox
 import app.hawkeye.balltracker.utils.ScreenPoint
 import java.util.*
 
 
 internal class ORTImageProcessor(
-        private val ortSession: OrtSession?
+    private val ortSession: OrtSession?
 ) : ImageProcessor {
 
     // Get index of top 3 values
@@ -29,7 +30,6 @@ internal class ORTImageProcessor(
     private val SCORE_THRESHOLD: Float = 0.2F
     private val IMAGE_WIDTH: Float = 640.0F
     private val IMAGE_HEIGHT: Float = 640.0F
-
 
 
     private fun getIndOfMaxValue(classesScore: List<Float>): Int {
@@ -53,7 +53,10 @@ internal class ORTImageProcessor(
     [5] -> confidence of the object
     [6-85] -> scores for each class
      */
-    private fun getAllObjectsByClass(modelOutput: Array<FloatArray>, importantClassId: Int): List<ClassifiedBox> {
+    private fun getAllObjectsByClass(
+        modelOutput: Array<FloatArray>,
+        importantClassId: Int
+    ): List<ClassifiedBox> {
         val result = mutableListOf<ClassifiedBox>()
         for (record in modelOutput) {
             val confidence = record[4]
@@ -65,11 +68,16 @@ internal class ORTImageProcessor(
             if (classId != importantClassId) continue
             result.add(
                 ClassifiedBox(
-                ScreenPoint(record[0] / IMAGE_WIDTH,
-                record[1] / IMAGE_HEIGHT),
-                record[2] / IMAGE_WIDTH,
-                record[3] / IMAGE_HEIGHT,
-                classId, confidence)
+                    AdaptiveRect(
+                        ScreenPoint(
+                            record[0] / IMAGE_WIDTH,
+                            record[1] / IMAGE_HEIGHT
+                        ),
+                        record[2] / IMAGE_WIDTH,
+                        record[3] / IMAGE_HEIGHT
+                    ),
+                    classId, confidence
+                )
             )
         }
         return result

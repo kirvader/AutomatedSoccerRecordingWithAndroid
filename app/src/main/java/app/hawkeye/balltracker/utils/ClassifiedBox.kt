@@ -8,12 +8,11 @@ data class ScreenPoint(
     val y: Float
 )
 
-data class ClassifiedBox(
+// coordinates here are parts of current screen \in [0, 1]
+data class AdaptiveRect(
     val center: ScreenPoint,
     val width: Float,
     val height: Float,
-    val classId: Int,
-    val confidence: Float
 ) {
     fun toRect(screenWidth: Int, screenHeight: Int): Rect = Rect(
         (screenWidth * (center.x - width / 2)).toInt(),
@@ -21,7 +20,13 @@ data class ClassifiedBox(
         (screenWidth * (center.x + width / 2)).toInt(),
         (screenHeight * (center.y + height / 2)).toInt()
     )
+}
 
+data class ClassifiedBox(
+    val adaptiveRect: AdaptiveRect,
+    val classId: Int,
+    val confidence: Float
+) {
     private fun round(number: Double, decimals: Int): Double {
         val multiplier = 10.0.pow(decimals)
         return kotlin.math.round(number * multiplier) / multiplier
@@ -29,7 +34,7 @@ data class ClassifiedBox(
 
     fun getStrInfo(): String {
         val strPosition =
-            "(${round(center.x.toDouble(), 2)};${round(center.y.toDouble(), 2)})"
+            "(${round(adaptiveRect.center.x.toDouble(), 2)};${round(adaptiveRect.center.y.toDouble(), 2)})"
         val strConfidence = "conf: ${round((confidence * 100).toDouble(), 2)}"
         return "$strPosition $strConfidence"
     }
