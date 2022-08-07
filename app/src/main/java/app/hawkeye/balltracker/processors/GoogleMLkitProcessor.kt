@@ -8,9 +8,11 @@ import app.hawkeye.balltracker.utils.createLogger
 import com.google.android.gms.tasks.Tasks.await
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.objects.DetectedObject
+import com.google.mlkit.vision.objects.ObjectDetection
 import com.google.mlkit.vision.objects.ObjectDetector
+import com.google.mlkit.vision.objects.defaults.ObjectDetectorOptions
 
-private val LOG = createLogger<GoogleMLkitImageProcessor>()
+private val LOG = createLogger<GoogleMLkitModelImageProcessor>()
 
 private fun toClassifiedBox(
     detectedObject: DetectedObject?,
@@ -34,10 +36,13 @@ private fun toClassifiedBox(
     )
 }
 
-internal class GoogleMLkitImageProcessor(
-    private val objectDetector: ObjectDetector?
+internal class GoogleMLkitModelImageProcessor() : ModelImageProcessor {
+    private val objectDetectorOptions = ObjectDetectorOptions.Builder()
+        .setDetectorMode(ObjectDetectorOptions.STREAM_MODE)
+        .enableClassification()
+        .build()
+    private val objectDetector = ObjectDetection.getClient(objectDetectorOptions)
 
-) : ImageProcessor {
 
     override fun processImageProxy(imageProxy: ImageProxy): List<ClassifiedBox> {
         @androidx.camera.core.ExperimentalGetImage
@@ -46,8 +51,6 @@ internal class GoogleMLkitImageProcessor(
         if (mediaImage != null) {
             val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
 
-            if (objectDetector == null)
-                return listOf()
             await(objectDetector.process(image)
                 .addOnSuccessListener { detectedObjects ->
                     top3AppropriateObjects = detectedObjects.mapNotNull {

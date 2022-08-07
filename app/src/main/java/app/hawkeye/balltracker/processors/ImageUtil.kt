@@ -18,28 +18,30 @@ package app.hawkeye.balltracker.processors
 
 import android.graphics.*
 import androidx.camera.core.ImageProxy
+import app.hawkeye.balltracker.utils.AdaptiveRect
+import app.hawkeye.balltracker.utils.ClassifiedBox
+import app.hawkeye.balltracker.utils.ScreenPoint
+import com.google.android.material.transition.MaterialContainerTransform
 import java.io.ByteArrayOutputStream
 import java.nio.FloatBuffer
 
 const val DIM_BATCH_SIZE = 1
 const val DIM_PIXEL_SIZE = 3
-const val IMAGE_SIZE_X = 640
-const val IMAGE_SIZE_Y = 640
 
-fun preProcess(bitmap: Bitmap): FloatBuffer {
+fun preProcess(bitmap: Bitmap, imageSizeX: Int, ImageSizeY: Int): FloatBuffer {
     val imgData = FloatBuffer.allocate(
             DIM_BATCH_SIZE
                     * DIM_PIXEL_SIZE
-                    * IMAGE_SIZE_X
-                    * IMAGE_SIZE_Y
+                    * imageSizeX
+                    * ImageSizeY
     )
     imgData.rewind()
-    val stride = IMAGE_SIZE_X * IMAGE_SIZE_Y
+    val stride = imageSizeX * ImageSizeY
     val bmpData = IntArray(stride)
     bitmap.getPixels(bmpData, 0, bitmap.width, 0, 0, bitmap.width, bitmap.height)
-    for (i in 0 until IMAGE_SIZE_X) {
-        for (j in 0 until IMAGE_SIZE_Y) {
-            val idx = IMAGE_SIZE_Y * i + j
+    for (i in 0 until imageSizeX) {
+        for (j in 0 until ImageSizeY) {
+            val idx = ImageSizeY * i + j
             val pixelValue = bmpData[idx]
             imgData.put(idx, (pixelValue shr 16 and 0xFF) / 255.0F)
             imgData.put(idx + stride, (pixelValue shr 8 and 0xFF) / 255.0F)
@@ -187,4 +189,64 @@ private fun imageToByteBuffer(image: ImageProxy, outputBuffer: ByteArray, pixelC
             }
         }
     }
+}
+
+fun Bitmap.rotate(degrees: Float): Bitmap {
+    val matrix = Matrix().apply { postRotate(degrees) }
+    return Bitmap.createBitmap(this, 0, 0, width, height, matrix, true)
+}
+
+private fun getIndOfMaxValue(classesScore: List<Float>): Int {
+    var ind = 0
+    for (i in 1 until classesScore.size) {
+        if (classesScore[i] > classesScore[ind]) {
+            ind = i
+        }
+    }
+    return ind
+}
+
+// That function parses the yolov5 model output.
+// I assumed the format from this project https://github.com/doleron/yolov5-opencv-cpp-python/blob/main/cpp/yolo.cpp#L59
+// It says that each row is a bunch of encoded elements:
+/*
+[0] -> centerX
+[1] -> centerY
+[2] -> width of box in received image
+[3] -> height of box in received image
+[5] -> confidence of the object
+[6-85] -> scores for each class
+ */
+fun getAllObjectsByClassFromYOLO(
+    modelOutput: Array<FloatArray>,
+    importantClassId: Int,
+    confidenceThreshold: Float,
+    scoreThreshold: Float,
+    imageWidth: Int,
+    imageHeight: Int
+): List<ClassifiedBox> {
+    val result = mutableListOf<ClassifiedBox>()
+    for (record in modelOutput) {
+        val confidence = record[4]
+        if (confidence < confidenceThreshold)
+            continue
+        val maxScoreInd = getIndOfMaxValue(record.takeLast(80)) + 5
+        if (record[maxScoreInd] < scoreThreshold) continue
+        val classId = maxScoreInd - 5
+        if (importantClassId != -1 && classId != importantClassId) continue
+        result.add(
+            ClassifiedBox(
+                AdaptiveRect(
+                    ScreenPoint(
+                        record[0] / imageWidth,
+                        record[1] / imageHeight
+                    ),
+                    record[2] / imageWidth,
+                    record[3] / imageHeight
+                ),
+                classId, confidence
+            )
+        )
+    }
+    return result
 }

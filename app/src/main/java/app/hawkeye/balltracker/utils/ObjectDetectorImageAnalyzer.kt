@@ -6,9 +6,10 @@ import android.content.Context
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import app.hawkeye.balltracker.R
-import app.hawkeye.balltracker.processors.GoogleMLkitImageProcessor
-import app.hawkeye.balltracker.processors.ImageProcessor
-import app.hawkeye.balltracker.processors.ORTImageProcessor
+import app.hawkeye.balltracker.processors.*
+import app.hawkeye.balltracker.processors.GoogleMLkitModelImageProcessor
+import app.hawkeye.balltracker.processors.ORTModelImageProcessor
+import app.hawkeye.balltracker.processors.ORTModelImageProcessorFastestDet
 import com.google.mlkit.vision.objects.ObjectDetection
 import com.google.mlkit.vision.objects.defaults.ObjectDetectorOptions
 
@@ -17,8 +18,10 @@ private val LOG = createLogger<ObjectDetectorImageAnalyzer>()
 
 enum class ImageProcessorsChoice(private val index: Int) {
     None(0),
-    ORT_YOLO_V5(1),
-    GoogleML(2);
+    ONNX_YOLO_V5(1),
+    ONNX_FASTEST_DET(2),
+    GoogleML(3),
+    TFLITE_YOLO_V5_SMALL(4);
 
     companion object {
         private val VALUES = values()
@@ -32,31 +35,18 @@ class ObjectDetectorImageAnalyzer(
     val onUpdateCameraState: (List<ClassifiedBox>) -> Unit
 ) : ImageAnalysis.Analyzer {
     private var currentImageProcessorsChoice: ImageProcessorsChoice = ImageProcessorsChoice.None
-    private var imageProcessors: Map<ImageProcessorsChoice, ImageProcessor> = mapOf()
+    private var modelImageProcessors: Map<ImageProcessorsChoice, ModelImageProcessor> = mapOf()
+
 
     init {
-        val objectDetectorOptions = ObjectDetectorOptions.Builder()
-            .setDetectorMode(ObjectDetectorOptions.STREAM_MODE)
-            .enableClassification()
-            .build()
-        val objectDetector = ObjectDetection.getClient(objectDetectorOptions)
-
-        val ortSession = createOrtSession(context)
-
-        imageProcessors = mapOf(
-            ImageProcessorsChoice.None to ImageProcessor.Default,
-            ImageProcessorsChoice.GoogleML to GoogleMLkitImageProcessor(objectDetector),
-            ImageProcessorsChoice.ORT_YOLO_V5 to ORTImageProcessor(ortSession)
+        modelImageProcessors = mapOf(
+            ImageProcessorsChoice.None to ModelImageProcessor.Default,
+            ImageProcessorsChoice.GoogleML to GoogleMLkitModelImageProcessor(),
+            ImageProcessorsChoice.ONNX_YOLO_V5 to ORTModelImageProcessor(context),
+            ImageProcessorsChoice.ONNX_FASTEST_DET to ORTModelImageProcessorFastestDet(context),
+            ImageProcessorsChoice.TFLITE_YOLO_V5_SMALL to TFliteYOLOv5ProcessorModel(context)
         )
     }
-
-    private fun readYoloModel(context: Context): ByteArray {
-        val modelID = R.raw.yolov5s
-        return context.resources.openRawResource(modelID).readBytes()
-    }
-
-    private fun createOrtSession(context: Context): OrtSession? =
-        OrtEnvironment.getEnvironment()?.createSession(readYoloModel(context))
 
     fun setCurrentImageProcessor(choice: ImageProcessorsChoice) {
         currentImageProcessorsChoice = choice
@@ -66,7 +56,7 @@ class ObjectDetectorImageAnalyzer(
     override fun analyze(imageProxy: ImageProxy) {
         LOG.i(currentImageProcessorsChoice)
         val result =
-            imageProcessors[currentImageProcessorsChoice]?.processImageProxy(imageProxy = imageProxy)
+            modelImageProcessors[currentImageProcessorsChoice]?.processImageProxy(imageProxy = imageProxy)
 
         imageProxy.close()
 
