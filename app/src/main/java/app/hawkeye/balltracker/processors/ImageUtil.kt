@@ -16,24 +16,39 @@
 
 package app.hawkeye.balltracker.processors
 
+import android.content.res.AssetManager
 import android.graphics.*
 import androidx.camera.core.ImageProxy
 import app.hawkeye.balltracker.utils.AdaptiveRect
 import app.hawkeye.balltracker.utils.ClassifiedBox
 import app.hawkeye.balltracker.utils.ScreenPoint
-import com.google.android.material.transition.MaterialContainerTransform
 import java.io.ByteArrayOutputStream
+import java.io.FileInputStream
+import java.nio.ByteBuffer
 import java.nio.FloatBuffer
+import java.nio.MappedByteBuffer
+import java.nio.channels.FileChannel
+
 
 const val DIM_BATCH_SIZE = 1
 const val DIM_PIXEL_SIZE = 3
 
+
+fun loadModelFile(assets: AssetManager, modelFilename: String?): MappedByteBuffer? {
+    val fileDescriptor = assets.openFd(modelFilename!!)
+    val inputStream = FileInputStream(fileDescriptor.fileDescriptor)
+    val fileChannel: FileChannel = inputStream.channel
+    val startOffset = fileDescriptor.startOffset
+    val declaredLength = fileDescriptor.declaredLength
+    return fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength)
+}
+
 fun preProcess(bitmap: Bitmap, imageSizeX: Int, ImageSizeY: Int): FloatBuffer {
     val imgData = FloatBuffer.allocate(
-            DIM_BATCH_SIZE
-                    * DIM_PIXEL_SIZE
-                    * imageSizeX
-                    * ImageSizeY
+        DIM_BATCH_SIZE
+                * DIM_PIXEL_SIZE
+                * imageSizeX
+                * ImageSizeY
     )
     imgData.rewind()
     val stride = imageSizeX * ImageSizeY
@@ -51,6 +66,17 @@ fun preProcess(bitmap: Bitmap, imageSizeX: Int, ImageSizeY: Int): FloatBuffer {
 
     imgData.rewind()
     return imgData
+}
+
+fun floatToByteBuffer(fb: FloatBuffer): ByteBuffer {
+    val localByteBuffer: ByteBuffer = ByteBuffer.allocateDirect(
+        fb.remaining() * 4
+    )
+    fb.mark()
+    localByteBuffer.asFloatBuffer().put(fb)
+    fb.reset()
+    localByteBuffer.rewind()
+    return localByteBuffer
 }
 
 fun ImageProxy.toBitmap(): Bitmap? {
@@ -140,10 +166,10 @@ private fun imageToByteBuffer(image: ImageProxy, outputBuffer: ByteArray, pixelC
             imageCrop
         } else {
             Rect(
-                    imageCrop.left / 2,
-                    imageCrop.top / 2,
-                    imageCrop.right / 2,
-                    imageCrop.bottom / 2
+                imageCrop.left / 2,
+                imageCrop.top / 2,
+                imageCrop.right / 2,
+                imageCrop.bottom / 2
             )
         }
 
@@ -171,7 +197,7 @@ private fun imageToByteBuffer(image: ImageProxy, outputBuffer: ByteArray, pixelC
         for (row in 0 until planeHeight) {
             // Move buffer position to the beginning of this row
             planeBuffer.position(
-                    (row + planeCrop.top) * rowStride + planeCrop.left * pixelStride
+                (row + planeCrop.top) * rowStride + planeCrop.left * pixelStride
             )
 
             if (pixelStride == 1 && outputStride == 1) {
@@ -219,6 +245,40 @@ private fun getIndOfMaxValue(classesScore: List<Float>): Int {
  */
 fun getAllObjectsByClassFromYOLO(
     modelOutput: Array<FloatArray>,
+    importantClassId: Int,
+    confidenceThreshold: Float,
+    scoreThreshold: Float,
+    imageWidth: Int,
+    imageHeight: Int
+): List<ClassifiedBox> {
+    val result = mutableListOf<ClassifiedBox>()
+    for (record in modelOutput) {
+        val confidence = record[4]
+        if (confidence < confidenceThreshold)
+            continue
+        val maxScoreInd = getIndOfMaxValue(record.takeLast(80)) + 5
+        if (record[maxScoreInd] < scoreThreshold) continue
+        val classId = maxScoreInd - 5
+        if (importantClassId != -1 && classId != importantClassId) continue
+        result.add(
+            ClassifiedBox(
+                AdaptiveRect(
+                    ScreenPoint(
+                        record[0] / imageWidth,
+                        record[1] / imageHeight
+                    ),
+                    record[2] / imageWidth,
+                    record[3] / imageHeight
+                ),
+                classId, confidence
+            )
+        )
+    }
+    return result
+}
+
+fun getAllObjectsByClassForYOLOFromFloatList(
+    modelOutput: List<List<Float>>,
     importantClassId: Int,
     confidenceThreshold: Float,
     scoreThreshold: Float,
