@@ -68,6 +68,31 @@ fun preProcess(bitmap: Bitmap, imageSizeX: Int, ImageSizeY: Int): FloatBuffer {
     return imgData
 }
 
+fun preProcessForTFLite(bitmap: Bitmap, imageSizeX: Int, ImageSizeY: Int): FloatBuffer {
+    val imgData = FloatBuffer.allocate(
+        DIM_BATCH_SIZE
+                * DIM_PIXEL_SIZE
+                * imageSizeX
+                * ImageSizeY
+    )
+    imgData.rewind()
+    val stride = imageSizeX * ImageSizeY
+    val bmpData = IntArray(stride)
+    bitmap.getPixels(bmpData, 0, bitmap.width, 0, 0, bitmap.width, bitmap.height)
+    for (i in 0 until imageSizeX) {
+        for (j in 0 until ImageSizeY) {
+            val idx = ImageSizeY * i + j
+            val pixelValue = bmpData[idx]
+            imgData.put(idx * 3, (pixelValue shr 16 and 0xFF) / 255.0F)
+            imgData.put(idx * 3 + 1, (pixelValue shr 8 and 0xFF) / 255.0F)
+            imgData.put(idx * 3 + 2, (pixelValue and 0xFF) / 255.0F)
+        }
+    }
+
+    imgData.rewind()
+    return imgData
+}
+
 fun floatToByteBuffer(fb: FloatBuffer): ByteBuffer {
     val localByteBuffer: ByteBuffer = ByteBuffer.allocateDirect(
         fb.remaining() * 4

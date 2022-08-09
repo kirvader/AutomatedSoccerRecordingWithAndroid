@@ -2,6 +2,7 @@ package app.hawkeye.balltracker.processors
 
 import android.content.Context
 import android.graphics.*
+import android.util.Half
 import android.util.Size
 import androidx.camera.core.ImageProxy
 import app.hawkeye.balltracker.utils.ClassifiedBox
@@ -60,23 +61,22 @@ internal class TFliteYOLOv5ProcessorModel(private val context: Context) : ModelI
             imgBitmap?.let { Bitmap.createScaledBitmap(it, IMAGE_WIDTH, IMAGE_HEIGHT, false) }
         val bitmap = rawBitmap?.rotate(imageProxy.imageInfo.rotationDegrees.toFloat())
             ?: return listOf()
-        val imgData = preProcess(bitmap, IMAGE_WIDTH, IMAGE_HEIGHT)
+        val imgData = preProcessForTFLite(bitmap, IMAGE_WIDTH, IMAGE_HEIGHT)
 
         val input: ByteBuffer = floatToByteBuffer(imgData)
 
-        val output = ByteBuffer.allocateDirect(8568000)
+        val output = ByteBuffer.allocateDirect(4 * 25200 * 85)
 
         if (tflite == null) {
             return listOf()
         }
         tflite!!.run(input, output)
-        output.rewind()
 
-        val floatOutput = output.asFloatBuffer()
-        floatOutput.rewind()
-        val floatBuf = floatOutput.duplicate()
-        floatBuf.rewind()
-        val floatArr = floatBuf.array()
+        val floatArr = mutableListOf<Float>()
+        for (i in 0 until 25200 * 85) {
+            floatArr.add(output.getFloat(i * 4))
+        }
+
         val res = floatArr.toMutableList().chunked(85)
 
         return getAllObjectsByClassForYOLOFromFloatList(
