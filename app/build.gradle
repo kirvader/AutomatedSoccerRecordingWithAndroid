@@ -89,13 +89,14 @@ dependencies {
      */
     implementation "app.pivo.android.basicsdk:basicsdk:1.1.2"
 
+    /**
+     * ML-kit
+     */
+    implementation 'com.google.mlkit:object-detection:17.0.0'
 
     // Import tflite dependencies
-    implementation 'org.tensorflow:tensorflow-lite:2.8.0'
-    implementation 'org.tensorflow:tensorflow-lite-task-vision:0.4.0'
-    // Import the GPU delegate plugin Library for GPU inference
-    implementation 'org.tensorflow:tensorflow-lite-gpu-delegate-plugin:0.4.0'
-    implementation 'org.tensorflow:tensorflow-lite-gpu:2.9.0'
+    implementation 'org.tensorflow:tensorflow-lite:2.4.0'
+    implementation 'org.tensorflow:tensorflow-lite-gpu:2.4.0'
 
     /**
      * Unit testing dependencies
