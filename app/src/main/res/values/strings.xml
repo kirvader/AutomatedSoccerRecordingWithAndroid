@@ -42,8 +42,6 @@
     <string-array name="available_object_detectors">
         <item>None</item>
         <item>ORT YOLO</item>
-        <item>ORT FastestDet</item>
-        <item>Google ML-kit</item>
         <item>YOLO TFLITE</item>
     </string-array>
 
