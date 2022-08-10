@@ -5,6 +5,7 @@ import android.graphics.*
 import android.util.Half
 import android.util.Size
 import androidx.camera.core.ImageProxy
+import androidx.core.util.toHalf
 import app.hawkeye.balltracker.utils.ClassifiedBox
 import app.hawkeye.balltracker.utils.createLogger
 import org.tensorflow.lite.Interpreter
@@ -55,6 +56,7 @@ internal class TFliteYOLOv5ProcessorModel(private val context: Context) : ModelI
                 imageProxy.width * 2, imageProxy.height * 2, Bitmap.Config.RGBA_F16
             )
         }
+        LOG.i(imageProxy.format)
 
         val imgBitmap = imageProxy.toBitmap()
         val rawBitmap =
@@ -72,14 +74,14 @@ internal class TFliteYOLOv5ProcessorModel(private val context: Context) : ModelI
         }
         tflite!!.run(input, output)
 
-        val floatArr = mutableListOf<Float>()
+        val floatArr = mutableListOf<Half>()
         for (i in 0 until 25200 * 85) {
-            floatArr.add(output.getFloat(i * 4))
+            floatArr.add((output.getShort(i * 2)).toHalf())
         }
 
         val res = floatArr.toMutableList().chunked(85)
 
-        return getAllObjectsByClassForYOLOFromFloatList(
+        return getAllObjectsByClassForYOLOFromHalfList(
             res,
             -1,
             CONFIDENCE_THRESHOLD,

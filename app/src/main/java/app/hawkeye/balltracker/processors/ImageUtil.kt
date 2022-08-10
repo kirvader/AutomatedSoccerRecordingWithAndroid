@@ -18,7 +18,9 @@ package app.hawkeye.balltracker.processors
 
 import android.content.res.AssetManager
 import android.graphics.*
+import android.util.Half
 import androidx.camera.core.ImageProxy
+import androidx.core.util.toHalf
 import app.hawkeye.balltracker.utils.AdaptiveRect
 import app.hawkeye.balltracker.utils.ClassifiedBox
 import app.hawkeye.balltracker.utils.ScreenPoint
@@ -83,9 +85,9 @@ fun preProcessForTFLite(bitmap: Bitmap, imageSizeX: Int, ImageSizeY: Int): Float
         for (j in 0 until ImageSizeY) {
             val idx = ImageSizeY * i + j
             val pixelValue = bmpData[idx]
-            imgData.put(idx * 3, (pixelValue shr 16 and 0xFF) / 255.0F)
-            imgData.put(idx * 3 + 1, (pixelValue shr 8 and 0xFF) / 255.0F)
-            imgData.put(idx * 3 + 2, (pixelValue and 0xFF) / 255.0F)
+            imgData.put(idx, (pixelValue shr 16 and 0xFF) / 255.0F)
+            imgData.put(idx + stride, (pixelValue shr 8 and 0xFF) / 255.0F)
+            imgData.put(idx + stride * 2, (pixelValue and 0xFF) / 255.0F)
         }
     }
 
@@ -302,8 +304,8 @@ fun getAllObjectsByClassFromYOLO(
     return result
 }
 
-fun getAllObjectsByClassForYOLOFromFloatList(
-    modelOutput: List<List<Float>>,
+fun getAllObjectsByClassForYOLOFromHalfList(
+    modelOutput: List<List<Half>>,
     importantClassId: Int,
     confidenceThreshold: Float,
     scoreThreshold: Float,
@@ -313,23 +315,23 @@ fun getAllObjectsByClassForYOLOFromFloatList(
     val result = mutableListOf<ClassifiedBox>()
     for (record in modelOutput) {
         val confidence = record[4]
-        if (confidence < confidenceThreshold)
+        if (confidence.toFloat() < confidenceThreshold)
             continue
-        val maxScoreInd = getIndOfMaxValue(record.takeLast(80)) + 5
-        if (record[maxScoreInd] < scoreThreshold) continue
+        val maxScoreInd = getIndOfMaxValue(record.map { it.toFloat() }.takeLast(80)) + 5
+        if (record[maxScoreInd].toFloat() < scoreThreshold) continue
         val classId = maxScoreInd - 5
         if (importantClassId != -1 && classId != importantClassId) continue
         result.add(
             ClassifiedBox(
                 AdaptiveRect(
                     ScreenPoint(
-                        record[0] / imageWidth,
-                        record[1] / imageHeight
+                        record[0].toFloat() / imageWidth,
+                        record[1].toFloat() / imageHeight
                     ),
-                    record[2] / imageWidth,
-                    record[3] / imageHeight
+                    record[2].toFloat() / imageWidth,
+                    record[3].toFloat() / imageHeight
                 ),
-                classId, confidence
+                classId, confidence.toFloat()
             )
         )
     }

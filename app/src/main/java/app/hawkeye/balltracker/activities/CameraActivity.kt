@@ -55,11 +55,14 @@ class CameraActivity : AppCompatActivity() {
 
     private var objectDetectorImageAnalyzer: ObjectDetectorImageAnalyzer? = null
 
+    private var timeKeeper = TimeKeeper()
+
 
     private var movementControllerDevice: FootballTrackingSystemController =
         FootballTrackingSystemController(
             App.getRotatableDevice()
         )
+
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -296,6 +299,7 @@ class CameraActivity : AppCompatActivity() {
                     null
                 }
             )
+            inference_time_value.text = timeKeeper.getInfo()
         }
     }
 
