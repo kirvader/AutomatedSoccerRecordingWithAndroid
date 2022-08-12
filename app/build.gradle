@@ -34,7 +34,9 @@ android {
 }
 
 dependencies {
+    implementation 'androidx.test:rules:1.4.0'
     testImplementation 'org.junit.jupiter:junit-jupiter'
+    androidTestImplementation 'org.junit.jupiter:junit-jupiter'
 
 
     // CameraX core library using the camera2 implementation
