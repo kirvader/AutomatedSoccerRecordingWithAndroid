@@ -6,6 +6,7 @@ import android.util.Half
 import android.util.Size
 import androidx.camera.core.ImageProxy
 import androidx.core.util.toHalf
+import app.hawkeye.balltracker.processors.interfaces.ModelImageProcessor
 import app.hawkeye.balltracker.utils.ClassifiedBox
 import app.hawkeye.balltracker.utils.createLogger
 import org.tensorflow.lite.Interpreter

@@ -5,7 +5,7 @@ import com.hawkeye.movement.utils.Point
 import java.util.*
 
 
-class PhysicalObjectMovement : PhysicalObjectMovementModel {
+class PhysicalObjectMovement(private val relevanceDeltaTime: Long) : PhysicalObjectMovementModel {
     private data class State(
         val position: Point,
         val time_ms: Long
@@ -18,7 +18,7 @@ class PhysicalObjectMovement : PhysicalObjectMovementModel {
             return
         }
 
-        if (states.first().time_ms >= time_ms) {
+        if (states.isNotEmpty() && states.first().time_ms >= time_ms) {
             return
         }
 
@@ -26,8 +26,7 @@ class PhysicalObjectMovement : PhysicalObjectMovementModel {
     }
 
     private fun updateRelevantStatesFor(time_ms: Long) {
-        if (states.isEmpty()) return
-        while (states.first().time_ms < time_ms - relevanceTimeMs) {
+        while (states.isNotEmpty() && states.first().time_ms < time_ms - relevanceDeltaTime) {
             states.removeFirst()
         }
     }
@@ -44,9 +43,5 @@ class PhysicalObjectMovement : PhysicalObjectMovementModel {
         val deltaTime = time_ms - states.first().time_ms
 
         return lastState.position + speedVector * deltaTime.toFloat()
-    }
-
-    companion object {
-        private const val relevanceTimeMs = 1000
     }
 }

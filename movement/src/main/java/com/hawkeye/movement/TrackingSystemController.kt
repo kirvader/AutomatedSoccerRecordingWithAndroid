@@ -6,13 +6,15 @@ import com.hawkeye.movement.interfaces.RotatableDeviceControllerBase
 import com.hawkeye.movement.interfaces.TrackingSystemControllerBase
 import com.hawkeye.movement.utils.Point
 
-open class TrackingSystemController(rotatableDevice: RotatableDevice) : TrackingSystemControllerBase {
-    protected val ballMovementModel: PhysicalObjectMovementModel = PhysicalObjectMovement()
+open class TrackingSystemController(rotatableDevice: RotatableDevice) :
+    TrackingSystemControllerBase {
+
+    protected val ballMovementModel: PhysicalObjectMovementModel = PhysicalObjectMovement(relevanceDeltaTime    )
     protected var rotatableDeviceController: RotatableDeviceControllerBase
 
 
     init {
-        rotatableDeviceController = RotatableDeviceController(rotatableDevice)
+        rotatableDeviceController = RotatableDeviceController(rotatableDevice, relevanceDeltaTime)
     }
 
     override fun updateTargetPosition(point: Point?, currentAbsTime_ms: Long) {
@@ -20,9 +22,17 @@ open class TrackingSystemController(rotatableDevice: RotatableDevice) : Tracking
     }
 
     override fun directDeviceAtObjectAtTime(currentAbsTime_ms: Long, targetAbsTime_ms: Long) {
-        val targetPosition = ballMovementModel.getApproximatePositionAtTime(targetAbsTime_ms) ?: return
+        val targetPosition =
+            ballMovementModel.getApproximatePositionAtTime(targetAbsTime_ms) ?: return
 
-        rotatableDeviceController.smoothlyDirectDeviceAt(targetPosition, currentAbsTime_ms, targetAbsTime_ms)
+        rotatableDeviceController.smoothlyDirectDeviceAt(
+            targetPosition,
+            currentAbsTime_ms,
+            targetAbsTime_ms
+        )
+    }
 
+    companion object {
+        private const val relevanceDeltaTime = 1000L
     }
 }

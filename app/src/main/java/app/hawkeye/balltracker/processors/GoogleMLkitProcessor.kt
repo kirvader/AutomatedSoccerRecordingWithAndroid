@@ -1,6 +1,7 @@
 package app.hawkeye.balltracker.processors
 
 import androidx.camera.core.ImageProxy
+import app.hawkeye.balltracker.processors.interfaces.ModelImageProcessor
 import app.hawkeye.balltracker.utils.AdaptiveRect
 import app.hawkeye.balltracker.utils.ClassifiedBox
 import app.hawkeye.balltracker.utils.ScreenPoint
@@ -9,7 +10,6 @@ import com.google.android.gms.tasks.Tasks.await
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.objects.DetectedObject
 import com.google.mlkit.vision.objects.ObjectDetection
-import com.google.mlkit.vision.objects.ObjectDetector
 import com.google.mlkit.vision.objects.defaults.ObjectDetectorOptions
 
 private val LOG = createLogger<GoogleMLkitModelImageProcessor>()

@@ -1,4 +1,4 @@
-package app.hawkeye.balltracker.rotating
+package app.hawkeye.balltracker.rotatable
 
 import android.Manifest
 import android.content.Context

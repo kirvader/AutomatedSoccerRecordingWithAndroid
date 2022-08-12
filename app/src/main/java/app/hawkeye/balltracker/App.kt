@@ -2,7 +2,7 @@ package app.hawkeye.balltracker
 
 import android.app.Application
 import android.util.Log
-import app.hawkeye.balltracker.rotating.PivoPodDevice
+import app.hawkeye.balltracker.rotatable.PivoPodDevice
 import app.hawkeye.balltracker.utils.RuntimeUtils
 import com.elvishew.xlog.LogConfiguration
 import com.elvishew.xlog.LogLevel

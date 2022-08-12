@@ -2,22 +2,24 @@ package app.hawkeye.balltracker.utils
 
 class TimeKeeper {
     private var currentTime = 0L
-    private var averageDeltaTimeBetweenCalls = 0.0f
+    private var lastDelta = 0L
+    private var averageDeltaTimeBetweenCalls = 0L
 
     init {
         currentTime = System.currentTimeMillis()
     }
 
-    private fun getDeltaTimeFromLastCall(): Float {
-        val newTime = System.currentTimeMillis()
-        val deltaTime = newTime - currentTime
-        currentTime = newTime
-        return deltaTime.toFloat() / 1000
+    fun getCurrentCircleStartTime() = currentTime
+
+    fun registerCircle() {
+        val newCurrentTime = System.currentTimeMillis()
+
+        lastDelta = newCurrentTime - currentTime
+        currentTime = newCurrentTime
+        averageDeltaTimeBetweenCalls = (lastDelta + averageDeltaTimeBetweenCalls) / 2
     }
 
-    fun getInfo() : String {
-        val lastDelta = getDeltaTimeFromLastCall()
-        averageDeltaTimeBetweenCalls = (lastDelta + averageDeltaTimeBetweenCalls) / 2
-        return "avg = $averageDeltaTimeBetweenCalls; $lastDelta"
+    fun getInfoAboutLastCircle() : String {
+        return "avg = ${averageDeltaTimeBetweenCalls}ms; ${lastDelta}ms"
     }
 }

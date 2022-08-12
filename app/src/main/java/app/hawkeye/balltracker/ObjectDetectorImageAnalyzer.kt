@@ -1,17 +1,15 @@
-package app.hawkeye.balltracker.utils
+package app.hawkeye.balltracker
 
-import ai.onnxruntime.OrtEnvironment
-import ai.onnxruntime.OrtSession
 import android.content.Context
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
-import app.hawkeye.balltracker.R
 import app.hawkeye.balltracker.processors.*
 import app.hawkeye.balltracker.processors.GoogleMLkitModelImageProcessor
 import app.hawkeye.balltracker.processors.ORTModelImageProcessor
 import app.hawkeye.balltracker.processors.ORTModelImageProcessorFastestDet
-import com.google.mlkit.vision.objects.ObjectDetection
-import com.google.mlkit.vision.objects.defaults.ObjectDetectorOptions
+import app.hawkeye.balltracker.processors.interfaces.ModelImageProcessor
+import app.hawkeye.balltracker.utils.ClassifiedBox
+import app.hawkeye.balltracker.utils.createLogger
 
 
 private val LOG = createLogger<ObjectDetectorImageAnalyzer>()
@@ -31,8 +29,7 @@ enum class ImageProcessorsChoice(private val index: Int) {
 
 class ObjectDetectorImageAnalyzer(
     context: Context,
-    val onUpdateUI: (List<ClassifiedBox>) -> Unit,
-    val onUpdateCameraState: (List<ClassifiedBox>) -> Unit
+    val onResultsReady: (List<ClassifiedBox>) -> Unit
 ) : ImageAnalysis.Analyzer {
     private var currentImageProcessorsChoice: ImageProcessorsChoice = ImageProcessorsChoice.None
     private var modelImageProcessors: Map<ImageProcessorsChoice, ModelImageProcessor> = mapOf()
@@ -61,10 +58,7 @@ class ObjectDetectorImageAnalyzer(
         imageProxy.close()
 
         if (result != null) {
-            onUpdateUI(result)
-        }
-        if (result != null) {
-            onUpdateCameraState(result)
+            onResultsReady(result)
         }
     }
 }

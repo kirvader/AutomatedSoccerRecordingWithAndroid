@@ -65,7 +65,7 @@
         </LinearLayout>
 
         <TextView
-            android:id="@+id/inference_time_value"
+            android:id="@+id/inference_time_info"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="end"

@@ -1,4 +1,4 @@
-package app.hawkeye.balltracker.processors
+package app.hawkeye.balltracker.processors.interfaces
 
 import androidx.camera.core.ImageProxy
 import app.hawkeye.balltracker.utils.ClassifiedBox

@@ -8,12 +8,10 @@ import ai.onnxruntime.OrtEnvironment
 import ai.onnxruntime.OrtSession
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.Matrix
 import androidx.camera.core.ImageProxy
 import app.hawkeye.balltracker.R
-import app.hawkeye.balltracker.utils.AdaptiveRect
+import app.hawkeye.balltracker.processors.interfaces.ModelImageProcessor
 import app.hawkeye.balltracker.utils.ClassifiedBox
-import app.hawkeye.balltracker.utils.ScreenPoint
 import java.util.*
 
 

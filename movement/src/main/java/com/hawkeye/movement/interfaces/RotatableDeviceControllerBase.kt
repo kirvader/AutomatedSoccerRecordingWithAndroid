@@ -11,4 +11,6 @@ interface RotatableDeviceControllerBase {
     fun smoothlyDirectDeviceAt(position: Point, currentTime_ms: Long, targetTime_ms: Long)
 
     fun getDeviceDirectionWithConstraints(direction: Float) = direction
+
+    fun getDirectionAtTime(absTime: Long): Float
 }
