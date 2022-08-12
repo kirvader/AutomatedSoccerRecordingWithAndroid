@@ -1,4 +1,4 @@
-package com.hawkeye.movement
+package com.hawkeye.movement.interfaces
 
 interface RotatableDevice {
     /**

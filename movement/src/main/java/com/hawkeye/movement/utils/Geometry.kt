@@ -68,6 +68,8 @@ class Point {
 
     operator fun div(d: Float): Point = Point(cartesianPoint / d)
 
+    operator fun div(d: Long): Point = Point(cartesianPoint / d.toFloat())
+
     operator fun minus(other: Point): Point =
         Point(cartesianPoint - other.cartesianPoint)
 

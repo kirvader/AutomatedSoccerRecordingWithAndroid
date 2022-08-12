@@ -12,7 +12,7 @@ import com.elvishew.xlog.printer.Printer
 import com.elvishew.xlog.printer.file.FilePrinter
 import com.elvishew.xlog.printer.file.backup.NeverBackupStrategy
 import com.elvishew.xlog.printer.file.naming.DateFileNameGenerator
-import com.hawkeye.movement.RotatableDevice
+import com.hawkeye.movement.interfaces.RotatableDevice
 import java.io.File
 
 

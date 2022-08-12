@@ -1,7 +1,7 @@
 package app.hawkeye.balltracker.controllers
 
 import app.hawkeye.balltracker.utils.ClassifiedBox
-import com.hawkeye.movement.RotatableDevice
+import com.hawkeye.movement.interfaces.RotatableDevice
 import com.hawkeye.movement.TrackingSystemControllerBase
 import com.hawkeye.movement.utils.Point
 import com.hawkeye.movement.utils.PolarPoint
