@@ -14,10 +14,12 @@ import app.hawkeye.balltracker.utils.pod.ScanResultsAdapter
 import app.pivo.android.basicsdk.PivoSdk
 import app.pivo.android.basicsdk.events.PivoEvent
 import app.pivo.android.basicsdk.events.PivoEventBus
-import com.hawkeye.movement.RotatableDevice
+import com.hawkeye.movement.interfaces.RotatableDevice
 import com.nabinbhandari.android.permissions.PermissionHandler
 import com.nabinbhandari.android.permissions.Permissions
+
 import kotlin.math.abs
+
 
 private val LOG = createLogger<PivoPodDevice>()
 

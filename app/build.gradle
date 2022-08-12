@@ -90,6 +90,8 @@ dependencies {
      * PivoBasic SDK 1.0.6
      */
     implementation "app.pivo.android.basicsdk:basicsdk:1.1.2"
+    implementation 'com.nabinbhandari.android:permissions:3.8'
+
 
     /**
      * ML-kit
