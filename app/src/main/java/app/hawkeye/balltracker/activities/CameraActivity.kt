@@ -9,6 +9,9 @@ import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.camera.core.CameraInfoUnavailableException
+import androidx.camera.core.FocusMeteringAction
+import androidx.camera.core.SurfaceOrientedMeteringPointFactory
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import app.hawkeye.balltracker.*
@@ -16,6 +19,7 @@ import app.hawkeye.balltracker.R
 import app.hawkeye.balltracker.rotatable.PivoPodDevice
 import app.hawkeye.balltracker.utils.*
 import kotlinx.android.synthetic.main.activity_camera.*
+import java.util.concurrent.TimeUnit
 
 
 private val LOG = createLogger<CameraActivity>()
@@ -103,7 +107,6 @@ class CameraActivity : AppCompatActivity() {
     }
 
     private fun getPreviewSurfaceProvider() = cameraPreview.surfaceProvider
-
 
     override fun onDestroy() {
         super.onDestroy()

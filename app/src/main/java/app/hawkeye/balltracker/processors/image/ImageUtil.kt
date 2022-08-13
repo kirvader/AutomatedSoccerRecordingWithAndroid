@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-package app.hawkeye.balltracker.processors
+package app.hawkeye.balltracker.processors.image
 
 import android.content.res.AssetManager
 import android.graphics.*
 import android.util.Half
 import androidx.camera.core.ImageProxy
-import androidx.core.util.toHalf
 import app.hawkeye.balltracker.utils.AdaptiveRect
 import app.hawkeye.balltracker.utils.ClassifiedBox
 import app.hawkeye.balltracker.utils.ScreenPoint
@@ -311,8 +310,8 @@ fun getAllObjectsByClassForYOLOFromHalfList(
     scoreThreshold: Float,
     imageWidth: Int,
     imageHeight: Int
-): List<ClassifiedBox> {
-    val result = mutableListOf<ClassifiedBox>()
+): ClassifiedBox? {
+    var result: ClassifiedBox? = null
     for (record in modelOutput) {
         val confidence = record[4]
         if (confidence.toFloat() < confidenceThreshold)
@@ -321,8 +320,9 @@ fun getAllObjectsByClassForYOLOFromHalfList(
         if (record[maxScoreInd].toFloat() < scoreThreshold) continue
         val classId = maxScoreInd - 5
         if (importantClassId != -1 && classId != importantClassId) continue
-        result.add(
-            ClassifiedBox(
+
+        if (result == null) {
+            result = ClassifiedBox(
                 AdaptiveRect(
                     ScreenPoint(
                         record[0].toFloat() / imageWidth,
@@ -333,7 +333,19 @@ fun getAllObjectsByClassForYOLOFromHalfList(
                 ),
                 classId, confidence.toFloat()
             )
-        )
+        } else if (result.confidence < confidence.toFloat()) {
+            result = ClassifiedBox(
+                AdaptiveRect(
+                    ScreenPoint(
+                        record[0].toFloat() / imageWidth,
+                        record[1].toFloat() / imageHeight
+                    ),
+                    record[2].toFloat() / imageWidth,
+                    record[3].toFloat() / imageHeight
+                ),
+                classId, confidence.toFloat()
+            )
+        }
     }
     return result
 }

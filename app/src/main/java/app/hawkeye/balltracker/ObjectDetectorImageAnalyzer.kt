@@ -3,10 +3,10 @@ package app.hawkeye.balltracker
 import android.content.Context
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
-import app.hawkeye.balltracker.processors.*
-import app.hawkeye.balltracker.processors.GoogleMLkitModelImageProcessor
-import app.hawkeye.balltracker.processors.ORTModelImageProcessor
-import app.hawkeye.balltracker.processors.ORTModelImageProcessorFastestDet
+import app.hawkeye.balltracker.processors.image.GoogleMLkitModelImageProcessor
+import app.hawkeye.balltracker.processors.image.ORTModelImageProcessor
+import app.hawkeye.balltracker.processors.image.ORTModelImageProcessorFastestDet
+import app.hawkeye.balltracker.processors.image.TFliteYOLOv5ProcessorModel
 import app.hawkeye.balltracker.processors.interfaces.ModelImageProcessor
 import app.hawkeye.balltracker.utils.ClassifiedBox
 import app.hawkeye.balltracker.utils.createLogger
@@ -29,7 +29,7 @@ enum class ImageProcessorsChoice(private val index: Int) {
 
 class ObjectDetectorImageAnalyzer(
     context: Context,
-    val onResultsReady: (List<ClassifiedBox>) -> Unit
+    val onResultsReady: (ClassifiedBox?) -> Unit
 ) : ImageAnalysis.Analyzer {
     private var currentImageProcessorsChoice: ImageProcessorsChoice = ImageProcessorsChoice.None
     private var modelImageProcessors: Map<ImageProcessorsChoice, ModelImageProcessor> = mapOf()
@@ -57,8 +57,6 @@ class ObjectDetectorImageAnalyzer(
 
         imageProxy.close()
 
-        if (result != null) {
-            onResultsReady(result)
-        }
+        onResultsReady(result)
     }
 }

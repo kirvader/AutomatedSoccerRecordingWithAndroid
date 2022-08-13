@@ -7,21 +7,19 @@ import android.content.pm.PackageManager
 import android.icu.text.SimpleDateFormat
 import android.provider.MediaStore
 import android.widget.Toast
-import androidx.camera.core.AspectRatio
-import androidx.camera.core.CameraSelector
-import androidx.camera.core.ImageAnalysis
-import androidx.camera.core.Preview
+import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.video.*
+import androidx.camera.video.VideoCapture
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.util.Consumer
 import androidx.lifecycle.LifecycleOwner
-import androidx.test.internal.runner.junit4.statement.UiThreadStatement.runOnUiThread
 import app.hawkeye.balltracker.controllers.FootballTrackingSystemController
 import app.hawkeye.balltracker.utils.AdaptiveRect
 import app.hawkeye.balltracker.utils.ClassifiedBox
-import app.hawkeye.balltracker.utils.TimeKeeper
+import app.hawkeye.balltracker.controllers.time.TimeKeeper
+import app.hawkeye.balltracker.controllers.time.interfaces.TimeKeeperBase
 import app.hawkeye.balltracker.utils.createLogger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -30,6 +28,7 @@ import kotlinx.coroutines.launch
 import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 private val LOG = createLogger<CameraManager>()
 
@@ -40,8 +39,8 @@ class CameraManager(
     private val updateUIOnStartRecording: () -> Unit,
     private val updateUIOnImageAnalyzerFinished: (AdaptiveRect?, String) -> Unit,
     private val getPreviewSurfaceProvider: () -> Preview.SurfaceProvider,
-
 ) {
+
     private val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
     private var preview: Preview? = null
 
@@ -60,8 +59,8 @@ class CameraManager(
 
     private var objectDetectorImageAnalyzer: ObjectDetectorImageAnalyzer? = null
 
-    private var timeKeeper = TimeKeeper()
-    private var movementControllerDevice: FootballTrackingSystemController =
+    private var timeKeeper: TimeKeeperBase = TimeKeeper()
+    private var movementControllerDevice =
         FootballTrackingSystemController(
             App.getRotatableDevice()
         )
@@ -91,7 +90,8 @@ class CameraManager(
     }
 
     init {
-        objectDetectorImageAnalyzer = ObjectDetectorImageAnalyzer(context, ::updateTrackingSystemState)
+        objectDetectorImageAnalyzer =
+            ObjectDetectorImageAnalyzer(context, ::updateTrackingSystemState)
     }
 
 
@@ -117,6 +117,23 @@ class CameraManager(
         }
     }
 
+    private fun setAutoFocus(camera: Camera) {
+        val autoFocusPoint = SurfaceOrientedMeteringPointFactory(1f, 1f)
+            .createPoint(.5f, .5f)
+        try {
+            val autoFocusAction = FocusMeteringAction.Builder(
+                autoFocusPoint,
+                FocusMeteringAction.FLAG_AF
+            ).apply {
+                //start auto-focusing after 2 seconds
+                setAutoCancelDuration(2, TimeUnit.SECONDS)
+            }.build()
+            camera.cameraControl.startFocusAndMetering(autoFocusAction)
+        } catch (e: CameraInfoUnavailableException) {
+            LOG.d("ERROR", "cannot access camera", e)
+        }
+    }
+
     fun startCamera() {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
         val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
@@ -125,8 +142,8 @@ class CameraManager(
             try {
                 selector = QualitySelector
                     .from(
-                        Quality.UHD,
-                        FallbackStrategy.higherQualityOrLowerThan(Quality.SD)
+                        Quality.FHD,
+                        FallbackStrategy.higherQualityOrLowerThan(Quality.FHD)
                     )
 
                 recorder = Recorder.Builder()
@@ -148,8 +165,10 @@ class CameraManager(
 
                 cameraProvider.unbindAll()
 
-                cameraProvider.bindToLifecycle(
-                    lifecycleOwner, cameraSelector, preview, videoCapture, imageAnalysis
+                setAutoFocus(
+                    cameraProvider.bindToLifecycle(
+                        lifecycleOwner, cameraSelector, preview, videoCapture, imageAnalysis
+                    )
                 )
 
                 preview?.setSurfaceProvider(getPreviewSurfaceProvider())
@@ -203,8 +222,8 @@ class CameraManager(
         recording = null
     }
 
-    private fun updateTrackingSystemState(result: List<ClassifiedBox>) {
-        if (result.isEmpty()) {
+    private fun updateTrackingSystemState(result: ClassifiedBox?) {
+        if (result == null) {
             LOG.i("No appropriate objects found")
             movementControllerDevice.updateBallModelWithClassifiedBox(
                 null,
@@ -212,13 +231,16 @@ class CameraManager(
             )
             return
         }
-        LOG.d("Found objects. The best is at x = %f", result[0].adaptiveRect.center.x)
+        LOG.d("Found objects. The best is at x = %f", result.adaptiveRect.center.x)
         movementControllerDevice.updateBallModelWithClassifiedBox(
-            result[0],
+            result,
             timeKeeper.getCurrentCircleStartTime()
         )
         timeKeeper.registerCircle()
-        updateUIOnImageAnalyzerFinished(result.firstOrNull()?.adaptiveRect, timeKeeper.getInfoAboutLastCircle())
+        updateUIOnImageAnalyzerFinished(
+            result.adaptiveRect,
+            timeKeeper.getInfoAboutLastCircle()
+        )
     }
 
     fun destroy() {

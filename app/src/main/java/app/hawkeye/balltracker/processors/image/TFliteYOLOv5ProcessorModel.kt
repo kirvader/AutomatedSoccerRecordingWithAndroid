@@ -1,4 +1,4 @@
-package app.hawkeye.balltracker.processors
+package app.hawkeye.balltracker.processors.image
 
 import android.content.Context
 import android.graphics.*
@@ -47,7 +47,7 @@ internal class TFliteYOLOv5ProcessorModel(private val context: Context) : ModelI
     private val IMAGE_WIDTH: Int = 640
     private val IMAGE_HEIGHT: Int = 640
 
-    override fun processImageProxy(imageProxy: ImageProxy): List<ClassifiedBox> {
+    override fun processImageProxy(imageProxy: ImageProxy): ClassifiedBox? {
         if (!::bitmapBuffer.isInitialized) {
             // The image rotation and RGB image buffer are initialized only once
             // the analyzer has started running
@@ -63,7 +63,7 @@ internal class TFliteYOLOv5ProcessorModel(private val context: Context) : ModelI
         val rawBitmap =
             imgBitmap?.let { Bitmap.createScaledBitmap(it, IMAGE_WIDTH, IMAGE_HEIGHT, false) }
         val bitmap = rawBitmap?.rotate(imageProxy.imageInfo.rotationDegrees.toFloat())
-            ?: return listOf()
+            ?: return null
         val imgData = preProcessForTFLite(bitmap, IMAGE_WIDTH, IMAGE_HEIGHT)
 
         val input: ByteBuffer = floatToByteBuffer(imgData)
@@ -71,7 +71,7 @@ internal class TFliteYOLOv5ProcessorModel(private val context: Context) : ModelI
         val output = ByteBuffer.allocateDirect(4 * 25200 * 85)
 
         if (tflite == null) {
-            return listOf()
+            return null
         }
         tflite!!.run(input, output)
 

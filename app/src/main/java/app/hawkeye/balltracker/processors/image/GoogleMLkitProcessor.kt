@@ -1,4 +1,4 @@
-package app.hawkeye.balltracker.processors
+package app.hawkeye.balltracker.processors.image
 
 import androidx.camera.core.ImageProxy
 import app.hawkeye.balltracker.processors.interfaces.ModelImageProcessor
@@ -44,27 +44,27 @@ internal class GoogleMLkitModelImageProcessor() : ModelImageProcessor {
     private val objectDetector = ObjectDetection.getClient(objectDetectorOptions)
 
 
-    override fun processImageProxy(imageProxy: ImageProxy): List<ClassifiedBox> {
+    override fun processImageProxy(imageProxy: ImageProxy): ClassifiedBox? {
         @androidx.camera.core.ExperimentalGetImage
         val mediaImage = imageProxy.image
-        var top3AppropriateObjects: List<ClassifiedBox> = listOf()
+        var topObject: ClassifiedBox? = null
         if (mediaImage != null) {
             val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
 
             await(objectDetector.process(image)
                 .addOnSuccessListener { detectedObjects ->
-                    top3AppropriateObjects = detectedObjects.mapNotNull {
+                    topObject = detectedObjects.mapNotNull {
                         toClassifiedBox(
                             it,
                             image.width,
                             image.height
                         )
-                    }.take(3)
+                    }.firstOrNull()
                 }
                 .addOnFailureListener { e ->
                     LOG.e("Image processor failed to process image", e)
                 })
         }
-        return top3AppropriateObjects
+        return topObject
     }
 }
