@@ -15,7 +15,7 @@ import app.hawkeye.balltracker.utils.ClassifiedBox
 import java.util.*
 
 
-internal class ORTModelImageProcessor(
+internal class ONNXYOLOv5ImageProcessor(
     context: Context
 ) : ModelImageProcessor {
     private var ortSession: OrtSession? = null

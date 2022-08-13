@@ -23,6 +23,8 @@ import androidx.camera.core.ImageProxy
 import app.hawkeye.balltracker.utils.AdaptiveRect
 import app.hawkeye.balltracker.utils.ClassifiedBox
 import app.hawkeye.balltracker.utils.ScreenPoint
+import app.hawkeye.balltracker.utils.createLogger
+import com.elvishew.xlog.XLog
 import java.io.ByteArrayOutputStream
 import java.io.FileInputStream
 import java.nio.ByteBuffer
@@ -121,6 +123,7 @@ private fun YuvImage.toBitmap(): Bitmap? {
 
 private fun yuv420888ToNv21(image: ImageProxy): ByteArray {
     val pixelCount = image.cropRect.width() * image.cropRect.height()
+//    XLog.tag("yuv").i(pixelCount)
     val pixelSizeBits = ImageFormat.getBitsPerPixel(ImageFormat.YUV_420_888)
     val outputBuffer = ByteArray(pixelCount * pixelSizeBits / 8)
     imageToByteBuffer(image, outputBuffer, pixelCount)

@@ -5,5 +5,5 @@ import app.hawkeye.balltracker.utils.ClassifiedBox
 import app.hawkeye.balltracker.utils.ScreenPoint
 
 interface SegmentProcessor {
-    fun processImageSegment(imageProxy: ImageProxy, rect: ScreenPoint) : ClassifiedBox?
+    fun processImageSegment(imageProxy: ImageProxy, screenPoint: ScreenPoint) : ClassifiedBox?
 }

@@ -41,10 +41,8 @@
     <string name="stop_recording">Stop recording</string>
     <string-array name="available_object_detectors">
         <item>None</item>
-        <item>ORT YOLO</item>
-        <item>ORT FastestDet</item>
-        <item>Google ML-kit</item>
-        <item>YOLO TFLITE</item>
+        <item>ONNX YOLO</item>
+        <item>ONNX YOLO + Tracker</item>
     </string-array>
 
 </resources>

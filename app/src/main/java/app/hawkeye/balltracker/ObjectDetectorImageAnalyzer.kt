@@ -3,10 +3,8 @@ package app.hawkeye.balltracker
 import android.content.Context
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
-import app.hawkeye.balltracker.processors.image.GoogleMLkitModelImageProcessor
-import app.hawkeye.balltracker.processors.image.ORTModelImageProcessor
-import app.hawkeye.balltracker.processors.image.ORTModelImageProcessorFastestDet
-import app.hawkeye.balltracker.processors.image.TFliteYOLOv5ProcessorModel
+import app.hawkeye.balltracker.processors.image.ONNXYOLOv5ImageProcessor
+import app.hawkeye.balltracker.processors.image.ONNXYOLOv5WithTrackerImageProcessor
 import app.hawkeye.balltracker.processors.interfaces.ModelImageProcessor
 import app.hawkeye.balltracker.utils.ClassifiedBox
 import app.hawkeye.balltracker.utils.createLogger
@@ -17,9 +15,7 @@ private val LOG = createLogger<ObjectDetectorImageAnalyzer>()
 enum class ImageProcessorsChoice(private val index: Int) {
     None(0),
     ONNX_YOLO_V5(1),
-    ONNX_FASTEST_DET(2),
-    GoogleML(3),
-    TFLITE_YOLO_V5_SMALL(4);
+    ONNX_YOLO_V5_TRACKER(2);
 
     companion object {
         private val VALUES = values()
@@ -38,10 +34,8 @@ class ObjectDetectorImageAnalyzer(
     init {
         modelImageProcessors = mapOf(
             ImageProcessorsChoice.None to ModelImageProcessor.Default,
-            ImageProcessorsChoice.GoogleML to GoogleMLkitModelImageProcessor(),
-            ImageProcessorsChoice.ONNX_YOLO_V5 to ORTModelImageProcessor(context),
-            ImageProcessorsChoice.ONNX_FASTEST_DET to ORTModelImageProcessorFastestDet(context),
-            ImageProcessorsChoice.TFLITE_YOLO_V5_SMALL to TFliteYOLOv5ProcessorModel(context)
+            ImageProcessorsChoice.ONNX_YOLO_V5 to ONNXYOLOv5ImageProcessor(context),
+            ImageProcessorsChoice.ONNX_YOLO_V5_TRACKER to ONNXYOLOv5WithTrackerImageProcessor(context)
         )
     }
 
