@@ -10,8 +10,14 @@ import android.content.Context
 import android.graphics.Bitmap
 import androidx.camera.core.ImageProxy
 import app.hawkeye.balltracker.R
+import app.hawkeye.balltracker.processors.getAllObjectsByClassFromYOLO
 import app.hawkeye.balltracker.processors.interfaces.ModelImageProcessor
+import app.hawkeye.balltracker.processors.preProcess
+import app.hawkeye.balltracker.processors.rotate
+import app.hawkeye.balltracker.processors.toBitmap
+import app.hawkeye.balltracker.utils.AdaptiveRect
 import app.hawkeye.balltracker.utils.ClassifiedBox
+import app.hawkeye.balltracker.utils.ScreenPoint
 import java.util.*
 
 
@@ -42,12 +48,25 @@ internal class ONNXYOLOv5ImageProcessor(
     private val IMAGE_WIDTH: Int = 640
     private val IMAGE_HEIGHT: Int = 640
 
+    private fun getAbsoluteClassifiedBoxFromRelative(relativeClassifiedBox: ClassifiedBox?, relativeRectCenterPoint: ScreenPoint, imageWidth: Int, imageHeight: Int): ClassifiedBox? {
+        if (relativeClassifiedBox == null) {
+            return null
+        }
+        val absoluteBoxWidth = relativeClassifiedBox.adaptiveRect.width * 640 / imageWidth
+        val absoluteBoxHeight = relativeClassifiedBox.adaptiveRect.height * 640 / imageHeight
+        val absoluteBoxCenter = relativeClassifiedBox.adaptiveRect.center * Pair(640.toFloat() / imageWidth, 640.toFloat() / imageHeight) + relativeRectCenterPoint
+
+        return ClassifiedBox(
+            adaptiveRect = AdaptiveRect(absoluteBoxCenter, absoluteBoxWidth, absoluteBoxHeight),
+            relativeClassifiedBox.classId, relativeClassifiedBox.confidence
+        )
+    }
+
 
     override fun processImageProxy(imageProxy: ImageProxy): ClassifiedBox? {
 
         val imgBitmap = imageProxy.toBitmap()
-        val rawBitmap = imgBitmap?.let { Bitmap.createScaledBitmap(it, IMAGE_WIDTH, IMAGE_HEIGHT, false) }
-        val bitmap = rawBitmap?.rotate(imageProxy.imageInfo.rotationDegrees.toFloat())
+        val bitmap = imgBitmap?.rotate(imageProxy.imageInfo.rotationDegrees.toFloat())
 
         if (bitmap != null) {
 
@@ -65,7 +84,7 @@ internal class ONNXYOLOv5ImageProcessor(
 
                             val balls = getAllObjectsByClassFromYOLO(arr, -1, CONFIDENCE_THRESHOLD, SCORE_THRESHOLD, IMAGE_WIDTH, IMAGE_HEIGHT)
 
-                            return getTopDetectedObject(balls)
+                            return getAbsoluteClassifiedBoxFromRelative(getTopDetectedObject(balls), ScreenPoint(320.0f / imageProxy.width, 320.0f / imageProxy.height), imageProxy.width, imageProxy.height)
                         }
                     }
                 }

@@ -22,21 +22,12 @@ class ONNXYOLOv5WithTrackerImageProcessor (
     init {
         segProcessor = ONNXYOLOSegmentProcessor(context, R.raw.yolov5s, 640)
     }
-    // Get index of top 3 values
-    // This is for demo purpose only, there are more efficient algorithms for topK problems
-    private fun getTopDetectedObject(foundObjects: List<ClassifiedBox>): ClassifiedBox? {
-        return foundObjects.maxByOrNull { it.confidence }
-    }
 
-    private val CONFIDENCE_THRESHOLD: Float = 0.3F
-    private val SCORE_THRESHOLD: Float = 0.2F
-    private val IMAGE_WIDTH: Int = 640
-    private val IMAGE_HEIGHT: Int = 640
 
 
     override fun processImageProxy(imageProxy: ImageProxy): ClassifiedBox? {
-        segProcessor.processImageSegment(imageProxy, ScreenPoint(0.5f, 0.5f))
+        return segProcessor.processImageSegment(imageProxy, ScreenPoint(0.5f, 0.5f))
 
-        return null
+
     }
 }

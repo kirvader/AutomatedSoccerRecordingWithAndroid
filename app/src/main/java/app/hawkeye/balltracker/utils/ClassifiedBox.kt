@@ -6,7 +6,19 @@ import kotlin.math.pow
 data class ScreenPoint(
     val x: Float,
     val y: Float
-)
+) {
+    operator fun times(float: Float): ScreenPoint {
+        return ScreenPoint(x * float, y * float)
+    }
+
+    operator fun times(multipliers: Pair<Float, Float>): ScreenPoint {
+        return ScreenPoint(x * multipliers.first, y * multipliers.second)
+    }
+
+    operator fun plus(other: ScreenPoint): ScreenPoint {
+        return ScreenPoint(x + other.x, y + other.y)
+    }
+}
 
 // coordinates here are parts of current screen \in [0, 1]
 data class AdaptiveRect(
