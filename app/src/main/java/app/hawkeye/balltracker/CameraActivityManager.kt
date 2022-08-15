@@ -229,6 +229,11 @@ class CameraManager(
                 null,
                 timeKeeper.getCurrentCircleStartTime()
             )
+            timeKeeper.registerCircle()
+            updateUIOnImageAnalyzerFinished(
+                null,
+                timeKeeper.getInfoAboutLastCircle()
+            )
             return
         }
         LOG.d("Found objects. The best is at x = %f", result.adaptiveRect.center.x)

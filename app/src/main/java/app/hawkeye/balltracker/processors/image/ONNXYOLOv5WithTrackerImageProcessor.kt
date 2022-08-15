@@ -20,14 +20,12 @@ class ONNXYOLOv5WithTrackerImageProcessor (
     private lateinit var segProcessor: SegmentProcessor
 
     init {
-        segProcessor = ONNXYOLOSegmentProcessor(context, R.raw.yolov5s, 640)
+        segProcessor = ONNXYOLOSegmentProcessor(context, R.raw.yolov5n6_128, 128)
     }
 
 
 
     override fun processImageProxy(imageProxy: ImageProxy): ClassifiedBox? {
         return segProcessor.processImageSegment(imageProxy, ScreenPoint(0.5f, 0.5f))
-
-
     }
 }

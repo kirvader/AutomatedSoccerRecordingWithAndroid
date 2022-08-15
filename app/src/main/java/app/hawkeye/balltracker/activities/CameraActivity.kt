@@ -100,8 +100,8 @@ class CameraActivity : AppCompatActivity() {
         runOnUiThread {
             detectedObjectsSurface.setAreaOfDetection(AdaptiveRect(
                 ScreenPoint(0.5f, 0.5f),
-                640.0f / 720,
-                640.0f / 1280
+                128.0f / 720,
+                128.0f / 1280
             ).toRect(detectedObjectsSurface.measuredWidth, detectedObjectsSurface.measuredHeight))
             detectedObjectsSurface.updateCurrentDetectedObject(
                 rect?.toRect(

@@ -3,7 +3,6 @@ package app.hawkeye.balltracker.processors.segment
 import ai.onnxruntime.OnnxTensor
 import ai.onnxruntime.OrtEnvironment
 import android.content.Context
-import android.graphics.Bitmap
 import androidx.camera.core.ImageProxy
 
 import app.hawkeye.balltracker.processors.getAllObjectsByClassFromYOLO
@@ -13,7 +12,6 @@ import app.hawkeye.balltracker.processors.toBitmap
 import app.hawkeye.balltracker.utils.ClassifiedBox
 import app.hawkeye.balltracker.utils.ScreenPoint
 import app.hawkeye.balltracker.utils.createLogger
-import com.elvishew.xlog.XLog
 import java.util.*
 import kotlin.math.max
 import kotlin.math.min
@@ -25,8 +23,6 @@ class ONNXYOLOSegmentProcessor(context: Context, modelId: Int, inputImageSize: I
 
     private val CONFIDENCE_THRESHOLD: Float = 0.3F
     private val SCORE_THRESHOLD: Float = 0.2F
-    private val IMAGE_WIDTH: Int = 640
-    private val IMAGE_HEIGHT: Int = 640
 
     // Get index of top 3 values
     // This is for demo purpose only, there are more efficient algorithms for topK problems
@@ -57,15 +53,14 @@ class ONNXYOLOSegmentProcessor(context: Context, modelId: Int, inputImageSize: I
         val wholeImageHeight = if ((imageProxy.imageInfo.rotationDegrees / 90) % 2 == 0) imageProxy.height else imageProxy.width
         val (left, top) = getTopLeftRectPoint(screenPoint, wholeImageWidth, wholeImageHeight)
 
-
         val imgBitmap = imageProxy.toBitmap()
         val bitmap = imgBitmap?.rotate(imageProxy.imageInfo.rotationDegrees.toFloat())
 
         if (bitmap != null) {
-            val imgData = preProcess(bitmap, IMAGE_WIDTH, IMAGE_HEIGHT, left, top)
+            val imgData = preProcess(bitmap, inputImageSize, inputImageSize, left, top)
 
             val inputName = ortSession.inputNames?.iterator()?.next()
-            val shape = longArrayOf(1, 3, IMAGE_HEIGHT.toLong(), IMAGE_WIDTH.toLong())
+            val shape = longArrayOf(1, 3, inputImageSize.toLong(), inputImageSize.toLong())
             val env = OrtEnvironment.getEnvironment()
             env.use {
                 val tensor = OnnxTensor.createTensor(env, imgData, shape)
@@ -75,7 +70,7 @@ class ONNXYOLOSegmentProcessor(context: Context, modelId: Int, inputImageSize: I
                         output.use {
                             val arr = ((output.get(0)?.value) as Array<Array<FloatArray>>)[0]
 
-                            val balls = getAllObjectsByClassFromYOLO(arr, -1, CONFIDENCE_THRESHOLD, SCORE_THRESHOLD, IMAGE_WIDTH, IMAGE_HEIGHT)
+                            val balls = getAllObjectsByClassFromYOLO(arr, -1, CONFIDENCE_THRESHOLD, SCORE_THRESHOLD, inputImageSize, inputImageSize)
 
                             val relativeResult = getTopDetectedObject(balls) ?: return null
 
