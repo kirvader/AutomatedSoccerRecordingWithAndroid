@@ -84,6 +84,8 @@ class CameraActivity : AppCompatActivity() {
                     LOG.i("Model is not changed.")
                 }
             }
+
+
     }
 
     private fun updateUIOnStartRecording() {
@@ -96,6 +98,11 @@ class CameraActivity : AppCompatActivity() {
 
     private fun updateUIWhenImageAnalyzerFinished(rect: AdaptiveRect?, newBenchmarksInfo: String) {
         runOnUiThread {
+            detectedObjectsSurface.setAreaOfDetection(AdaptiveRect(
+                ScreenPoint(0.5f, 0.5f),
+                640.0f / 720,
+                640.0f / 1280
+            ).toRect(detectedObjectsSurface.measuredWidth, detectedObjectsSurface.measuredHeight))
             detectedObjectsSurface.updateCurrentDetectedObject(
                 rect?.toRect(
                     detectedObjectsSurface.measuredWidth,

@@ -3,6 +3,7 @@ package app.hawkeye.balltracker.processors.segment
 import ai.onnxruntime.OnnxTensor
 import ai.onnxruntime.OrtEnvironment
 import android.content.Context
+import android.graphics.Bitmap
 import androidx.camera.core.ImageProxy
 
 import app.hawkeye.balltracker.processors.getAllObjectsByClassFromYOLO
@@ -12,6 +13,7 @@ import app.hawkeye.balltracker.processors.toBitmap
 import app.hawkeye.balltracker.utils.ClassifiedBox
 import app.hawkeye.balltracker.utils.ScreenPoint
 import app.hawkeye.balltracker.utils.createLogger
+import com.elvishew.xlog.XLog
 import java.util.*
 import kotlin.math.max
 import kotlin.math.min
@@ -32,7 +34,11 @@ class ONNXYOLOSegmentProcessor(context: Context, modelId: Int, inputImageSize: I
         return foundObjects.maxByOrNull { it.confidence }
     }
 
-    private fun getTopLeftRectPoint(screenPoint: ScreenPoint, imageWidth: Int, imageHeight: Int): Pair<Int, Int> {
+    private fun getTopLeftRectPoint(
+        screenPoint: ScreenPoint,
+        imageWidth: Int,
+        imageHeight: Int
+    ): Pair<Int, Int> {
         val leftBorder = (screenPoint.x * imageWidth).toInt() - inputImageSize / 2
         val topBorder = (screenPoint.y * imageHeight).toInt() - inputImageSize / 2
 
@@ -46,15 +52,20 @@ class ONNXYOLOSegmentProcessor(context: Context, modelId: Int, inputImageSize: I
         imageProxy: ImageProxy,
         screenPoint: ScreenPoint
     ): ClassifiedBox? {
-        val (left, top) = getTopLeftRectPoint(screenPoint, imageProxy.width, imageProxy.height)
+
+        val wholeImageWidth = if ((imageProxy.imageInfo.rotationDegrees / 90) % 2 == 0) imageProxy.width else imageProxy.height
+        val wholeImageHeight = if ((imageProxy.imageInfo.rotationDegrees / 90) % 2 == 0) imageProxy.height else imageProxy.width
+        val (left, top) = getTopLeftRectPoint(screenPoint, wholeImageWidth, wholeImageHeight)
+
 
         val imgBitmap = imageProxy.toBitmap()
         val bitmap = imgBitmap?.rotate(imageProxy.imageInfo.rotationDegrees.toFloat())
 
         if (bitmap != null) {
-            val imgData = preProcess(bitmap, inputImageSize, inputImageSize, left, top)
+            val imgData = preProcess(bitmap, IMAGE_WIDTH, IMAGE_HEIGHT, left, top)
+
             val inputName = ortSession.inputNames?.iterator()?.next()
-            val shape = longArrayOf(1, 3, inputImageSize.toLong(), inputImageSize.toLong())
+            val shape = longArrayOf(1, 3, IMAGE_HEIGHT.toLong(), IMAGE_WIDTH.toLong())
             val env = OrtEnvironment.getEnvironment()
             env.use {
                 val tensor = OnnxTensor.createTensor(env, imgData, shape)
@@ -66,13 +77,21 @@ class ONNXYOLOSegmentProcessor(context: Context, modelId: Int, inputImageSize: I
 
                             val balls = getAllObjectsByClassFromYOLO(arr, -1, CONFIDENCE_THRESHOLD, SCORE_THRESHOLD, IMAGE_WIDTH, IMAGE_HEIGHT)
 
-                            return getAbsoluteClassifiedBoxFromRelative(getTopDetectedObject(balls), screenPoint, imageProxy.width, imageProxy.height)
+                            val relativeResult = getTopDetectedObject(balls) ?: return null
+
+                            return getAbsoluteClassifiedBoxFromRelative(
+                                relativeResult,
+                                screenPoint,
+                                wholeImageWidth,
+                                wholeImageHeight
+                            )
                         }
                     }
                 }
             }
         }
         return null
+
     }
 
 }

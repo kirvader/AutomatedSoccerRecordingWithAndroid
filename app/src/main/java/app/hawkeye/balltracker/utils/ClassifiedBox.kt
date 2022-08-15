@@ -18,6 +18,10 @@ data class ScreenPoint(
     operator fun plus(other: ScreenPoint): ScreenPoint {
         return ScreenPoint(x + other.x, y + other.y)
     }
+
+    operator fun minus(other: ScreenPoint): ScreenPoint {
+        return ScreenPoint(x - other.x, y - other.y)
+    }
 }
 
 // coordinates here are parts of current screen \in [0, 1]
@@ -46,8 +50,9 @@ data class ClassifiedBox(
 
     fun getStrInfo(): String {
         val strPosition =
-            "(${round(adaptiveRect.center.x.toDouble(), 2)};${round(adaptiveRect.center.y.toDouble(), 2)})"
+            "topLeft = (${round(adaptiveRect.center.x.toDouble() - adaptiveRect.width / 2, 2)}; ${round(adaptiveRect.center.y.toDouble() - adaptiveRect.height / 2, 2)});\n" +
+                    "bottomRight = (${round(adaptiveRect.center.x.toDouble() + adaptiveRect.width / 2, 2)}; ${round(adaptiveRect.center.y.toDouble() + adaptiveRect.height / 2, 2)})"
         val strConfidence = "conf: ${round((confidence * 100).toDouble(), 2)}"
-        return "$strPosition $strConfidence"
+        return "$strPosition\n$classId\n$strConfidence"
     }
 }

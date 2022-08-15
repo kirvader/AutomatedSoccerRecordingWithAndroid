@@ -26,9 +26,11 @@ abstract class ONNXSegmentProcessor(context: Context, modelId: Int, protected va
         if (relativeClassifiedBox == null) {
             return null
         }
+        val absoluteRectTopLeftPoint = relativeRectCenterPoint - ScreenPoint(inputImageSize.toFloat() / imageWidth / 2, inputImageSize.toFloat() / imageHeight / 2)
+
         val absoluteBoxWidth = relativeClassifiedBox.adaptiveRect.width * inputImageSize / imageWidth
         val absoluteBoxHeight = relativeClassifiedBox.adaptiveRect.height * inputImageSize / imageHeight
-        val absoluteBoxCenter = relativeClassifiedBox.adaptiveRect.center * Pair(inputImageSize.toFloat() / imageWidth, inputImageSize.toFloat() / imageHeight) + relativeRectCenterPoint
+        val absoluteBoxCenter = relativeClassifiedBox.adaptiveRect.center * Pair(inputImageSize.toFloat() / imageWidth, inputImageSize.toFloat() / imageHeight) + absoluteRectTopLeftPoint
 
         return ClassifiedBox(
             adaptiveRect = AdaptiveRect(absoluteBoxCenter, absoluteBoxWidth, absoluteBoxHeight),
