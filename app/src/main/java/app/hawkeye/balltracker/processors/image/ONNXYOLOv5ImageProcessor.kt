@@ -15,7 +15,9 @@ import app.hawkeye.balltracker.processors.interfaces.ModelImageProcessor
 import app.hawkeye.balltracker.processors.preProcess
 import app.hawkeye.balltracker.processors.rotate
 import app.hawkeye.balltracker.processors.toBitmap
+import app.hawkeye.balltracker.utils.AdaptiveRect
 import app.hawkeye.balltracker.utils.ClassifiedBox
+import app.hawkeye.balltracker.utils.ScreenPoint
 import com.elvishew.xlog.XLog
 import java.util.*
 
@@ -77,5 +79,15 @@ internal class ONNXYOLOv5ImageProcessor(
             }
         }
         return null
+    }
+
+    override fun getAreaOfDetection(): List<AdaptiveRect> {
+        return listOf(
+            AdaptiveRect(
+                ScreenPoint(0.5f, 0.5f),
+                1.0f,
+                1.0f
+            )
+        )
     }
 }

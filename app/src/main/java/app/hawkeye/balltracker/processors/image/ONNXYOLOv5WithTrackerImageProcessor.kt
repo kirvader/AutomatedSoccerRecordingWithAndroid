@@ -10,6 +10,7 @@ import app.hawkeye.balltracker.R
 import app.hawkeye.balltracker.processors.interfaces.ModelImageProcessor
 import app.hawkeye.balltracker.processors.interfaces.SegmentProcessor
 import app.hawkeye.balltracker.processors.segment.ONNXYOLOSegmentProcessor
+import app.hawkeye.balltracker.utils.AdaptiveRect
 import app.hawkeye.balltracker.utils.ClassifiedBox
 import app.hawkeye.balltracker.utils.ScreenPoint
 import java.util.*
@@ -27,5 +28,16 @@ class ONNXYOLOv5WithTrackerImageProcessor (
 
     override fun processImageProxy(imageProxy: ImageProxy): ClassifiedBox? {
         return segProcessor.processImageSegment(imageProxy, ScreenPoint(0.5f, 0.5f))
+    }
+
+    override fun getAreaOfDetection(): List<AdaptiveRect> {
+        return listOf(
+            AdaptiveRect(
+                ScreenPoint(0.5f, 0.5f),
+                640.0f / 720.0f,
+                640.0f / 1280.0f
+
+            )
+        )
     }
 }

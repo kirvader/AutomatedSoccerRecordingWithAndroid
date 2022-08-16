@@ -6,6 +6,7 @@ import androidx.camera.core.ImageProxy
 import app.hawkeye.balltracker.processors.image.ONNXYOLOv5ImageProcessor
 import app.hawkeye.balltracker.processors.image.ONNXYOLOv5WithTrackerImageProcessor
 import app.hawkeye.balltracker.processors.interfaces.ModelImageProcessor
+import app.hawkeye.balltracker.utils.AdaptiveRect
 import app.hawkeye.balltracker.utils.ClassifiedBox
 import app.hawkeye.balltracker.utils.createLogger
 
@@ -25,7 +26,8 @@ enum class ImageProcessorsChoice(private val index: Int) {
 
 class ObjectDetectorImageAnalyzer(
     context: Context,
-    val onResultsReady: (ClassifiedBox?) -> Unit
+    val onResultsReady: (ClassifiedBox?) -> Unit,
+    private val updateUIAreaOfDetectionWithNewArea: (List<AdaptiveRect>) -> Unit
 ) : ImageAnalysis.Analyzer {
     private var currentImageProcessorsChoice: ImageProcessorsChoice = ImageProcessorsChoice.None
     private var modelImageProcessors: Map<ImageProcessorsChoice, ModelImageProcessor> = mapOf()
@@ -42,6 +44,8 @@ class ObjectDetectorImageAnalyzer(
     fun setCurrentImageProcessor(choice: ImageProcessorsChoice) {
         currentImageProcessorsChoice = choice
         LOG.i(currentImageProcessorsChoice)
+        modelImageProcessors[currentImageProcessorsChoice]?.getAreaOfDetection()
+            ?.let { updateUIAreaOfDetectionWithNewArea(it) }
     }
 
     override fun analyze(imageProxy: ImageProxy) {

@@ -59,32 +59,15 @@ class DetectedObjectsView @JvmOverloads constructor(
         color = Color.RED
     }
 
-    private val currentAreaOfDetectionPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        style = Paint.Style.STROKE
-        textAlign = Paint.Align.CENTER
-        textSize = 55.0f
-        typeface = Typeface.create("", Typeface.BOLD)
-        color = Color.RED
-        strokeWidth = 10.0f
-    }
-
-    private var currentAreaOfDetection = Rect(0, 100, 200, 200)
-
     private var trackedObjectLocations = ObjectLocations()
     fun updateCurrentDetectedObject(newCurrentLocation: Rect?) {
         trackedObjectLocations = trackedObjectLocations.updateCurrentLocation(newCurrentLocation)
         invalidate()
     }
 
-    fun setAreaOfDetection(rect: Rect) {
-        currentAreaOfDetection = rect
-        invalidate()
-    }
-
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
 
-        canvas?.drawRect(currentAreaOfDetection, currentAreaOfDetectionPaint)
 
         trackedObjectLocations.drawBoxAroundPreviousLocation(canvas, previousDetectedObjectPaint)
         trackedObjectLocations.drawBoxAroundCurrentLocation(canvas, currentDetectedObjectPaint)

@@ -14,8 +14,14 @@
         android:layout_above="@+id/mylinear"
         app:implementationMode="compatible">
 
-
     </androidx.camera.view.PreviewView>
+
+    <app.hawkeye.balltracker.views.AreaOfDetectionView
+        android:id="@+id/areaOfDetectionSurface"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@+id/mylinear"
+        />
 
     <app.hawkeye.balltracker.views.DetectedObjectsView
         android:id="@+id/detectedObjectsSurface"

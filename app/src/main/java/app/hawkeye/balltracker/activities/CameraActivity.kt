@@ -9,9 +9,6 @@ import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.camera.core.CameraInfoUnavailableException
-import androidx.camera.core.FocusMeteringAction
-import androidx.camera.core.SurfaceOrientedMeteringPointFactory
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import app.hawkeye.balltracker.*
@@ -19,7 +16,6 @@ import app.hawkeye.balltracker.R
 import app.hawkeye.balltracker.rotatable.PivoPodDevice
 import app.hawkeye.balltracker.utils.*
 import kotlinx.android.synthetic.main.activity_camera.*
-import java.util.concurrent.TimeUnit
 
 
 private val LOG = createLogger<CameraActivity>()
@@ -38,7 +34,8 @@ class CameraActivity : AppCompatActivity() {
             ::updateUIOnStartRecording,
             ::updateUIOnStopRecording,
             ::updateUIWhenImageAnalyzerFinished,
-            ::getPreviewSurfaceProvider
+            ::getPreviewSurfaceProvider,
+            ::updateUIAreaOfDetectionWithNewArea
         )
 
         if (allPermissionsGranted()) {
@@ -85,7 +82,7 @@ class CameraActivity : AppCompatActivity() {
                 }
             }
 
-
+        updateUIAreaOfDetectionWithNewArea(listOf())
     }
 
     private fun updateUIOnStartRecording() {
@@ -96,13 +93,12 @@ class CameraActivity : AppCompatActivity() {
         videoCaptureButton.setText(R.string.start_recording)
     }
 
+    private fun updateUIAreaOfDetectionWithNewArea(newArea: List<AdaptiveRect>) {
+        areaOfDetectionSurface.updateAreaOfDetection(newArea)
+    }
+
     private fun updateUIWhenImageAnalyzerFinished(rect: AdaptiveRect?, newBenchmarksInfo: String) {
         runOnUiThread {
-            detectedObjectsSurface.setAreaOfDetection(AdaptiveRect(
-                ScreenPoint(0.5f, 0.5f),
-                128.0f / 720,
-                128.0f / 1280
-            ).toRect(detectedObjectsSurface.measuredWidth, detectedObjectsSurface.measuredHeight))
             detectedObjectsSurface.updateCurrentDetectedObject(
                 rect?.toRect(
                     detectedObjectsSurface.measuredWidth,

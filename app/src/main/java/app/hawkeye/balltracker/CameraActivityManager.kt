@@ -21,6 +21,7 @@ import app.hawkeye.balltracker.utils.ClassifiedBox
 import app.hawkeye.balltracker.controllers.time.TimeKeeper
 import app.hawkeye.balltracker.controllers.time.interfaces.TimeKeeperBase
 import app.hawkeye.balltracker.utils.createLogger
+import app.hawkeye.balltracker.views.AreaOfDetectionView
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -39,6 +40,7 @@ class CameraManager(
     private val updateUIOnStartRecording: () -> Unit,
     private val updateUIOnImageAnalyzerFinished: (AdaptiveRect?, String) -> Unit,
     private val getPreviewSurfaceProvider: () -> Preview.SurfaceProvider,
+    updateUIAreaOfDetectionWithNewArea: (List<AdaptiveRect>) -> Unit
 ) {
 
     private val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
@@ -91,7 +93,11 @@ class CameraManager(
 
     init {
         objectDetectorImageAnalyzer =
-            ObjectDetectorImageAnalyzer(context, ::updateTrackingSystemState)
+            ObjectDetectorImageAnalyzer(
+                context,
+                ::updateTrackingSystemState,
+                updateUIAreaOfDetectionWithNewArea
+            )
     }
 
 
