@@ -8,6 +8,9 @@ import android.graphics.Typeface
 import android.util.AttributeSet
 import android.view.View
 import app.hawkeye.balltracker.utils.AdaptiveRect
+import app.hawkeye.balltracker.utils.createLogger
+
+private val LOG = createLogger<AreaOfDetectionView>()
 
 class AreaOfDetectionView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
@@ -38,6 +41,8 @@ class AreaOfDetectionView @JvmOverloads constructor(
         super.onDraw(canvas)
 
         for (adaptiveRect in areaOfDetection) {
+            LOG.i("${adaptiveRect.center.x} ${adaptiveRect.center.y}")
+
             canvas?.drawRect(adaptiveRect.toRect(measuredWidth, measuredHeight), detectionSegmentPaint)
         }
     }

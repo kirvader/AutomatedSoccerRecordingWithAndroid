@@ -21,7 +21,7 @@ import android.graphics.*
 import androidx.camera.core.ImageProxy
 import app.hawkeye.balltracker.utils.AdaptiveRect
 import app.hawkeye.balltracker.utils.ClassifiedBox
-import app.hawkeye.balltracker.utils.ScreenPoint
+import app.hawkeye.balltracker.utils.AdaptiveScreenPoint
 import java.io.ByteArrayOutputStream
 import java.io.FileInputStream
 import java.nio.FloatBuffer
@@ -255,7 +255,7 @@ fun getAllObjectsByClassFromYOLO(
         result.add(
             ClassifiedBox(
                 AdaptiveRect(
-                    ScreenPoint(
+                    AdaptiveScreenPoint(
                         record[0] / imageWidth,
                         record[1] / imageHeight
                     ),

@@ -38,8 +38,8 @@ class CameraManager(
     private val lifecycleOwner: LifecycleOwner,
     private val updateUIOnStopRecording: () -> Unit,
     private val updateUIOnStartRecording: () -> Unit,
-    private val updateUIOnImageAnalyzerFinished: (AdaptiveRect?, String) -> Unit,
     private val getPreviewSurfaceProvider: () -> Preview.SurfaceProvider,
+    updateUIOnImageAnalyzerFinished: (AdaptiveRect?, String) -> Unit,
     updateUIAreaOfDetectionWithNewArea: (List<AdaptiveRect>) -> Unit
 ) {
 
@@ -60,13 +60,6 @@ class CameraManager(
     private val scope = CoroutineScope(Job() + Dispatchers.Default)
 
     private var objectDetectorImageAnalyzer: ObjectDetectorImageAnalyzer? = null
-
-    private var timeKeeper: TimeKeeperBase = TimeKeeper()
-    private var movementControllerDevice =
-        FootballTrackingSystemController(
-            App.getRotatableDevice()
-        )
-
 
     private val recordingListener = Consumer<VideoRecordEvent> { event ->
         when (event) {
@@ -95,11 +88,10 @@ class CameraManager(
         objectDetectorImageAnalyzer =
             ObjectDetectorImageAnalyzer(
                 context,
-                ::updateTrackingSystemState,
+                updateUIOnImageAnalyzerFinished,
                 updateUIAreaOfDetectionWithNewArea
             )
     }
-
 
     fun setImageProcessor(imageProcessorsChoice: ImageProcessorsChoice) {
         objectDetectorImageAnalyzer?.setCurrentImageProcessor(imageProcessorsChoice)
@@ -228,31 +220,7 @@ class CameraManager(
         recording = null
     }
 
-    private fun updateTrackingSystemState(result: ClassifiedBox?) {
-        if (result == null) {
-            LOG.i("No appropriate objects found")
-            movementControllerDevice.updateBallModelWithClassifiedBox(
-                null,
-                timeKeeper.getCurrentCircleStartTime()
-            )
-            timeKeeper.registerCircle()
-            updateUIOnImageAnalyzerFinished(
-                null,
-                timeKeeper.getInfoAboutLastCircle()
-            )
-            return
-        }
-        LOG.d("Found objects. The best is at x = %f", result.adaptiveRect.center.x)
-        movementControllerDevice.updateBallModelWithClassifiedBox(
-            result,
-            timeKeeper.getCurrentCircleStartTime()
-        )
-        timeKeeper.registerCircle()
-        updateUIOnImageAnalyzerFinished(
-            result.adaptiveRect,
-            timeKeeper.getInfoAboutLastCircle()
-        )
-    }
+
 
     fun destroy() {
         backgroundExecutor.shutdown()

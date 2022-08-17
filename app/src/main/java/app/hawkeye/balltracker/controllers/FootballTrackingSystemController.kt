@@ -1,6 +1,7 @@
 package app.hawkeye.balltracker.controllers
 
 import app.hawkeye.balltracker.utils.ClassifiedBox
+import app.hawkeye.balltracker.utils.AdaptiveScreenPoint
 import com.hawkeye.movement.TrackingSystemController
 import com.hawkeye.movement.interfaces.RotatableDevice
 import com.hawkeye.movement.utils.Point
@@ -12,6 +13,16 @@ class FootballTrackingSystemController(rotatableDevice: RotatableDevice) : Track
 ) {
 
     private val averageDistance = 15.0f
+
+    fun getBallPositionOnScreenAtTime(absTime_ms: Long) : AdaptiveScreenPoint? {
+        val currentBallPosition = ballMovementModel.getApproximatePositionAtTime(absTime_ms) ?: return null
+
+        val currentCameraDirection = rotatableDeviceController.getDirectionAtTime(absTime_ms)
+
+        val deltaAngle = currentBallPosition.getAngle() - currentCameraDirection
+
+        return AdaptiveScreenPoint(0.5f + (deltaAngle / cameraFOV - 0.5f), currentBallPosition.getHeight())
+    }
 
     fun updateBallModelWithClassifiedBox(box: ClassifiedBox?, absTime_ms: Long) {
         if (box == null)

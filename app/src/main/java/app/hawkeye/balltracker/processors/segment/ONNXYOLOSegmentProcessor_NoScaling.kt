@@ -9,16 +9,16 @@ import app.hawkeye.balltracker.processors.getAllObjectsByClassFromYOLO
 import app.hawkeye.balltracker.processors.preProcess
 import app.hawkeye.balltracker.processors.rotate
 import app.hawkeye.balltracker.processors.toBitmap
+import app.hawkeye.balltracker.processors.utils.ScreenRect
 import app.hawkeye.balltracker.utils.ClassifiedBox
-import app.hawkeye.balltracker.utils.ScreenPoint
 import app.hawkeye.balltracker.utils.createLogger
 import java.util.*
 import kotlin.math.max
 import kotlin.math.min
 
-private val LOG = createLogger<ONNXYOLOSegmentProcessor>()
+private val LOG = createLogger<ONNXYOLOSegmentProcessor_NoScaling>()
 
-class ONNXYOLOSegmentProcessor(context: Context, modelId: Int, inputImageSize: Int) :
+class ONNXYOLOSegmentProcessor_NoScaling(context: Context, modelId: Int, inputImageSize: Int) :
     ONNXSegmentProcessor(context, modelId, inputImageSize) {
 
     private val CONFIDENCE_THRESHOLD: Float = 0.3F
@@ -31,27 +31,27 @@ class ONNXYOLOSegmentProcessor(context: Context, modelId: Int, inputImageSize: I
     }
 
     private fun getTopLeftRectPoint(
-        screenPoint: ScreenPoint,
+        screenRect: ScreenRect,
         imageWidth: Int,
         imageHeight: Int
     ): Pair<Int, Int> {
-        val leftBorder = (screenPoint.x * imageWidth).toInt() - inputImageSize / 2
-        val topBorder = (screenPoint.y * imageHeight).toInt() - inputImageSize / 2
+        val leftBorder = screenRect.center.x - screenRect.width / 2
+        val topBorder = screenRect.center.y - screenRect.height / 2
 
-        val calibratedLeftBorder = max(0, min(imageWidth - inputImageSize, leftBorder))
-        val calibratedTopBorder = max(0, min(imageHeight - inputImageSize, topBorder))
+        val calibratedLeftBorder = max(0, min(imageWidth - screenRect.width, leftBorder))
+        val calibratedTopBorder = max(0, min(imageHeight - screenRect.height, topBorder))
 
         return Pair(calibratedLeftBorder, calibratedTopBorder)
     }
 
     override fun processImageSegment(
         imageProxy: ImageProxy,
-        screenPoint: ScreenPoint
+        screenRect: ScreenRect
     ): ClassifiedBox? {
 
         val wholeImageWidth = if ((imageProxy.imageInfo.rotationDegrees / 90) % 2 == 0) imageProxy.width else imageProxy.height
         val wholeImageHeight = if ((imageProxy.imageInfo.rotationDegrees / 90) % 2 == 0) imageProxy.height else imageProxy.width
-        val (left, top) = getTopLeftRectPoint(screenPoint, wholeImageWidth, wholeImageHeight)
+        val (left, top) = getTopLeftRectPoint(screenRect, wholeImageWidth, wholeImageHeight)
 
         val imgBitmap = imageProxy.toBitmap()
         val bitmap = imgBitmap?.rotate(imageProxy.imageInfo.rotationDegrees.toFloat())
@@ -76,7 +76,7 @@ class ONNXYOLOSegmentProcessor(context: Context, modelId: Int, inputImageSize: I
 
                             return getAbsoluteClassifiedBoxFromRelative(
                                 relativeResult,
-                                screenPoint,
+                                screenRect,
                                 wholeImageWidth,
                                 wholeImageHeight
                             )

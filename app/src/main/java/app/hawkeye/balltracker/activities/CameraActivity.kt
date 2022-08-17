@@ -33,8 +33,8 @@ class CameraActivity : AppCompatActivity() {
             this,
             ::updateUIOnStartRecording,
             ::updateUIOnStopRecording,
-            ::updateUIWhenImageAnalyzerFinished,
             ::getPreviewSurfaceProvider,
+            ::updateUIWhenImageAnalyzerFinished,
             ::updateUIAreaOfDetectionWithNewArea
         )
 

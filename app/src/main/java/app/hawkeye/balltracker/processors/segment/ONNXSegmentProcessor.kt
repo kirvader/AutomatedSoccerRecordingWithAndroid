@@ -4,9 +4,10 @@ import ai.onnxruntime.OrtEnvironment
 import ai.onnxruntime.OrtSession
 import android.content.Context
 import app.hawkeye.balltracker.processors.interfaces.SegmentProcessor
+import app.hawkeye.balltracker.processors.utils.ScreenRect
 import app.hawkeye.balltracker.utils.AdaptiveRect
 import app.hawkeye.balltracker.utils.ClassifiedBox
-import app.hawkeye.balltracker.utils.ScreenPoint
+import app.hawkeye.balltracker.utils.AdaptiveScreenPoint
 import app.hawkeye.balltracker.utils.createLogger
 
 private val LOG = createLogger<ONNXSegmentProcessor>()
@@ -22,11 +23,11 @@ abstract class ONNXSegmentProcessor(context: Context, modelId: Int, protected va
         ortSession = OrtEnvironment.getEnvironment().createSession(readYoloModel(context, modelId))
     }
 
-    protected fun getAbsoluteClassifiedBoxFromRelative(relativeClassifiedBox: ClassifiedBox?, relativeRectCenterPoint: ScreenPoint, imageWidth: Int, imageHeight: Int): ClassifiedBox? {
+    protected fun getAbsoluteClassifiedBoxFromRelative(relativeClassifiedBox: ClassifiedBox?, screenRect: ScreenRect, imageWidth: Int, imageHeight: Int): ClassifiedBox? {
         if (relativeClassifiedBox == null) {
             return null
         }
-        val absoluteRectTopLeftPoint = relativeRectCenterPoint - ScreenPoint(inputImageSize.toFloat() / imageWidth / 2, inputImageSize.toFloat() / imageHeight / 2)
+        val absoluteRectTopLeftPoint = screenRect.center.toAdaptive(imageWidth, imageHeight) - AdaptiveScreenPoint(screenRect.width.toFloat() / imageWidth / 2, screenRect.height.toFloat() / imageHeight / 2)
 
         val absoluteBoxWidth = relativeClassifiedBox.adaptiveRect.width * inputImageSize / imageWidth
         val absoluteBoxHeight = relativeClassifiedBox.adaptiveRect.height * inputImageSize / imageHeight
