@@ -25,18 +25,25 @@ class ONNXYOLOv5WithTrackerImageProcessor(
     private val getCurrentImageProcessingStart: () -> Long,
     private val updateUIAreaOfDetectionWithNewArea: (List<AdaptiveRect>) -> Unit
 ) : ModelImageProcessor {
-    private var segProcessor: SegmentProcessor
+
+    private var segmentProcessors: Map<Int, SegmentProcessor> = mapOf()
 
     private var trackingStrategy: TrackingStrategy
 
-    private lateinit var tilingStrategy: TilingStrategy
+    private var tilingStrategy: TilingStrategy
 
     init {
-        segProcessor = ONNXYOLOSegmentProcessor_NoScaling(context, R.raw.yolov5s_640, 640)
+        segmentProcessors = mapOf(
+            64 to ONNXYOLOSegmentProcessor_NoScaling(context, R.raw.yolov5s_64, 64),
+            128 to ONNXYOLOSegmentProcessor_NoScaling(context, R.raw.yolov5s_128, 128),
+            256 to ONNXYOLOSegmentProcessor_NoScaling(context, R.raw.yolov5s_256, 256),
+            512 to ONNXYOLOSegmentProcessor_NoScaling(context, R.raw.yolov5s_512, 512),
+            640 to ONNXYOLOSegmentProcessor_NoScaling(context, R.raw.yolov5s_640, 640)
+        )
 
         trackingStrategy = SingleRectFollower_StaticCamera(getBallScreenPositionAtTime)
 
-        tilingStrategy = SingleRectTiling(listOf(640))
+        tilingStrategy = SingleRectTiling(segmentProcessors.keys.toList())
     }
 
 
@@ -59,7 +66,7 @@ class ONNXYOLOv5WithTrackerImageProcessor(
 
         val allDetectingResults = mutableListOf<ClassifiedBox>()
         tiling.map {
-            val result = segProcessor.processImageSegment(imageProxy, it.screenPartToHandle)
+            val result = segmentProcessors[it.inputImageSize]?.processImageSegment(imageProxy, it.screenPartToHandle)
             if (result != null)
                 allDetectingResults.add(result)
         }
