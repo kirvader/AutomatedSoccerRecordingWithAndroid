@@ -70,7 +70,7 @@ class ONNXYOLOSegmentProcessor_NoScaling(context: Context, modelId: Int, inputIm
                         output.use {
                             val arr = ((output.get(0)?.value) as Array<Array<FloatArray>>)[0]
 
-                            val balls = getAllObjectsByClassFromYOLO(arr, -1, CONFIDENCE_THRESHOLD, SCORE_THRESHOLD, inputImageSize, inputImageSize)
+                            val balls = getAllObjectsByClassFromYOLO(arr, 0, CONFIDENCE_THRESHOLD, SCORE_THRESHOLD, inputImageSize, inputImageSize)
 
                             val relativeResult = getTopDetectedObject(balls) ?: return null
 

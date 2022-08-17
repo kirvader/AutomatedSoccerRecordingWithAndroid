@@ -6,20 +6,23 @@ import com.hawkeye.movement.TrackingSystemController
 import com.hawkeye.movement.interfaces.RotatableDevice
 import com.hawkeye.movement.utils.Point
 import com.hawkeye.movement.utils.PolarPoint
+import com.hawkeye.movement.utils.convertRadianToGrad
 
 
 class FootballTrackingSystemController(rotatableDevice: RotatableDevice) : TrackingSystemController(
     rotatableDevice
 ) {
 
-    private val averageDistance = 15.0f
+    private val averageDistance = 10.0f
 
     fun getBallPositionOnScreenAtTime(absTime_ms: Long) : AdaptiveScreenPoint? {
         val currentBallPosition = ballMovementModel.getApproximatePositionAtTime(absTime_ms) ?: return null
 
+        val ballDirection = convertRadianToGrad(currentBallPosition.getAngle())
+
         val currentCameraDirection = rotatableDeviceController.getDirectionAtTime(absTime_ms)
 
-        val deltaAngle = currentBallPosition.getAngle() - currentCameraDirection
+        val deltaAngle = ballDirection - currentCameraDirection
 
         return AdaptiveScreenPoint(0.5f + (deltaAngle / cameraFOV - 0.5f), currentBallPosition.getHeight())
     }

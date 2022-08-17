@@ -10,6 +10,7 @@ import app.hawkeye.balltracker.processors.interfaces.TilingStrategy
 import app.hawkeye.balltracker.processors.interfaces.TrackingStrategy
 import app.hawkeye.balltracker.processors.segment.ONNXYOLOSegmentProcessor_NoScaling
 import app.hawkeye.balltracker.processors.tiling_strategies.SingleRectTiling
+import app.hawkeye.balltracker.processors.tracking_strategies.SingleRectFollower_RotatingCamera
 import app.hawkeye.balltracker.processors.tracking_strategies.SingleRectFollower_StaticCamera
 import app.hawkeye.balltracker.processors.utils.SegmentProcessorConfig
 import app.hawkeye.balltracker.utils.AdaptiveRect
@@ -41,7 +42,9 @@ class ONNXYOLOv5WithTrackerImageProcessor(
             640 to ONNXYOLOSegmentProcessor_NoScaling(context, R.raw.yolov5s_640, 640)
         )
 
-        trackingStrategy = SingleRectFollower_StaticCamera(getBallScreenPositionAtTime)
+        trackingStrategy = SingleRectFollower_StaticCamera()
+
+//        trackingStrategy = SingleRectFollower_RotatingCamera(getBallScreenPositionAtTime)
 
         tilingStrategy = SingleRectTiling(segmentProcessors.keys.toList())
     }
