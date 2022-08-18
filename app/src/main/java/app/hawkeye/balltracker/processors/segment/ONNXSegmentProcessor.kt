@@ -12,7 +12,7 @@ import app.hawkeye.balltracker.utils.createLogger
 
 private val LOG = createLogger<ONNXSegmentProcessor>()
 
-abstract class ONNXSegmentProcessor(context: Context, modelId: Int, protected val inputImageSize: Int) : SegmentProcessor {
+abstract class ONNXSegmentProcessor(context: Context, modelId: Int, protected val modelInputImageSideSize: Int) : SegmentProcessor {
     protected lateinit var ortSession: OrtSession
 
     private fun readYoloModel(context: Context, modelId: Int): ByteArray {
@@ -29,9 +29,9 @@ abstract class ONNXSegmentProcessor(context: Context, modelId: Int, protected va
         }
         val absoluteRectTopLeftPoint = screenRect.center.toAdaptive(imageWidth, imageHeight) - AdaptiveScreenPoint(screenRect.width.toFloat() / imageWidth / 2, screenRect.height.toFloat() / imageHeight / 2)
 
-        val absoluteBoxWidth = relativeClassifiedBox.adaptiveRect.width * inputImageSize / imageWidth
-        val absoluteBoxHeight = relativeClassifiedBox.adaptiveRect.height * inputImageSize / imageHeight
-        val absoluteBoxCenter = relativeClassifiedBox.adaptiveRect.center * Pair(inputImageSize.toFloat() / imageWidth, inputImageSize.toFloat() / imageHeight) + absoluteRectTopLeftPoint
+        val absoluteBoxWidth = relativeClassifiedBox.adaptiveRect.width * modelInputImageSideSize / imageWidth
+        val absoluteBoxHeight = relativeClassifiedBox.adaptiveRect.height * modelInputImageSideSize / imageHeight
+        val absoluteBoxCenter = relativeClassifiedBox.adaptiveRect.center * Pair(modelInputImageSideSize.toFloat() / imageWidth, modelInputImageSideSize.toFloat() / imageHeight) + absoluteRectTopLeftPoint
 
         return ClassifiedBox(
             adaptiveRect = AdaptiveRect(absoluteBoxCenter, absoluteBoxWidth, absoluteBoxHeight),

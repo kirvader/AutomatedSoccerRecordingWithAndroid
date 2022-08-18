@@ -19,7 +19,11 @@ import kotlin.math.min
 
 private val LOG = createLogger<ONNXYOLOSegmentProcessor_NoScaling>()
 
-class ONNXYOLOSegmentProcessor_NoScaling(context: Context, modelId: Int, modelInputImageSideSize: Int) :
+class ONNXYOLOSegmentProcessor_Scalable(
+    context: Context,
+    modelId: Int,
+    modelInputImageSideSize: Int
+) :
     ONNXSegmentProcessor(context, modelId, modelInputImageSideSize) {
 
     private val CONFIDENCE_THRESHOLD: Float = 0.3F
@@ -39,30 +43,46 @@ class ONNXYOLOSegmentProcessor_NoScaling(context: Context, modelId: Int, modelIn
         val leftBorder = screenRect.center.x - screenRect.width / 2
         val topBorder = screenRect.center.y - screenRect.height / 2
 
-        val calibratedLeftBorder = max(0, min(imageWidth - screenRect.width, leftBorder))
-        val calibratedTopBorder = max(0, min(imageHeight - screenRect.height, topBorder))
+        val calibratedLeftBorder = max(0, min(imageWidth - modelInputImageSideSize, leftBorder))
+        val calibratedTopBorder = max(0, min(imageHeight - modelInputImageSideSize, topBorder))
 
         return Pair(calibratedLeftBorder, calibratedTopBorder)
+    }
+
+    private fun getScaleFactor(rectToProcessSideSize: Int): Float {
+        return modelInputImageSideSize.toFloat() / rectToProcessSideSize
     }
 
     override fun processImageSegment(
         imageProxy: ImageProxy,
         screenRect: ScreenRect
     ): ClassifiedBox? {
+        val widthScaleFactor = getScaleFactor(screenRect.width)
+        val heightScaleFactor = getScaleFactor(screenRect.height)
 
-        val wholeImageWidth = if ((imageProxy.imageInfo.rotationDegrees / 90) % 2 == 0) imageProxy.width else imageProxy.height
-        val wholeImageHeight = if ((imageProxy.imageInfo.rotationDegrees / 90) % 2 == 0) imageProxy.height else imageProxy.width
+        val wholeImageWidth: Int =
+            (widthScaleFactor * if ((imageProxy.imageInfo.rotationDegrees / 90) % 2 == 0) imageProxy.width else imageProxy.height).toInt()
+        val wholeImageHeight: Int =
+            (heightScaleFactor * if ((imageProxy.imageInfo.rotationDegrees / 90) % 2 == 0) imageProxy.height else imageProxy.width).toInt()
 
-        val (left, top) = getTopLeftRectPoint(screenRect, wholeImageWidth, wholeImageHeight)
+        val (left, top) = getTopLeftRectPoint(screenRect.scaleBy(Pair(widthScaleFactor, heightScaleFactor)), wholeImageWidth, wholeImageHeight)
 
         val imgBitmap = imageProxy.toBitmap()
-        val bitmap = imgBitmap?.rotate(imageProxy.imageInfo.rotationDegrees.toFloat())
+        val rawBitmap =
+            imgBitmap?.let { Bitmap.createScaledBitmap(it, wholeImageWidth, wholeImageHeight, false) }
+        val bitmap = rawBitmap?.rotate(imageProxy.imageInfo.rotationDegrees.toFloat())
 
         if (bitmap != null) {
-            val imgData = preProcess(bitmap, modelInputImageSideSize, modelInputImageSideSize, left, top)
+            val imgData =
+                preProcess(bitmap, modelInputImageSideSize, modelInputImageSideSize, left, top)
 
             val inputName = ortSession.inputNames?.iterator()?.next()
-            val shape = longArrayOf(1, 3, modelInputImageSideSize.toLong(), modelInputImageSideSize.toLong())
+            val shape = longArrayOf(
+                1,
+                3,
+                modelInputImageSideSize.toLong(),
+                modelInputImageSideSize.toLong()
+            )
             val env = OrtEnvironment.getEnvironment()
             env.use {
                 val tensor = OnnxTensor.createTensor(env, imgData, shape)
@@ -72,7 +92,14 @@ class ONNXYOLOSegmentProcessor_NoScaling(context: Context, modelId: Int, modelIn
                         output.use {
                             val arr = ((output.get(0)?.value) as Array<Array<FloatArray>>)[0]
 
-                            val balls = getAllObjectsByClassFromYOLO(arr, 0, CONFIDENCE_THRESHOLD, SCORE_THRESHOLD, modelInputImageSideSize, modelInputImageSideSize)
+                            val balls = getAllObjectsByClassFromYOLO(
+                                arr,
+                                0,
+                                CONFIDENCE_THRESHOLD,
+                                SCORE_THRESHOLD,
+                                modelInputImageSideSize,
+                                modelInputImageSideSize
+                            )
 
                             val relativeResult = getTopDetectedObject(balls) ?: return null
 

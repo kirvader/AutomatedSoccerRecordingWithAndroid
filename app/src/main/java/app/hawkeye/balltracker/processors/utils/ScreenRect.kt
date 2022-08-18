@@ -11,6 +11,18 @@ data class ScreenRect(
     val width: Int,
     val height: Int
 ) {
+    fun scaleBy(scalePair: Pair<Float, Float>): ScreenRect {
+        return ScreenRect(
+            center.scaleBy(scalePair),
+            (width * scalePair.first).toInt(),
+            (height * scalePair.second).toInt()
+        )
+    }
+
+    fun canBeTiledBySquareWithSide(sideSize: Int): Boolean =
+        (width <= sideSize) && (height <= sideSize)
+
+
     fun toAdaptive(imageWidth: Int, imageHeight: Int): AdaptiveRect {
         return AdaptiveRect(
             center.toAdaptive(imageWidth, imageHeight),
