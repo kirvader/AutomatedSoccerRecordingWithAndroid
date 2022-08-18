@@ -3,12 +3,11 @@ package com.hawkeye.movement.utils
 import kotlin.math.*
 import kotlin.system.exitProcess
 
-fun convertGradToRadian(phi: Float): Float = phi / 180.0f * PI.toFloat()
-fun convertRadianToGrad(phi: Float) = phi / PI.toFloat() * 180.0f
+
 
 class PolarPoint(
     val d: Float = 0.0f,
-    val phi: Float = 0.0f,
+    val phi: AngleMeasure = Radian(0.0f),
     val h: Float = 0.0f
 ) {
     fun getXProjection() = d * cos(phi)
@@ -27,7 +26,7 @@ class CartesianPoint(
 
     fun toPolar(): PolarPoint = PolarPoint(getLength(), getAngle(), h)
 
-    private fun getAngle(): Float = atan2(y, x)
+    private fun getAngle(): AngleMeasure = Radian(atan2(y, x))
 
     operator fun div(d: Float): CartesianPoint {
         try {

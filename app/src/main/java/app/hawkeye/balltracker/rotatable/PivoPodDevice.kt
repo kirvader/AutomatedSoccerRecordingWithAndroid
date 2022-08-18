@@ -15,6 +15,8 @@ import app.pivo.android.basicsdk.PivoSdk
 import app.pivo.android.basicsdk.events.PivoEvent
 import app.pivo.android.basicsdk.events.PivoEventBus
 import com.hawkeye.movement.interfaces.RotatableDevice
+import com.hawkeye.movement.utils.AngleMeasure
+import com.hawkeye.movement.utils.Degree
 import com.nabinbhandari.android.permissions.PermissionHandler
 import com.nabinbhandari.android.permissions.Permissions
 
@@ -36,11 +38,11 @@ class PivoPodDevice(context: Context) : RotatableDevice {
         availableSpeeds = sdk.supportedSpeeds.filter { it in 20..200 }
     }
 
-    override fun rotateBy(speed: Float, orientedAngle: Float) {
-        if (orientedAngle > 0) {
-            sdk.turnRight(abs(orientedAngle.toInt()))
-        } else if (orientedAngle < 0) {
-            sdk.turnLeft(abs(orientedAngle.toInt()))
+    override fun rotateBy(speed: Float, orientedAngle: AngleMeasure) {
+        if (orientedAngle > Degree(0.0f)) {
+            sdk.turnRight(abs(orientedAngle.degree().toInt()))
+        } else if (orientedAngle < Degree(0.0f)) {
+            sdk.turnLeft(abs(orientedAngle.degree().toInt()))
         } else {
             sdk.stop()
         }
@@ -50,12 +52,12 @@ class PivoPodDevice(context: Context) : RotatableDevice {
         sdk.stop()
     }
 
-    override fun getTheMostAppropriateSpeedFromAvailable(speed: Float): Float {
-        return availableSpeeds[availableSpeeds.binarySearch((360.0f / speed).toInt())].toFloat()
+    override fun getTheMostAppropriateSpeedFromAvailable(speed: AngleMeasure): Float {
+        return availableSpeeds[availableSpeeds.binarySearch((360.0f / speed.degree()).toInt())].toFloat()
     }
 
-    override fun getGradPerSecSpeedFromAvailable(availableDeviceSpeed: Float): Float {
-        return 1.0f / 360.0f / availableDeviceSpeed
+    override fun getGradPerSecSpeedFromAvailable(availableDeviceSpeed: Float): AngleMeasure {
+        return Degree(1.0f / 360.0f / availableDeviceSpeed)
     }
 
     companion object {

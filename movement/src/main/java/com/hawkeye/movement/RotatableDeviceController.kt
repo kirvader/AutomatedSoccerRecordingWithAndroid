@@ -2,6 +2,8 @@ package com.hawkeye.movement
 
 import com.hawkeye.movement.interfaces.RotatableDevice
 import com.hawkeye.movement.interfaces.RotatableDeviceControllerBase
+import com.hawkeye.movement.utils.AngleMeasure
+import com.hawkeye.movement.utils.Degree
 import com.hawkeye.movement.utils.Point
 import java.util.*
 import kotlin.math.abs
@@ -15,15 +17,15 @@ class RotatableDeviceController(
      * Stores information about one rotatable device state in grads and ms
      */
     private data class State(
-        val direction: Float,
+        val direction: AngleMeasure,
         val absTime: Long,
-        val speed: Float,
-        val rotationLeftover: Float
+        val speed: AngleMeasure,
+        val rotationLeftover: AngleMeasure
     )
 
     private val allStoredStates: Deque<State> = LinkedList()
 
-    private var lastUpdatedState = State(0.0f, 0L, 0.0f, 0.0f)
+    private var lastUpdatedState = State(Degree(0.0f), 0L, Degree(0.0f), Degree(0.0f))
 
     private fun updateRelevantStatesFor(time_ms: Long) {
         while (allStoredStates.isNotEmpty() && allStoredStates.first().absTime < time_ms - relevanceDeltaTime) {
@@ -32,21 +34,21 @@ class RotatableDeviceController(
     }
 
     private fun updateStateAtTime(time_ms: Long) {
-        val deltaTime = time_ms - lastUpdatedState.absTime
+        val deltaTime = (time_ms - lastUpdatedState.absTime) / 1000.0f
 
-        var newSpeed = 0.0f
-        var newRotationLeftover = 0.0f
-        var newDirection = 0.0f
+        val newSpeed: AngleMeasure
+        val newRotationLeftover: AngleMeasure
+        val newDirection: AngleMeasure
 
 
-        if (abs(lastUpdatedState.speed * deltaTime) < abs(lastUpdatedState.rotationLeftover)) {
+        if (abs((lastUpdatedState.speed * deltaTime).degree()) < abs(lastUpdatedState.rotationLeftover.degree())) {
             newSpeed = lastUpdatedState.speed
             newRotationLeftover =
                 lastUpdatedState.rotationLeftover - lastUpdatedState.speed * deltaTime
             newDirection = lastUpdatedState.direction + lastUpdatedState.speed * deltaTime
         } else {
-            newSpeed = 0.0f
-            newRotationLeftover = 0.0f
+            newSpeed = Degree(0.0f)
+            newRotationLeftover = Degree(0.0f)
             newDirection = lastUpdatedState.direction + lastUpdatedState.rotationLeftover
         }
 
@@ -59,7 +61,11 @@ class RotatableDeviceController(
         allStoredStates.addLast(lastUpdatedState)
     }
 
-    override fun rotateByAngleAtTime(angle: Float, speed: Float, currentTime_ms: Long) {
+    override fun rotateByAngleAtTime(
+        angle: AngleMeasure,
+        speed: AngleMeasure,
+        currentTime_ms: Long
+    ) {
         if (currentTime_ms < lastUpdatedState.absTime) {
             print("Can't change device state in the past.")
             return
@@ -100,8 +106,10 @@ class RotatableDeviceController(
         updateStateAtTime(currentTime_ms)
 
         val checkedDeltaAngle =
-            getDeviceDirectionWithConstraints(position.getAngle()) - lastUpdatedState.direction
-        val deltaTime = targetTime_ms - currentTime_ms
+            getDeviceDirectionWithConstraints(
+                position.getAngle()
+            ) - lastUpdatedState.direction
+        val deltaTime = (targetTime_ms - currentTime_ms) / 1000.0f
 
         val availableSpeed =
             device.getTheMostAppropriateSpeedFromAvailable(checkedDeltaAngle / deltaTime)
@@ -118,7 +126,27 @@ class RotatableDeviceController(
 
     }
 
-    override fun getDirectionAtTime(absTime: Long): Float {
+    private fun lerpAngle(
+        startAngle: AngleMeasure,
+        finishAngle: AngleMeasure,
+        startTime: Long,
+        finishTime: Long,
+        currentTime: Long
+    ): AngleMeasure {
+        if (currentTime == startTime) {
+            return startAngle
+        }
+
+        if (currentTime == finishTime) {
+            return finishAngle
+        }
+
+        val currentTimePartBetweenStartFinish = (currentTime - startTime).toFloat() / (finishTime - startTime)
+
+        return startAngle + (finishAngle - startAngle) * currentTimePartBetweenStartFinish
+    }
+
+    override fun getDirectionAtTime(absTime: Long): AngleMeasure {
         val stack = Stack<State>()
         while (allStoredStates.isNotEmpty() && allStoredStates.last.absTime > absTime) {
             stack.push(allStoredStates.pollLast())
@@ -129,12 +157,12 @@ class RotatableDeviceController(
         }
 
         val previousState = allStoredStates.last
-        val deltaTimeFromPreviousState = absTime - previousState.absTime
+        val deltaTimeFromPreviousState = (absTime - previousState.absTime) / 1000.0f
 
         if (stack.isEmpty()) {
 
             val deltaAngleFromLastDirection =
-                if (abs(previousState.speed * deltaTimeFromPreviousState) < abs(previousState.rotationLeftover))
+                if (abs((previousState.speed * deltaTimeFromPreviousState).degree()) < abs((previousState.rotationLeftover).degree()))
                     previousState.speed * deltaTimeFromPreviousState
                 else
                     previousState.rotationLeftover
@@ -147,14 +175,6 @@ class RotatableDeviceController(
             allStoredStates.addLast(stack.pop())
         }
 
-        if (absTime == previousState.absTime) {
-            return previousState.direction
-        }
-
-        if (absTime == nextState.absTime) {
-            return nextState.direction
-        }
-
-        return previousState.direction + (nextState.direction - previousState.direction) * deltaTimeFromPreviousState / (nextState.absTime - previousState.absTime)
+        return lerpAngle(previousState.direction, nextState.direction, previousState.absTime, nextState.absTime, absTime)
     }
 }
