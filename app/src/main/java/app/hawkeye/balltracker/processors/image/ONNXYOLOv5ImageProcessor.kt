@@ -11,17 +11,15 @@ import android.graphics.Bitmap
 import androidx.camera.core.ImageProxy
 import app.hawkeye.balltracker.R
 import app.hawkeye.balltracker.processors.getAllObjectsByClassFromYOLO
-import app.hawkeye.balltracker.processors.interfaces.ModelImageProcessor
 import app.hawkeye.balltracker.processors.preProcess
 import app.hawkeye.balltracker.processors.rotate
 import app.hawkeye.balltracker.processors.toBitmap
-import app.hawkeye.balltracker.utils.AdaptiveRect
-import app.hawkeye.balltracker.utils.ClassifiedBox
-import app.hawkeye.balltracker.utils.AdaptiveScreenPoint
+import app.hawkeye.balltracker.processors.utils.AdaptiveScreenRect
+import app.hawkeye.balltracker.processors.utils.ClassifiedBox
 import java.util.*
 
 
-internal class ONNXYOLOv5ImageProcessor(
+class ONNXYOLOv5ImageProcessor(
     context: Context
 ) : ModelImageProcessor {
     private var ortSession: OrtSession? = null
@@ -80,13 +78,9 @@ internal class ONNXYOLOv5ImageProcessor(
         return null
     }
 
-    override fun getAreaOfDetection(): List<AdaptiveRect> {
+    override fun getAreaOfDetection(): List<AdaptiveScreenRect> {
         return listOf(
-            AdaptiveRect(
-                AdaptiveScreenPoint(0.5f, 0.5f),
-                1.0f,
-                1.0f
-            )
+            AdaptiveScreenRect(0f, 0f, 1f, 1f)
         )
     }
 }

@@ -43,6 +43,7 @@
         <item>None</item>
         <item>ONNX YOLO</item>
         <item>ONNX YOLO + Tracker</item>
+        <item>ONNX YOLO + Tracker + fitting for rotating</item>
     </string-array>
 
 </resources>

@@ -13,6 +13,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import app.hawkeye.balltracker.*
 import app.hawkeye.balltracker.R
+import app.hawkeye.balltracker.processors.utils.AdaptiveScreenRect
 import app.hawkeye.balltracker.rotatable.PivoPodDevice
 import app.hawkeye.balltracker.utils.*
 import kotlinx.android.synthetic.main.activity_camera.*
@@ -93,17 +94,17 @@ class CameraActivity : AppCompatActivity() {
         videoCaptureButton.setText(R.string.start_recording)
     }
 
-    private fun updateUIAreaOfDetectionWithNewArea(newArea: List<AdaptiveRect>) {
+    private fun updateUIAreaOfDetectionWithNewArea(newArea: List<AdaptiveScreenRect>) {
         areaOfDetectionSurface.updateAreaOfDetection(newArea)
     }
 
-    private fun updateUIWhenImageAnalyzerFinished(rect: AdaptiveRect?, newBenchmarksInfo: String) {
+    private fun updateUIWhenImageAnalyzerFinished(rect: AdaptiveScreenRect?, newBenchmarksInfo: String) {
         runOnUiThread {
             detectedObjectsSurface.updateCurrentDetectedObject(
-                rect?.toRect(
+                rect?.toScreenRect(
                     detectedObjectsSurface.measuredWidth,
                     detectedObjectsSurface.measuredHeight
-                )
+                )?.toRect()
             )
             inference_time_info.text = newBenchmarksInfo
         }

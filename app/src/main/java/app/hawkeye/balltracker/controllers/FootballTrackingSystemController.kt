@@ -1,7 +1,7 @@
 package app.hawkeye.balltracker.controllers
 
-import app.hawkeye.balltracker.utils.ClassifiedBox
-import app.hawkeye.balltracker.utils.AdaptiveScreenPoint
+import app.hawkeye.balltracker.processors.utils.ClassifiedBox
+import app.hawkeye.balltracker.processors.utils.AdaptiveScreenVector
 import com.hawkeye.movement.TrackingSystemController
 import com.hawkeye.movement.interfaces.RotatableDevice
 import com.hawkeye.movement.utils.AngleMeasure
@@ -27,7 +27,7 @@ class FootballTrackingSystemController(rotatableDevice: RotatableDevice) : Track
 
     private val averageDistance = 10.0f
 
-    fun getBallPositionOnScreenAtTime(absTime_ms: Long) : AdaptiveScreenPoint? {
+    fun getBallPositionOnScreenAtTime(absTime_ms: Long) : AdaptiveScreenVector? {
         val currentBallPosition = ballMovementModel.getApproximatePositionAtTime(absTime_ms) ?: return null
 
         val ballDirection = currentBallPosition.getAngle()
@@ -36,7 +36,7 @@ class FootballTrackingSystemController(rotatableDevice: RotatableDevice) : Track
 
         val deltaAngle = ballDirection - currentCameraDirection
 
-        return AdaptiveScreenPoint(0.5f + deltaAngle.degree() / cameraFOV, currentBallPosition.getHeight())
+        return AdaptiveScreenVector(0.5f + deltaAngle.degree() / cameraFOV, currentBallPosition.getHeight())
     }
 
     fun updateBallModelWithClassifiedBox(box: ClassifiedBox?, absTime_ms: Long) {
@@ -45,9 +45,10 @@ class FootballTrackingSystemController(rotatableDevice: RotatableDevice) : Track
             updateTargetPosition(null, absTime_ms)
             return
         }
+        val centerX = box.adaptiveRect.topLeftPoint.x + box.adaptiveRect.size.x / 2
 
-        val deltaAngle = ScreenPart(box.adaptiveRect.center.x, cameraFOV)
-        val height = box.adaptiveRect.center.y
+        val deltaAngle = ScreenPart(centerX, cameraFOV)
+        val height = box.adaptiveRect.topLeftPoint.y + box.adaptiveRect.size.y / 2
 
         updateTargetPosition(Point(PolarPoint(averageDistance, rotatableDeviceController.getDirectionAtTime(absTime_ms) + deltaAngle, height)), absTime_ms)
     }

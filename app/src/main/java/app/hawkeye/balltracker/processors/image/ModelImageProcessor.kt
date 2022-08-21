@@ -1,20 +1,20 @@
-package app.hawkeye.balltracker.processors.interfaces
+package app.hawkeye.balltracker.processors.image
 
 import androidx.camera.core.ImageProxy
-import app.hawkeye.balltracker.utils.AdaptiveRect
-import app.hawkeye.balltracker.utils.ClassifiedBox
+import app.hawkeye.balltracker.processors.utils.AdaptiveScreenRect
+import app.hawkeye.balltracker.processors.utils.ClassifiedBox
 
 interface ModelImageProcessor {
     fun processImageProxy(imageProxy: ImageProxy) : ClassifiedBox?
 
-    fun getAreaOfDetection() : List<AdaptiveRect>
+    fun getAreaOfDetection() : List<AdaptiveScreenRect>
 
     object Default : ModelImageProcessor {
         override fun processImageProxy(imageProxy: ImageProxy): ClassifiedBox? {
             return null
         }
 
-        override fun getAreaOfDetection(): List<AdaptiveRect> {
+        override fun getAreaOfDetection(): List<AdaptiveScreenRect> {
             return listOf()
         }
     }

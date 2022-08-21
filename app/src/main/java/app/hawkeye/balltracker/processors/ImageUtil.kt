@@ -19,9 +19,8 @@ package app.hawkeye.balltracker.processors
 import android.content.res.AssetManager
 import android.graphics.*
 import androidx.camera.core.ImageProxy
-import app.hawkeye.balltracker.utils.AdaptiveRect
-import app.hawkeye.balltracker.utils.ClassifiedBox
-import app.hawkeye.balltracker.utils.AdaptiveScreenPoint
+import app.hawkeye.balltracker.processors.utils.AdaptiveScreenRect
+import app.hawkeye.balltracker.processors.utils.ClassifiedBox
 import java.io.ByteArrayOutputStream
 import java.io.FileInputStream
 import java.nio.FloatBuffer
@@ -252,15 +251,19 @@ fun getAllObjectsByClassFromYOLO(
         if (record[maxScoreInd] < scoreThreshold) continue
         val classId = maxScoreInd - 5
         if (importantClassId != -1 && classId != importantClassId) continue
+
+        val width = record[2] / imageWidth
+        val height = record[3] / imageHeight
+        val left = record[0] / imageWidth - width / 2
+        val top = record[1] / imageHeight - height / 2
+
         result.add(
             ClassifiedBox(
-                AdaptiveRect(
-                    AdaptiveScreenPoint(
-                        record[0] / imageWidth,
-                        record[1] / imageHeight
-                    ),
-                    record[2] / imageWidth,
-                    record[3] / imageHeight
+                AdaptiveScreenRect(
+                    left,
+                    top,
+                    width,
+                    height
                 ),
                 classId, confidence
             )

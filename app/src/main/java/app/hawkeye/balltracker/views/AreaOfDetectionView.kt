@@ -7,7 +7,7 @@ import android.graphics.Paint
 import android.graphics.Typeface
 import android.util.AttributeSet
 import android.view.View
-import app.hawkeye.balltracker.utils.AdaptiveRect
+import app.hawkeye.balltracker.processors.utils.AdaptiveScreenRect
 import app.hawkeye.balltracker.utils.createLogger
 
 private val LOG = createLogger<AreaOfDetectionView>()
@@ -16,7 +16,7 @@ class AreaOfDetectionView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
 
-    private var areaOfDetection: List<AdaptiveRect> = listOf()
+    private var areaOfDetection: List<AdaptiveScreenRect> = listOf()
 
     private val detectionSegmentPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
@@ -27,12 +27,12 @@ class AreaOfDetectionView @JvmOverloads constructor(
         strokeWidth = 5.0f
     }
 
-    fun updateAreaOfDetection(rect: AdaptiveRect) {
+    fun updateAreaOfDetection(rect: AdaptiveScreenRect) {
         areaOfDetection = listOf(rect)
         invalidate()
     }
 
-    fun updateAreaOfDetection(newArea: List<AdaptiveRect>) {
+    fun updateAreaOfDetection(newArea: List<AdaptiveScreenRect>) {
         areaOfDetection = newArea
         invalidate()
     }
@@ -41,9 +41,9 @@ class AreaOfDetectionView @JvmOverloads constructor(
         super.onDraw(canvas)
 
         for (adaptiveRect in areaOfDetection) {
-            LOG.i("${adaptiveRect.center.x} ${adaptiveRect.center.y}")
+            LOG.i("${adaptiveRect.getCenter().x} ${adaptiveRect.getCenter().y}")
 
-            canvas?.drawRect(adaptiveRect.toRect(measuredWidth, measuredHeight), detectionSegmentPaint)
+            canvas?.drawRect(adaptiveRect.toScreenRect(measuredWidth, measuredHeight).toRect(), detectionSegmentPaint)
         }
     }
 

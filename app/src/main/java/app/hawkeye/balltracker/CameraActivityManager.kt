@@ -15,13 +15,8 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.util.Consumer
 import androidx.lifecycle.LifecycleOwner
-import app.hawkeye.balltracker.controllers.FootballTrackingSystemController
-import app.hawkeye.balltracker.utils.AdaptiveRect
-import app.hawkeye.balltracker.utils.ClassifiedBox
-import app.hawkeye.balltracker.controllers.time.TimeKeeper
-import app.hawkeye.balltracker.controllers.time.interfaces.TimeKeeperBase
+import app.hawkeye.balltracker.processors.utils.AdaptiveScreenRect
 import app.hawkeye.balltracker.utils.createLogger
-import app.hawkeye.balltracker.views.AreaOfDetectionView
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -39,8 +34,8 @@ class CameraManager(
     private val updateUIOnStopRecording: () -> Unit,
     private val updateUIOnStartRecording: () -> Unit,
     private val getPreviewSurfaceProvider: () -> Preview.SurfaceProvider,
-    updateUIOnImageAnalyzerFinished: (AdaptiveRect?, String) -> Unit,
-    updateUIAreaOfDetectionWithNewArea: (List<AdaptiveRect>) -> Unit
+    updateUIOnImageAnalyzerFinished: (AdaptiveScreenRect?, String) -> Unit,
+    updateUIAreaOfDetectionWithNewArea: (List<AdaptiveScreenRect>) -> Unit
 ) {
 
     private val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
