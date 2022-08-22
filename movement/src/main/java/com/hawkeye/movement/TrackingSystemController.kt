@@ -9,7 +9,7 @@ import com.hawkeye.movement.utils.Point
 open class TrackingSystemController(rotatableDevice: RotatableDevice) :
     TrackingSystemControllerBase {
 
-    protected val ballMovementModel: PhysicalObjectMovementModel = PhysicalObjectMovement(relevanceDeltaTime    )
+    protected val ballMovementModel: PhysicalObjectMovementModel = PhysicalObjectMovement(relevanceDeltaTime)
     protected var rotatableDeviceController: RotatableDeviceControllerBase
 
 

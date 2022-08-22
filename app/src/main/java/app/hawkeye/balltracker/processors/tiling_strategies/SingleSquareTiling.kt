@@ -15,19 +15,26 @@ class SingleSquareTiling : SquareTilingStrategy {
         imageWidth: Int,
         imageHeight: Int
     ): List<ScreenRect> {
-        val rectSize = adaptiveRect.size.toScreenVector(imageWidth, imageHeight)
+        val croppedBySurface = adaptiveRect.getCropped()
 
-        val topLeftPoint = adaptiveRect.topLeftPoint.toScreenVector(
+        val rectSize = croppedBySurface.size.toScreenVector(imageWidth, imageHeight)
+
+        val topLeftPoint = croppedBySurface.topLeftPoint.toScreenVector(
             imageWidth,
             imageHeight
         )
 
+        val tilingSideSize = sortedAvailableSquareSideSizes.firstOrNull {
+            it >= max(rectSize.x, rectSize.y)
+        } ?: sortedAvailableSquareSideSizes.last()
+
+        val topLeftCalibrated = topLeftPoint.getOnSurface(imageWidth - tilingSideSize, imageHeight - tilingSideSize)
+
+
         return listOf(
             ScreenRect(
-                topLeftPoint,
-                sortedAvailableSquareSideSizes.firstOrNull {
-                    it >= max(rectSize.x, rectSize.y)
-                } ?: sortedAvailableSquareSideSizes.last()
+                topLeftCalibrated,
+                tilingSideSize
             )
         )
     }

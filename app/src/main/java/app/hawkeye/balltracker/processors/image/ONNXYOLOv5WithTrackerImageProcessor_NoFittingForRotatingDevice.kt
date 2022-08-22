@@ -31,11 +31,7 @@ class ONNXYOLOv5WithTrackerImageProcessor_NoFittingForRotatingDevice(
     private var resolution = ScreenVector(720, 1280)
 
     init {
-
-
         trackingStrategy = SingleRectFollower_StaticCamera()
-
-//        trackingStrategy = SingleRectFollower_RotatingCamera(getBallScreenPositionAtTime)
 
         squareTilingStrategy = SingleSquareTiling()
 
@@ -48,7 +44,6 @@ class ONNXYOLOv5WithTrackerImageProcessor_NoFittingForRotatingDevice(
         val imgBitmap = imageProxy.toBitmap()
         val rawBitmap = imgBitmap?.rotate(imageProxy.imageInfo.rotationDegrees.toFloat())
         val resultBitmap = rawBitmap?.let { Bitmap.createScaledBitmap(it, resolution.x, resolution.y, false) }
-
 
         val areaOfDetection = trackingStrategy.getAreaOfDetectionAtTime(getCurrentImageProcessingStart())
 

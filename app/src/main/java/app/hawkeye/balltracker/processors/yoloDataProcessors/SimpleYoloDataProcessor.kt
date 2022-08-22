@@ -59,7 +59,7 @@ class YoloDataProcessor(context: Context, modelId: Int, private val modelInputIm
             val maxScoreInd = getIndOfMaxValue(record.takeLast(80)) + 5
             if (record[maxScoreInd] < SCORE_THRESHOLD) continue
             val classId = maxScoreInd - 5
-            if (importantClassId != -1 && importantClassId == classId) continue
+            if (importantClassId != -1 && importantClassId != classId) continue
 
             val width = record[2] / imageWidth
             val height = record[3] / imageHeight

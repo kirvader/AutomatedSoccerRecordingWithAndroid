@@ -59,6 +59,14 @@ data class ScreenVector(
         return getScaled(scaleFactorPair.first, scaleFactorPair.second)
     }
 
+    fun getOnSurface(width: Int, height: Int): ScreenVector {
+        return ScreenVector(
+            max(0, min(width - 1, x)),
+            max(0, min(height - 1, y)),
+        )
+    }
+
+
     operator fun times(float: Float): ScreenVector {
         return ScreenVector((x * float).toInt(), (y * float).toInt())
     }

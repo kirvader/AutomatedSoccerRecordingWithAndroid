@@ -4,11 +4,15 @@ import android.content.Context
 import android.graphics.Bitmap
 import app.hawkeye.balltracker.processors.modelSelector.ModelSelector
 import app.hawkeye.balltracker.processors.modelSelector.YOLOv5sModelSelector
+import app.hawkeye.balltracker.processors.utils.AdaptiveScreenRect
 import app.hawkeye.balltracker.processors.utils.ClassifiedBox
 import app.hawkeye.balltracker.processors.utils.ScreenRect
 import app.hawkeye.balltracker.processors.utils.ScreenVector
+import app.hawkeye.balltracker.utils.createLogger
 import java.nio.FloatBuffer
+import kotlin.math.abs
 
+private val LOG = createLogger<YOLOObjectExtractor>()
 
 class YOLOObjectExtractor(context: Context) : ImageObjectsExtractor {
 
@@ -31,6 +35,7 @@ class YOLOObjectExtractor(context: Context) : ImageObjectsExtractor {
         val wholeImageStride = bitmap.width * bitmap.height
         val bmpData = IntArray(wholeImageStride)
         bitmap.getPixels(bmpData, 0, bitmap.width, 0, 0, bitmap.width, bitmap.height)
+        LOG.i("sideSize = $sideSize, offset = (${offset.x}; ${offset.y})")
 
         val resultImageStride = sideSize * sideSize
         for (i in 0 until sideSize) {
@@ -48,6 +53,18 @@ class YOLOObjectExtractor(context: Context) : ImageObjectsExtractor {
         return imgData
     }
 
+    private fun relativeToAbsolute(relative: ClassifiedBox?, absScreenRect: ScreenRect, imageWidth: Int, imageHeight: Int): ClassifiedBox? {
+        if (relative == null)
+            return null
+        return ClassifiedBox(
+            AdaptiveScreenRect(
+                absScreenRect.toAdaptiveScreenRect(imageWidth, imageHeight).topLeftPoint + relative.adaptiveRect.topLeftPoint.getScaled(absScreenRect.size.x.toFloat() / imageWidth, absScreenRect.size.y.toFloat() / imageHeight),
+                relative.adaptiveRect.size.getScaled(absScreenRect.size.x.toFloat() / imageWidth, absScreenRect.size.y.toFloat() / imageHeight)
+            ),
+            relative.classId, relative.confidence
+        )
+    }
+
     override fun extractObjects(
         bitmap: Bitmap,
         areaOfDetection: List<ScreenRect>,
@@ -61,10 +78,9 @@ class YOLOObjectExtractor(context: Context) : ImageObjectsExtractor {
                     val imgData = preProcess(bitmap, it.size.x, it.topLeftPoint)
 
                     // TODO add multithreading
-                    val curRectResult = chosenModel.process(imgData, 0)
-                    if (result == null) {
-                        result = curRectResult
-                    } else if (curRectResult != null && result!!.confidence < curRectResult.confidence) {
+                    val curRectResult = relativeToAbsolute(chosenModel.process(imgData, soughtClassIds), it, bitmap.width, bitmap.height)
+
+                    if ((result == null) || (curRectResult != null && result!!.confidence < curRectResult.confidence)) {
                         result = curRectResult
                     }
                 }
