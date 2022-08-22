@@ -12,6 +12,9 @@ import app.hawkeye.balltracker.processors.image.ModelImageProcessor
 import app.hawkeye.balltracker.processors.image.ONNXYOLOv5WithTrackerImageProcessor_WithFittingForRotatingDevice
 import app.hawkeye.balltracker.processors.utils.*
 import app.hawkeye.balltracker.utils.createLogger
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 
 private val LOG = createLogger<ObjectDetectorImageAnalyzer>()
@@ -62,7 +65,7 @@ class ObjectDetectorImageAnalyzer(
                 updateUIAreaOfDetectionWithNewArea
             ),
             // crutch about switching between static and rotating camera
-            ImageProcessorsChoice.ONNX_YOLO_V5_TRACKER_NO_ROTATION_FITTING to ONNXYOLOv5WithTrackerImageProcessor_WithFittingForRotatingDevice(
+            ImageProcessorsChoice.ONNX_YOLO_V5_TRACKER_ROTATION_FITTING to ONNXYOLOv5WithTrackerImageProcessor_WithFittingForRotatingDevice(
                 context,
                 ::getBallPositionAtTime,
                 ::getCurrentImageProcessingStart,
@@ -111,11 +114,13 @@ class ObjectDetectorImageAnalyzer(
 
     override fun analyze(imageProxy: ImageProxy) {
         LOG.i(currentImageProcessorsChoice)
-        val result =
-            modelImageProcessors[currentImageProcessorsChoice]?.processImageProxy(imageProxy = imageProxy)
+        var result: ClassifiedBox?
+        CoroutineScope(Dispatchers.Default).launch {
+            result = modelImageProcessors[currentImageProcessorsChoice]?.processImageProxy(imageProxy = imageProxy)
 
-        imageProxy.close()
+            imageProxy.close()
 
-        updateTrackingSystemState(result)
+            updateTrackingSystemState(result)
+        }
     }
 }

@@ -47,7 +47,7 @@ class ONNXYOLOv5ImageProcessor(
     private val IMAGE_HEIGHT: Int = 640
 
 
-    override fun processImageProxy(imageProxy: ImageProxy): ClassifiedBox? {
+    override suspend fun processImageProxy(imageProxy: ImageProxy): ClassifiedBox? {
 
         val imgBitmap = imageProxy.toBitmap()
         val rawBitmap = imgBitmap?.let { Bitmap.createScaledBitmap(it, IMAGE_WIDTH, IMAGE_HEIGHT, false) }

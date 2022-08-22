@@ -46,7 +46,7 @@ class ONNXYOLOv5WithTrackerImageProcessor_WithFittingForRotatingDevice(
 
 
 
-    override fun processImageProxy(imageProxy: ImageProxy): ClassifiedBox? {
+    override suspend fun processImageProxy(imageProxy: ImageProxy): ClassifiedBox? {
         val wholeImageWidth = if ((imageProxy.imageInfo.rotationDegrees / 90) % 2 == 0) imageProxy.width else imageProxy.height
         val wholeImageHeight = if ((imageProxy.imageInfo.rotationDegrees / 90) % 2 == 0) imageProxy.height else imageProxy.width
 

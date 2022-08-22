@@ -40,7 +40,7 @@ class ONNXYOLOv5WithTrackerImageProcessor_NoFittingForRotatingDevice(
 
 
 
-    override fun processImageProxy(imageProxy: ImageProxy): ClassifiedBox? {
+    override suspend fun processImageProxy(imageProxy: ImageProxy): ClassifiedBox? {
         val imgBitmap = imageProxy.toBitmap()
         val rawBitmap = imgBitmap?.rotate(imageProxy.imageInfo.rotationDegrees.toFloat())
         val resultBitmap = rawBitmap?.let { Bitmap.createScaledBitmap(it, resolution.x, resolution.y, false) }

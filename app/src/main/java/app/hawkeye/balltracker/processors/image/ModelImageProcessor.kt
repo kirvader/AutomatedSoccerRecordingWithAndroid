@@ -5,12 +5,12 @@ import app.hawkeye.balltracker.processors.utils.AdaptiveScreenRect
 import app.hawkeye.balltracker.processors.utils.ClassifiedBox
 
 interface ModelImageProcessor {
-    fun processImageProxy(imageProxy: ImageProxy) : ClassifiedBox?
+    suspend fun processImageProxy(imageProxy: ImageProxy) : ClassifiedBox?
 
     fun getAreaOfDetection() : List<AdaptiveScreenRect>
 
     object Default : ModelImageProcessor {
-        override fun processImageProxy(imageProxy: ImageProxy): ClassifiedBox? {
+        override suspend fun processImageProxy(imageProxy: ImageProxy): ClassifiedBox? {
             return null
         }
 
