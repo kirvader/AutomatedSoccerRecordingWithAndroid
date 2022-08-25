@@ -9,6 +9,7 @@ import app.hawkeye.balltracker.controllers.time.interfaces.TimeKeeperBase
 import app.hawkeye.balltracker.processors.image.*
 import app.hawkeye.balltracker.processors.utils.*
 import app.hawkeye.balltracker.utils.createLogger
+import com.hawkeye.movement.interfaces.TrackingSystemControllerBase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -78,6 +79,10 @@ class ObjectDetectorImageAnalyzer(
 
 
         )
+    }
+
+    fun getTrackingSystemController(): TrackingSystemControllerBase {
+        return movementControllerSystem
     }
 
     private fun getBallPositionAtTime(absTime_ms: Long): AdaptiveScreenVector? {

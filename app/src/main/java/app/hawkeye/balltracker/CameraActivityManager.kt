@@ -17,6 +17,7 @@ import androidx.core.util.Consumer
 import androidx.lifecycle.LifecycleOwner
 import app.hawkeye.balltracker.processors.utils.AdaptiveScreenRect
 import app.hawkeye.balltracker.utils.createLogger
+import com.hawkeye.movement.interfaces.TrackingSystemControllerBase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -35,7 +36,8 @@ class CameraManager(
     private val updateUIOnStartRecording: () -> Unit,
     private val getPreviewSurfaceProvider: () -> Preview.SurfaceProvider,
     updateUIOnImageAnalyzerFinished: (AdaptiveScreenRect?, String) -> Unit,
-    updateUIAreaOfDetectionWithNewArea: (List<AdaptiveScreenRect>) -> Unit
+    updateUIAreaOfDetectionWithNewArea: (List<AdaptiveScreenRect>) -> Unit,
+    attachTrackingSystemToLocator:(TrackingSystemControllerBase) -> Unit
 ) {
 
     private val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
@@ -86,6 +88,8 @@ class CameraManager(
                 updateUIOnImageAnalyzerFinished,
                 updateUIAreaOfDetectionWithNewArea
             )
+
+        attachTrackingSystemToLocator(objectDetectorImageAnalyzer!!.getTrackingSystemController())
     }
 
     fun setImageProcessor(imageProcessorsChoice: ImageProcessorsChoice) {

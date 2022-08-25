@@ -4,6 +4,8 @@ import com.hawkeye.movement.interfaces.PhysicalObjectMovementModel
 import com.hawkeye.movement.interfaces.RotatableDevice
 import com.hawkeye.movement.interfaces.RotatableDeviceControllerBase
 import com.hawkeye.movement.interfaces.TrackingSystemControllerBase
+import com.hawkeye.movement.utils.AngleMeasure
+import com.hawkeye.movement.utils.Degree
 import com.hawkeye.movement.utils.Point
 
 open class TrackingSystemController(rotatableDevice: RotatableDevice) :
@@ -30,6 +32,14 @@ open class TrackingSystemController(rotatableDevice: RotatableDevice) :
             currentAbsTime_ms,
             targetAbsTime_ms
         )
+    }
+
+    override fun getObjectPositionAtTime(absTime_ms: Long): Point? {
+        return ballMovementModel.getApproximatePositionAtTime(absTime_ms)
+    }
+
+    override fun getCameraDirectionAndFOVAngleAtTime(absTime_ms: Long): Pair<AngleMeasure, AngleMeasure> {
+        return Pair(rotatableDeviceController.getDirectionAtTime(absTime_ms), Degree(90.0f))
     }
 
     companion object {

@@ -29,6 +29,12 @@
         android:layout_height="match_parent"
         android:layout_above="@+id/mylinear" />
 
+    <app.hawkeye.balltracker.views.TrackingSystemStateView
+        android:id="@+id/trackingSystemStateView"
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        android:layout_above="@+id/mylinear" />
+
     <LinearLayout
         android:id="@+id/mylinear"
         android:layout_width="match_parent"

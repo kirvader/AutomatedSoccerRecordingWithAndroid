@@ -34,7 +34,7 @@ class FootballTrackingSystemController(rotatableDevice: RotatableDevice) : Track
 
         val deltaAngle = ballDirection - currentCameraDirection
 
-        return AdaptiveScreenVector(0.5f + deltaAngle.degree() / cameraFOV, currentBallPosition.getHeight())
+        return AdaptiveScreenVector(0.5f + deltaAngle.degree() / cameraFOV.degree(), currentBallPosition.getHeight())
     }
 
     fun updateBallModelWithClassifiedBox(box: ClassifiedBox?, absTime_ms: Long) {
@@ -45,7 +45,7 @@ class FootballTrackingSystemController(rotatableDevice: RotatableDevice) : Track
         }
         val centerX = box.adaptiveRect.topLeftPoint.x + box.adaptiveRect.size.x / 2
 
-        val deltaAngle = ScreenPart(centerX, cameraFOV)
+        val deltaAngle = ScreenPart(centerX, cameraFOV.degree())
         val height = box.adaptiveRect.topLeftPoint.y + box.adaptiveRect.size.y / 2
 
         LOG.i(box.adaptiveRect.topLeftPoint + box.adaptiveRect.size)
@@ -55,7 +55,11 @@ class FootballTrackingSystemController(rotatableDevice: RotatableDevice) : Track
         updateTargetPosition(Point(PolarPoint(averageDistance, rotatableDeviceController.getDirectionAtTime(absTime_ms) + deltaAngle, height)), absTime_ms)
     }
 
+    override fun getCameraDirectionAndFOVAngleAtTime(absTime_ms: Long): Pair<AngleMeasure, AngleMeasure> {
+        return Pair(rotatableDeviceController.getDirectionAtTime(absTime_ms), cameraFOV)
+    }
+
     companion object {
-        private const val cameraFOV = 90.0f
+        private val cameraFOV = Degree(90.0f)
     }
 }

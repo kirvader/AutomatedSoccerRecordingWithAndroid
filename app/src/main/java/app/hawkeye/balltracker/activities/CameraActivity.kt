@@ -16,6 +16,7 @@ import app.hawkeye.balltracker.R
 import app.hawkeye.balltracker.processors.utils.AdaptiveScreenRect
 import app.hawkeye.balltracker.rotatable.PivoPodDevice
 import app.hawkeye.balltracker.utils.*
+import com.hawkeye.movement.interfaces.TrackingSystemControllerBase
 import kotlinx.android.synthetic.main.activity_camera.*
 
 
@@ -36,7 +37,8 @@ class CameraActivity : AppCompatActivity() {
             ::updateUIOnStopRecording,
             ::getPreviewSurfaceProvider,
             ::updateUIWhenImageAnalyzerFinished,
-            ::updateUIAreaOfDetectionWithNewArea
+            ::updateUIAreaOfDetectionWithNewArea,
+            ::attachTrackingSystemToLocator
         )
 
         if (allPermissionsGranted()) {
@@ -86,6 +88,10 @@ class CameraActivity : AppCompatActivity() {
         updateUIAreaOfDetectionWithNewArea(listOf())
     }
 
+    private fun attachTrackingSystemToLocator(trackingSystemControllerBase: TrackingSystemControllerBase) {
+        trackingSystemStateView.setTrackingSystemController(trackingSystemControllerBase)
+    }
+
     private fun updateUIOnStartRecording() {
         videoCaptureButton.setText(R.string.stop_recording)
     }
@@ -107,6 +113,7 @@ class CameraActivity : AppCompatActivity() {
                 )?.toRect()
             )
             inference_time_info.text = newBenchmarksInfo
+            trackingSystemStateView.updateLocatorState()
         }
     }
 
