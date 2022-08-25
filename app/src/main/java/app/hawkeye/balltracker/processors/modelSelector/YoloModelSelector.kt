@@ -4,7 +4,7 @@ import android.content.Context
 import app.hawkeye.balltracker.processors.yoloDataProcessors.DataProcessor
 import app.hawkeye.balltracker.processors.yoloDataProcessors.YoloDataProcessor
 
-abstract class SimpleModelSelector(context: Context): ModelSelector {
+abstract class YoloModelSelector(context: Context): ModelSelector {
     private val availableSortedDataProcessors: List<DataProcessor>
 
     abstract val model64: Int
@@ -24,5 +24,9 @@ abstract class SimpleModelSelector(context: Context): ModelSelector {
     }
     override fun selectAppropriateModelToHandleScreenSquare(sideSize: Int): DataProcessor? {
         return availableSortedDataProcessors.firstOrNull { it.getModelInputSideSize() == sideSize }
+    }
+
+    override fun getAvailableModelSideSizes(): List<Int> {
+        return availableSortedDataProcessors.map { it.getModelInputSideSize() }
     }
 }

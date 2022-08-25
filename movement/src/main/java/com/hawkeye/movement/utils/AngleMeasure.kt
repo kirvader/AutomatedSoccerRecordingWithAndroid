@@ -7,8 +7,12 @@ fun cos(angle: AngleMeasure): Float = kotlin.math.cos(angle.radian())
 fun sin(angle: AngleMeasure): Float = kotlin.math.sin(angle.radian())
 
 interface AngleMeasure : Comparable<AngleMeasure> {
-    fun degree(): Float
-    fun radian(): Float
+    fun degree(): Float {
+        return this.radian() * 180.0f / PI.toFloat()
+    }
+    fun radian(): Float {
+        return this.degree() * PI.toFloat() / 180.0f
+    }
 
     override operator fun compareTo(angle: AngleMeasure): Int {
         val deltaAngle = this.degree() - angle.degree()

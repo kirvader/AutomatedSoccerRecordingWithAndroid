@@ -6,10 +6,7 @@ import androidx.camera.core.ImageProxy
 import app.hawkeye.balltracker.controllers.FootballTrackingSystemController
 import app.hawkeye.balltracker.controllers.time.TimeKeeper
 import app.hawkeye.balltracker.controllers.time.interfaces.TimeKeeperBase
-import app.hawkeye.balltracker.processors.image.ONNXYOLOv5ImageProcessor
-import app.hawkeye.balltracker.processors.image.ONNXYOLOv5WithTrackerImageProcessor_NoFittingForRotatingDevice
-import app.hawkeye.balltracker.processors.image.ModelImageProcessor
-import app.hawkeye.balltracker.processors.image.ONNXYOLOv5WithTrackerImageProcessor_WithFittingForRotatingDevice
+import app.hawkeye.balltracker.processors.image.*
 import app.hawkeye.balltracker.processors.utils.*
 import app.hawkeye.balltracker.utils.createLogger
 import kotlinx.coroutines.CoroutineScope
@@ -22,8 +19,9 @@ private val LOG = createLogger<ObjectDetectorImageAnalyzer>()
 enum class ImageProcessorsChoice(private val index: Int) {
     None(0),
     ONNX_YOLO_V5(1),
-    ONNX_YOLO_V5_TRACKER_NO_ROTATION_FITTING(2),
-    ONNX_YOLO_V5_TRACKER_ROTATION_FITTING(3);
+    ONNX_YOLO_V5_TRACKER_NOROTATIONFIT_QUAD(2),
+    ONNX_YOLO_V5_TRACKER_ROTATIONFIT_QUAD(3),
+    ONNX_YOLO_V5_TRACKER_NOROTATIONFIT_SINGLE(4);
 
     companion object {
         private val VALUES = values()
@@ -59,18 +57,26 @@ class ObjectDetectorImageAnalyzer(
         modelImageProcessors = mapOf(
             ImageProcessorsChoice.None to ModelImageProcessor.Default,
             ImageProcessorsChoice.ONNX_YOLO_V5 to ONNXYOLOv5ImageProcessor(context),
-            ImageProcessorsChoice.ONNX_YOLO_V5_TRACKER_NO_ROTATION_FITTING to ONNXYOLOv5WithTrackerImageProcessor_NoFittingForRotatingDevice(
+            ImageProcessorsChoice.ONNX_YOLO_V5_TRACKER_NOROTATIONFIT_QUAD to ONNXYOLOv5WithTrackerImageProcessor_NoRotatingFit_QuadSquare(
                 context,
                 ::getCurrentImageProcessingStart,
                 updateUIAreaOfDetectionWithNewArea
             ),
             // crutch about switching between static and rotating camera
-            ImageProcessorsChoice.ONNX_YOLO_V5_TRACKER_ROTATION_FITTING to ONNXYOLOv5WithTrackerImageProcessor_WithFittingForRotatingDevice(
+            ImageProcessorsChoice.ONNX_YOLO_V5_TRACKER_ROTATIONFIT_QUAD to ONNXYOLOv5WithTrackerImageProcessor_WithRotationFit_QuadSquare(
                 context,
-                ::getBallPositionAtTime,
+                ::getCurrentImageProcessingStart,
+                updateUIAreaOfDetectionWithNewArea,
+                ::getBallPositionAtTime
+            ),
+            // crutch about switching between static and rotating camera
+            ImageProcessorsChoice.ONNX_YOLO_V5_TRACKER_NOROTATIONFIT_SINGLE to OnnxYoloV5WithTrackerImageProcessor_NoRotatingFit_SingleSquare(
+                context,
                 ::getCurrentImageProcessingStart,
                 updateUIAreaOfDetectionWithNewArea
-            )
+            ),
+
+
         )
     }
 
@@ -98,7 +104,13 @@ class ObjectDetectorImageAnalyzer(
             result,
             timeKeeper.getCurrentCircleStartTime()
         )
+
         timeKeeper.registerCircle()
+
+        LOG.i(movementControllerSystem.getBallPositionOnScreenAtTime(timeKeeper.getCurrentCircleStartTime()))
+
+        movementControllerSystem.directDeviceAtObjectAtTime(timeKeeper.getCurrentCircleStartTime(), timeKeeper.getCurrentCircleStartTime())
+
         updateUIonResultsReady(
             result.adaptiveRect,
             timeKeeper.getInfoAboutLastCircle()
@@ -117,10 +129,9 @@ class ObjectDetectorImageAnalyzer(
         var result: ClassifiedBox?
         CoroutineScope(Dispatchers.Default).launch {
             result = modelImageProcessors[currentImageProcessorsChoice]?.processImageProxy(imageProxy = imageProxy)
+            updateTrackingSystemState(result)
 
             imageProxy.close()
-
-            updateTrackingSystemState(result)
         }
     }
 }

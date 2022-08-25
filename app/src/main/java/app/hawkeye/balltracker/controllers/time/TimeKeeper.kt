@@ -1,14 +1,19 @@
 package app.hawkeye.balltracker.controllers.time
 
 import app.hawkeye.balltracker.controllers.time.interfaces.TimeKeeperBase
+import java.util.*
 
 class TimeKeeper : TimeKeeperBase {
     private var currentTime = 0L
     private var lastDelta = 0L
-    private var averageDeltaTimeBetweenCalls = 0L
+    private val circleStarts: Queue<Long> = LinkedList()
+
+    private val consecutiveCirclesQuantity = 5
+
 
     init {
         currentTime = System.currentTimeMillis()
+        circleStarts.add(currentTime)
     }
 
     override fun getCurrentCircleStartTime() = currentTime
@@ -18,10 +23,18 @@ class TimeKeeper : TimeKeeperBase {
 
         lastDelta = newCurrentTime - currentTime
         currentTime = newCurrentTime
-        averageDeltaTimeBetweenCalls = (lastDelta + averageDeltaTimeBetweenCalls) / 2
+        circleStarts.add(currentTime)
+        if (circleStarts.size > consecutiveCirclesQuantity) {
+            circleStarts.remove()
+        }
+
     }
 
     override fun getInfoAboutLastCircle() : String {
-        return "avg = ${averageDeltaTimeBetweenCalls}ms; ${lastDelta}ms"
+        return "avg = ${getApproximateCircleTime()}ms; ${lastDelta}ms"
+    }
+
+    override fun getApproximateCircleTime(): Long {
+        return (circleStarts.last() - circleStarts.first()) / circleStarts.size
     }
 }

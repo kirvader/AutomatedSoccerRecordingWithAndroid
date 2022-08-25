@@ -2,12 +2,15 @@ package app.hawkeye.balltracker.controllers
 
 import app.hawkeye.balltracker.processors.utils.ClassifiedBox
 import app.hawkeye.balltracker.processors.utils.AdaptiveScreenVector
+import app.hawkeye.balltracker.utils.createLogger
 import com.hawkeye.movement.TrackingSystemController
 import com.hawkeye.movement.interfaces.RotatableDevice
 import com.hawkeye.movement.utils.AngleMeasure
 import com.hawkeye.movement.utils.Degree
 import com.hawkeye.movement.utils.Point
 import com.hawkeye.movement.utils.PolarPoint
+
+private val LOG = createLogger<FootballTrackingSystemController>()
 
 
 class FootballTrackingSystemController(rotatableDevice: RotatableDevice) : TrackingSystemController(
@@ -18,11 +21,6 @@ class FootballTrackingSystemController(rotatableDevice: RotatableDevice) : Track
         override fun degree(): Float {
             return (screenPart - 0.5f) * cameraFOV_degree
         }
-
-        override fun radian(): Float {
-            return Degree(this.degree()).radian()
-        }
-
     }
 
     private val averageDistance = 10.0f
@@ -49,6 +47,10 @@ class FootballTrackingSystemController(rotatableDevice: RotatableDevice) : Track
 
         val deltaAngle = ScreenPart(centerX, cameraFOV)
         val height = box.adaptiveRect.topLeftPoint.y + box.adaptiveRect.size.y / 2
+
+        LOG.i(box.adaptiveRect.topLeftPoint + box.adaptiveRect.size)
+
+        LOG.i("grad = ${rotatableDeviceController.getDirectionAtTime(absTime_ms).degree()} + ${deltaAngle.degree()} = ${rotatableDeviceController.getDirectionAtTime(absTime_ms).degree() + deltaAngle.degree()}")
 
         updateTargetPosition(Point(PolarPoint(averageDistance, rotatableDeviceController.getDirectionAtTime(absTime_ms) + deltaAngle, height)), absTime_ms)
     }

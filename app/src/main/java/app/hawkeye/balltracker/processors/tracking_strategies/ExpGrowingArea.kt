@@ -2,12 +2,15 @@ package app.hawkeye.balltracker.processors.tracking_strategies
 
 import app.hawkeye.balltracker.processors.utils.AdaptiveScreenRect
 import app.hawkeye.balltracker.processors.utils.AdaptiveScreenVector
+import app.hawkeye.balltracker.utils.createLogger
 import kotlin.math.exp
 import kotlin.math.log
 import kotlin.math.max
 import kotlin.math.min
 
-abstract class ExpGrowingArea: TrackingStrategy {
+private val LOG = createLogger<ExpGrowingArea>()
+
+abstract class ExpGrowingArea: SingleObjectTrackingStrategy {
     private var lastDetectedObjectCenter: AdaptiveScreenVector = AdaptiveScreenVector(0.5f, 0.5f)
     private var startSize: Float = 0.1f
 
@@ -18,20 +21,31 @@ abstract class ExpGrowingArea: TrackingStrategy {
     private fun getSizeAtTime(baseSize: Float, absTime_ms: Long): Float {
         val deltaTime = (absTime_ms - lastTimeOfUpdate_ms).toFloat() / msInS
 
-        return min(1.0f, baseSize * exp(adaptiveRectGrowthFactor * min(maxTimeOfRelevance, deltaTime)))
+        return min(2.0f, baseSize * exp(adaptiveRectGrowthFactor * min(maxTimeOfRelevance, deltaTime)))
     }
 
     private fun updateGrowthFactor(newStartSize: Float) {
-        adaptiveRectGrowthFactor = -log(newStartSize, exp(1.0f)) / maxTimeOfRelevance
+        adaptiveRectGrowthFactor = log(2 / newStartSize, exp(1.0f)) / maxTimeOfRelevance
     }
 
-    override fun getAreaOfDetectionAtTime(absTime_ms: Long): List<AdaptiveScreenRect> {
+    override fun getAreaOfDetectionAtTime(absTime_ms: Long): AdaptiveScreenRect {
         val currentAreaOfDetectionSize = getSizeAtTime(startSize, absTime_ms)
 
-        val topLeftPointOfDetectionArea = (guessDetectionAreaCenterIfChanging(absTime_ms) ?: lastDetectedObjectCenter) - AdaptiveScreenVector(currentAreaOfDetectionSize, currentAreaOfDetectionSize) * 0.5f
-        val movedArea = AdaptiveScreenRect(topLeftPointOfDetectionArea, AdaptiveScreenVector(currentAreaOfDetectionSize, currentAreaOfDetectionSize)).getCropped()
+        val topLeftPointOfDetectionArea = ((guessDetectionAreaCenterIfChanging(absTime_ms)
+            ?: lastDetectedObjectCenter) - AdaptiveScreenVector(
+            currentAreaOfDetectionSize,
+            currentAreaOfDetectionSize
+        ) * 0.5f).getOntoSurface()
 
-        return listOf(movedArea)
+        val bottomRightPointOfDetectionArea = (topLeftPointOfDetectionArea + AdaptiveScreenVector(
+            currentAreaOfDetectionSize,
+            currentAreaOfDetectionSize
+        )).getOntoSurface()
+
+        return AdaptiveScreenRect(
+            topLeftPointOfDetectionArea,
+            bottomRightPointOfDetectionArea - topLeftPointOfDetectionArea
+        ).getCropped()
     }
 
     override fun updateLastDetectedObjectPositionAtTime(adaptiveRect: AdaptiveScreenRect?, absTime_ms: Long) {

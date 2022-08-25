@@ -7,4 +7,6 @@ interface TimeKeeperBase {
     fun registerCircle()
 
     fun getInfoAboutLastCircle() : String
+
+    fun getApproximateCircleTime(): Long
 }

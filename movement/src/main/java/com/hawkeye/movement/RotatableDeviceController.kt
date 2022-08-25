@@ -5,6 +5,7 @@ import com.hawkeye.movement.interfaces.RotatableDeviceControllerBase
 import com.hawkeye.movement.utils.AngleMeasure
 import com.hawkeye.movement.utils.Degree
 import com.hawkeye.movement.utils.Point
+import com.hawkeye.movement.utils.Radian
 import java.util.*
 import kotlin.math.abs
 
@@ -66,6 +67,8 @@ class RotatableDeviceController(
         speed: AngleMeasure,
         currentTime_ms: Long
     ) {
+        if (!device.isConnected())
+            return
         if (currentTime_ms < lastUpdatedState.absTime) {
             print("Can't change device state in the past.")
             return
@@ -96,6 +99,9 @@ class RotatableDeviceController(
         currentTime_ms: Long,
         targetTime_ms: Long
     ) {
+
+        if (!device.isConnected())
+            return
         if (currentTime_ms < lastUpdatedState.absTime) {
             print("Can't change device state in the past.")
             return
@@ -113,6 +119,8 @@ class RotatableDeviceController(
 
         val availableSpeed =
             device.getTheMostAppropriateSpeedFromAvailable(checkedDeltaAngle / deltaTime)
+
+
 
         device.rotateBy(availableSpeed, checkedDeltaAngle)
 
@@ -147,6 +155,8 @@ class RotatableDeviceController(
     }
 
     override fun getDirectionAtTime(absTime: Long): AngleMeasure {
+        if (!device.isConnected())
+            return Degree(0f)
         val stack = Stack<State>()
         while (allStoredStates.isNotEmpty() && allStoredStates.last.absTime > absTime) {
             stack.push(allStoredStates.pollLast())

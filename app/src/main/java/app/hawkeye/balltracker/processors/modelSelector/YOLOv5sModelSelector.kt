@@ -3,7 +3,7 @@ package app.hawkeye.balltracker.processors.modelSelector
 import android.content.Context
 import app.hawkeye.balltracker.R
 
-class YOLOv5sModelSelector(context: Context): SimpleModelSelector(context) {
+class YOLOv5sModelSelector(context: Context): YoloModelSelector(context) {
     override val model64: Int
         get() = R.raw.yolov5s_64
     override val model128: Int

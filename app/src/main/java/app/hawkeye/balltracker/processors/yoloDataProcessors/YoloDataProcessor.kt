@@ -61,10 +61,10 @@ class YoloDataProcessor(context: Context, modelId: Int, private val modelInputIm
             val classId = maxScoreInd - 5
             if (importantClassId != -1 && importantClassId != classId) continue
 
-            val width = record[2] / imageWidth
-            val height = record[3] / imageHeight
-            val left = record[0] / imageWidth - width / 2
-            val top = record[1] / imageHeight - height / 2
+            val width = record[2] / modelInputImageSideSize
+            val height = record[3] / modelInputImageSideSize
+            val left = record[0] / modelInputImageSideSize - width / 2
+            val top = record[1] / modelInputImageSideSize - height / 2
 
             result.add(
                 ClassifiedBox(
@@ -116,7 +116,7 @@ class YoloDataProcessor(context: Context, modelId: Int, private val modelInputIm
     }
 
     companion object {
-        private const val CONFIDENCE_THRESHOLD: Float = 0.3F
-        private const val SCORE_THRESHOLD: Float = 0.2F
+        private const val CONFIDENCE_THRESHOLD: Float = 0.5F
+        private const val SCORE_THRESHOLD: Float = 0.4F
     }
 }

@@ -2,19 +2,18 @@ package app.hawkeye.balltracker.processors.tiling_strategies
 
 import app.hawkeye.balltracker.processors.utils.AdaptiveScreenRect
 import app.hawkeye.balltracker.processors.utils.ScreenRect
+import app.hawkeye.balltracker.processors.utils.ScreenVector
 import app.hawkeye.balltracker.utils.createLogger
 import kotlin.math.max
 
-private val LOG = createLogger<SingleSquareTiling>()
+private val LOG = createLogger<StaticScaleSingleSquareTiling>()
 
-class SingleSquareTiling : SquareTilingStrategy {
-    private var sortedAvailableSquareSideSizes: List<Int> = listOf(64, 128, 256, 512, 640)
-
+class StaticScaleSingleSquareTiling(private val sortedAvailableSquareSideSizes: List<Int>): SquareTilingStrategy {
     override fun tileRect(
         adaptiveRect: AdaptiveScreenRect,
         imageWidth: Int,
         imageHeight: Int
-    ): List<ScreenRect> {
+    ): Pair<ScreenVector, List<ScreenRect>> {
         val croppedBySurface = adaptiveRect.getCropped()
 
         val rectSize = croppedBySurface.size.toScreenVector(imageWidth, imageHeight)
@@ -30,12 +29,12 @@ class SingleSquareTiling : SquareTilingStrategy {
 
         val topLeftCalibrated = topLeftPoint.getOnSurface(imageWidth - tilingSideSize, imageHeight - tilingSideSize)
 
-
-        return listOf(
+        return Pair(
+            ScreenVector(imageWidth, imageHeight), listOf(
             ScreenRect(
                 topLeftCalibrated,
                 tilingSideSize
             )
-        )
+        ))
     }
 }

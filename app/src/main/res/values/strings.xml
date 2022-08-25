@@ -41,9 +41,10 @@
     <string name="stop_recording">Stop recording</string>
     <string-array name="available_object_detectors">
         <item>None</item>
-        <item>ONNX YOLO</item>
-        <item>ONNX YOLO + Tracker</item>
-        <item>ONNX YOLO + Tracker + fitting for rotating</item>
+        <item>ONNX YOLO default</item>
+        <item>ONNX YOLO + Tracker + Quad tiling</item>
+        <item>ONNX YOLO + Tracker + Quad tiling + fitting for rotating</item>
+        <item>ONNX YOLO + Tracker + Single tiling</item>
     </string-array>
 
 </resources>

@@ -26,6 +26,8 @@ interface RotatableDevice {
      */
     fun getGradPerSecSpeedFromAvailable(availableDeviceSpeed: Float): AngleMeasure
 
+    fun isConnected(): Boolean
+
     object Dummy : RotatableDevice {
         override fun rotateBy(speed: Float, orientedAngle: AngleMeasure) {}
 
@@ -35,5 +37,9 @@ interface RotatableDevice {
 
         override fun getGradPerSecSpeedFromAvailable(availableDeviceSpeed: Float): AngleMeasure =
             Degree(availableDeviceSpeed)
+
+        override fun isConnected(): Boolean {
+            return false
+        }
     }
 }

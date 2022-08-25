@@ -28,17 +28,20 @@ private val LOG = createLogger<PivoPodDevice>()
 class PivoPodDevice(context: Context) : RotatableDevice {
     private var availableSpeeds: List<Int>
 
-    private fun getLicenseContent(context: Context): String = context.assets.open("licenceKey.json").bufferedReader().use { it.readText() }
+    private fun getLicenseContent(context: Context): String =
+        context.assets.open("licenceKey.json").bufferedReader().use { it.readText() }
 
     init {
         PivoSdk.init(context)
         sdk = PivoSdk.getInstance()
         sdk.unlockWithLicenseKey(getLicenseContent(context))
 
-        availableSpeeds = sdk.supportedSpeeds.filter { it in 20..200 }
+        availableSpeeds = sdk.supportedSpeeds.filter { it in 50..200 }
     }
 
     override fun rotateBy(speed: Float, orientedAngle: AngleMeasure) {
+
+        LOG.i("got command to rotate for ${orientedAngle.degree()} with speed $speed")
         if (orientedAngle > Degree(0.0f)) {
             sdk.turnRight(abs(orientedAngle.degree().toInt()))
         } else if (orientedAngle < Degree(0.0f)) {
@@ -53,11 +56,22 @@ class PivoPodDevice(context: Context) : RotatableDevice {
     }
 
     override fun getTheMostAppropriateSpeedFromAvailable(speed: AngleMeasure): Float {
-        return availableSpeeds[availableSpeeds.binarySearch((360.0f / speed.degree()).toInt())].toFloat()
+        if (availableSpeeds.isEmpty()) {
+            availableSpeeds = sdk.supportedSpeeds.filter { it in 50..200 }
+        }
+        if (speed.degree() == 0f) {
+            return availableSpeeds.last().toFloat()
+        }
+        return availableSpeeds.firstOrNull { it >= 360.0f / speed.degree() }?.toFloat()
+            ?: availableSpeeds.last().toFloat()
     }
 
     override fun getGradPerSecSpeedFromAvailable(availableDeviceSpeed: Float): AngleMeasure {
         return Degree(1.0f / 360.0f / availableDeviceSpeed)
+    }
+
+    override fun isConnected(): Boolean {
+        return sdk.isPivoConnected
     }
 
     companion object {

@@ -21,7 +21,6 @@ class YOLOObjectExtractor(context: Context) : ImageObjectsExtractor {
     private var modelSelector: ModelSelector
 
     private val scope = CoroutineScope(Dispatchers.Default)
-    private val mutex = Mutex()
 
     init {
         modelSelector = YOLOv5sModelSelector(context)
@@ -31,6 +30,7 @@ class YOLOObjectExtractor(context: Context) : ImageObjectsExtractor {
     private val DIM_PIXEL_SIZE = 3
 
     private fun preProcess(bitmap: Bitmap, sideSize: Int, offset: ScreenVector): FloatBuffer {
+        LOG.i("bitmap size = (${bitmap.width} ${bitmap.height}), sideSize = $sideSize, offset = (${offset.x}; ${offset.y})")
         val imgData = FloatBuffer.allocate(
             DIM_BATCH_SIZE
                     * DIM_PIXEL_SIZE
@@ -41,7 +41,6 @@ class YOLOObjectExtractor(context: Context) : ImageObjectsExtractor {
         val wholeImageStride = bitmap.width * bitmap.height
         val bmpData = IntArray(wholeImageStride)
         bitmap.getPixels(bmpData, 0, bitmap.width, 0, 0, bitmap.width, bitmap.height)
-        LOG.i("sideSize = $sideSize, offset = (${offset.x}; ${offset.y})")
 
         val resultImageStride = sideSize * sideSize
         for (i in 0 until sideSize) {
@@ -115,6 +114,10 @@ class YOLOObjectExtractor(context: Context) : ImageObjectsExtractor {
             }
         }
         return results.mapNotNull { it.await() }.maxByOrNull { it.confidence }
+    }
+
+    override fun getCurrentAvailableModelSideSizes(): List<Int> {
+        return modelSelector.getAvailableModelSideSizes()
     }
 
 }
