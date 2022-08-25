@@ -1,5 +1,6 @@
 package app.hawkeye.balltracker.processors.tiling_strategies
 
+import app.hawkeye.balltracker.configs.objects.TrackingSystemConfigObject
 import app.hawkeye.balltracker.processors.utils.AdaptiveScreenRect
 import app.hawkeye.balltracker.processors.utils.ScreenRect
 import app.hawkeye.balltracker.processors.utils.ScreenVector
@@ -8,9 +9,8 @@ import kotlin.math.max
 
 private val LOG = createLogger<DynamicScaleSingleSquareTiling>()
 
-class DynamicScaleSingleSquareTiling(private val sortedAvailableSquareSideSizes: List<Int>) :
+class DynamicScaleSingleSquareTiling :
         SquareTilingStrategy {
-
     private fun ceilBy(number: Int, base: Int): Int {
         if (number % base == 0)
             return (number.div(base) + 1) * base
@@ -57,9 +57,9 @@ class DynamicScaleSingleSquareTiling(private val sortedAvailableSquareSideSizes:
             imageHeight
         )
 
-        val modelSideSize = sortedAvailableSquareSideSizes.lastOrNull() {
+        val modelSideSize = TrackingSystemConfigObject.availableModelSideSizes.lastOrNull() {
             it <= max(rectSize.x, rectSize.y)
-        } ?: sortedAvailableSquareSideSizes.last()
+        } ?: TrackingSystemConfigObject.availableModelSideSizes.last()
 
         val topLeftCalibrated =
             topLeftPoint.getOnSurface(imageWidth - rectSize.x, imageHeight - rectSize.y)

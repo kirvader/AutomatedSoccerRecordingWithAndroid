@@ -1,47 +1,31 @@
 package app.hawkeye.balltracker.processors.image
 
-import android.content.Context
 import android.graphics.Bitmap
 import androidx.camera.core.ImageProxy
-import app.hawkeye.balltracker.processors.imageObjectExtractors.ImageObjectsExtractor
-import app.hawkeye.balltracker.processors.imageObjectExtractors.YOLOObjectExtractor
+import app.hawkeye.balltracker.configs.objects.TrackingSystemConfigObject
+import app.hawkeye.balltracker.controllers.UIController
 import app.hawkeye.balltracker.processors.rotate
-import app.hawkeye.balltracker.processors.tiling_strategies.SquareTilingStrategy
 import app.hawkeye.balltracker.processors.toBitmap
-import app.hawkeye.balltracker.processors.tracking_strategies.SingleObjectTrackingStrategy
 import app.hawkeye.balltracker.processors.utils.AdaptiveScreenRect
 import app.hawkeye.balltracker.processors.utils.ClassifiedBox
 
-abstract class OnnxYoloV5WithTrackerImageProcessor(
-    context: Context,
-    private val getCurrentImageProcessingStart: () -> Long,
-    private val updateUIAreaOfDetectionWithNewArea: (List<AdaptiveScreenRect>) -> Unit) : ModelImageProcessor {
-
-    abstract var singleObjectTrackingStrategy: SingleObjectTrackingStrategy
-
-    abstract var squareTilingStrategy: SquareTilingStrategy
-
-    protected var objectExtractor: ImageObjectsExtractor
-
-    init {
-        objectExtractor = YOLOObjectExtractor(context)
-    }
+class OnnxYoloV5WithTrackerImageProcessor() : ModelImageProcessor {
 
     override suspend fun processImageProxy(imageProxy: ImageProxy): ClassifiedBox? {
         val imgBitmap = imageProxy.toBitmap()
         val normalImageBitmap = imgBitmap?.rotate(imageProxy.imageInfo.rotationDegrees.toFloat()) ?: return null // image bitmap when it is vertical
 
-        val areaOfDetection = singleObjectTrackingStrategy.getAreaOfDetectionAtTime(getCurrentImageProcessingStart())
+        val areaOfDetection = TrackingSystemConfigObject.trackingStrategyChoice.trackingStrategy.getAreaOfDetectionAtTime(TrackingSystemConfigObject.timeKeeper.getCurrentCircleStartTime())
 
-        val (newResolution, tiling) = squareTilingStrategy.tileRect(areaOfDetection, normalImageBitmap.width, normalImageBitmap.height)
+        val (newResolution, tiling) = TrackingSystemConfigObject.tilingStrategyChoice.tilingStrategy.tileRect(areaOfDetection, normalImageBitmap.width, normalImageBitmap.height)
 
-        updateUIAreaOfDetectionWithNewArea(tiling.map { it.toAdaptiveScreenRect(newResolution.x, newResolution.y) })
+        UIController.updateUIAreaOfDetectionWithNewArea(tiling.map { it.toAdaptiveScreenRect(newResolution.x, newResolution.y) })
 
         val resultBitmap = normalImageBitmap.let { Bitmap.createScaledBitmap(it, newResolution.x, newResolution.y, false) } ?: return null
 
-        val result = objectExtractor.extractObjects(resultBitmap, tiling, 0)
+        val result = TrackingSystemConfigObject.objectExtractorChoice.objectsExtractor.extractObjects(resultBitmap, tiling, 0)
 
-        singleObjectTrackingStrategy.updateLastDetectedObjectPositionAtTime(result?.adaptiveRect, getCurrentImageProcessingStart())
+        TrackingSystemConfigObject.trackingStrategyChoice.trackingStrategy.updateLastDetectedObjectPositionAtTime(result?.adaptiveRect, TrackingSystemConfigObject.timeKeeper.getCurrentCircleStartTime())
 
         return result
     }

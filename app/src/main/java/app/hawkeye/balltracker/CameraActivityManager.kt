@@ -15,7 +15,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.util.Consumer
 import androidx.lifecycle.LifecycleOwner
-import app.hawkeye.balltracker.processors.utils.AdaptiveScreenRect
+import app.hawkeye.balltracker.controllers.UIController
 import app.hawkeye.balltracker.utils.createLogger
 import com.hawkeye.movement.interfaces.TrackingSystemControllerBase
 import kotlinx.coroutines.CoroutineScope
@@ -31,30 +31,14 @@ private val LOG = createLogger<CameraManager>()
 
 class CameraManager(
     private val context: Context,
-    private val lifecycleOwner: LifecycleOwner,
-    private val updateUIOnStopRecording: () -> Unit,
-    private val updateUIOnStartRecording: () -> Unit,
-    private val getPreviewSurfaceProvider: () -> Preview.SurfaceProvider,
-    updateUIOnImageAnalyzerFinished: (AdaptiveScreenRect?, String) -> Unit,
-    updateUIAreaOfDetectionWithNewArea: (List<AdaptiveScreenRect>) -> Unit,
-    attachTrackingSystemToLocator:(TrackingSystemControllerBase) -> Unit
+    private val lifecycleOwner: LifecycleOwner
 ) {
-
-    private val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
-    private var preview: Preview? = null
-
-    private var imageAnalysis: ImageAnalysis? = null
 
     private var videoCapture: VideoCapture<Recorder>? = null
     private var recording: Recording? = null
-    private var selector: QualitySelector? = null
-    private var mediaStoreOutputOptions: MediaStoreOutputOptions? = null
-
-    private var recorder: Recorder? = null
 
     private val cameraExecutor: ExecutorService by lazy { Executors.newSingleThreadExecutor() }
     private val backgroundExecutor: ExecutorService by lazy { Executors.newSingleThreadExecutor() }
-    private val scope = CoroutineScope(Job() + Dispatchers.Default)
 
     private var objectDetectorImageAnalyzer: ObjectDetectorImageAnalyzer? = null
 
@@ -74,7 +58,6 @@ class CameraManager(
                     recording = null
                     "Video capture ends with error: ${event.error}"
                 }
-
                 Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
                 LOG.i(msg)
             }
@@ -83,34 +66,22 @@ class CameraManager(
 
     init {
         objectDetectorImageAnalyzer =
-            ObjectDetectorImageAnalyzer(
-                context,
-                updateUIOnImageAnalyzerFinished,
-                updateUIAreaOfDetectionWithNewArea
-            )
+            ObjectDetectorImageAnalyzer()
 
-        attachTrackingSystemToLocator(objectDetectorImageAnalyzer!!.getTrackingSystemController())
+        UIController.attachTrackingSystemToLocator(objectDetectorImageAnalyzer!!.getTrackingSystemController())
     }
 
-    fun setImageProcessor(imageProcessorsChoice: ImageProcessorsChoice) {
-        objectDetectorImageAnalyzer?.setCurrentImageProcessor(imageProcessorsChoice)
-    }
-
-    private fun setAnalyzer() {
-        scope.launch {
-            imageAnalysis?.clearAnalyzer()
+    private fun setAnalyzerFor(imageAnalysis: ImageAnalysis) {
+        CoroutineScope(Job() + Dispatchers.Default).launch {
+            imageAnalysis.clearAnalyzer()
             try {
-
                 objectDetectorImageAnalyzer?.let {
-                    imageAnalysis?.setAnalyzer(backgroundExecutor, it)
+                    imageAnalysis.setAnalyzer(backgroundExecutor, it)
                 }
             } catch (e: Exception) {
                 LOG.d("Analyzer setup failed. Using model best2.pt", e)
             }
-            if (imageAnalysis != null)
-                LOG.i("Analyzer has been successfully set up.")
-            else
-                LOG.e("Analyzer is null.")
+            LOG.e("Analyzer is null.")
         }
     }
 
@@ -137,38 +108,38 @@ class CameraManager(
 
         cameraProviderFuture.addListener({
             try {
-                selector = QualitySelector
+                val selector = QualitySelector
                     .from(
                         Quality.FHD,
                         FallbackStrategy.higherQualityOrLowerThan(Quality.FHD)
                     )
 
-                recorder = Recorder.Builder()
-                    .setExecutor(cameraExecutor).setQualitySelector(selector!!)
+                val recorder = Recorder.Builder()
+                    .setExecutor(cameraExecutor).setQualitySelector(selector)
                     .build()
 
-                videoCapture = VideoCapture.withOutput(recorder!!)
+                videoCapture = VideoCapture.withOutput(recorder)
 
-                preview = Preview.Builder()
+                val preview = Preview.Builder()
                     .setTargetAspectRatio(AspectRatio.RATIO_16_9)
                     .build()
 
-                imageAnalysis = ImageAnalysis.Builder()
+                val imageAnalysis = ImageAnalysis.Builder()
                     .setTargetAspectRatio(AspectRatio.RATIO_16_9)
                     .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                     .build()
 
-                setAnalyzer()
+                setAnalyzerFor(imageAnalysis)
 
                 cameraProvider.unbindAll()
 
                 setAutoFocus(
                     cameraProvider.bindToLifecycle(
-                        lifecycleOwner, cameraSelector, preview, videoCapture, imageAnalysis
+                        lifecycleOwner, CameraSelector.DEFAULT_BACK_CAMERA, preview, videoCapture, imageAnalysis
                     )
                 )
 
-                preview?.setSurfaceProvider(getPreviewSurfaceProvider())
+                preview.setSurfaceProvider(UIController.getPreviewSurfaceProvider())
             } catch (ex: Exception) {
                 if (ex.message != null) {
                     LOG.e(ex.toString())
@@ -180,10 +151,10 @@ class CameraManager(
     fun toggleCameraRecording() {
         if (recording != null) {
             stopCapturing()
-            updateUIOnStopRecording()
+            UIController.updateUIOnStopRecording()
         } else {
             startCapture()
-            updateUIOnStartRecording()
+            UIController.updateUIOnStartRecording()
         }
     }
 
@@ -195,7 +166,7 @@ class CameraManager(
             put(MediaStore.Video.Media.DISPLAY_NAME, name)
         }
 
-        mediaStoreOutputOptions = MediaStoreOutputOptions
+        val mediaStoreOutputOptions = MediaStoreOutputOptions
             .Builder(context.contentResolver, MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
             .setContentValues(contentValues)
             .build()
@@ -209,7 +180,7 @@ class CameraManager(
             return
         }
         recording = videoCapture?.output
-            ?.prepareRecording(context, mediaStoreOutputOptions!!)
+            ?.prepareRecording(context, mediaStoreOutputOptions)
             ?.withAudioEnabled()
             ?.start(ContextCompat.getMainExecutor(context), recordingListener)!!
     }
@@ -218,8 +189,6 @@ class CameraManager(
         recording?.stop()
         recording = null
     }
-
-
 
     fun destroy() {
         backgroundExecutor.shutdown()

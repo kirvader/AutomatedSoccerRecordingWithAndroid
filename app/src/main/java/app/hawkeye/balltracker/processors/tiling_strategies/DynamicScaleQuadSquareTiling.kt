@@ -4,11 +4,11 @@ import app.hawkeye.balltracker.processors.utils.AdaptiveScreenRect
 import app.hawkeye.balltracker.processors.utils.ScreenRect
 import app.hawkeye.balltracker.processors.utils.ScreenVector
 
-class DynamicScaleQuadSquareTiling(private val sortedAvailableSquareSideSizes: List<Int>): SquareTilingStrategy {
+class DynamicScaleQuadSquareTiling: SquareTilingStrategy {
     private val singleSquareTiler: SquareTilingStrategy
 
     init {
-        singleSquareTiler = DynamicScaleSingleSquareTiling(sortedAvailableSquareSideSizes.filter { it != 640 })
+        singleSquareTiler = DynamicScaleSingleSquareTiling()
     }
 
     override fun tileRect(

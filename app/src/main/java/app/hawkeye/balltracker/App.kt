@@ -1,7 +1,9 @@
 package app.hawkeye.balltracker
 
 import android.app.Application
+import android.content.Context
 import android.util.Log
+import app.hawkeye.balltracker.configs.objects.AvailableYoloModels
 import app.hawkeye.balltracker.rotatable.PivoPodDevice
 import app.hawkeye.balltracker.utils.RuntimeUtils
 import com.elvishew.xlog.LogConfiguration
@@ -14,6 +16,7 @@ import com.elvishew.xlog.printer.file.backup.NeverBackupStrategy
 import com.elvishew.xlog.printer.file.naming.DateFileNameGenerator
 import com.hawkeye.movement.interfaces.RotatableDevice
 import java.io.File
+import java.nio.ByteBuffer
 
 
 /**
@@ -29,6 +32,29 @@ class App : Application() {
         } else {
             RotatableDevice.Dummy
         }
+
+        AvailableYoloModels.yoloV5n6_64 = readYoloModelBytes(R.raw.yolov5n6_64)
+        AvailableYoloModels.yoloV5n6_128 = readYoloModelBytes(R.raw.yolov5n6_128)
+        AvailableYoloModels.yoloV5n6_256 = readYoloModelBytes(R.raw.yolov5n6_256)
+        AvailableYoloModels.yoloV5n6_512 = readYoloModelBytes(R.raw.yolov5n6_512)
+        AvailableYoloModels.yoloV5n6_640 = readYoloModelBytes(R.raw.yolov5n6_640)
+
+        AvailableYoloModels.yoloV5s_64 = readYoloModelBytes(R.raw.yolov5s_64)
+        AvailableYoloModels.yoloV5s_128 = readYoloModelBytes(R.raw.yolov5s_128)
+        AvailableYoloModels.yoloV5s_256 = readYoloModelBytes(R.raw.yolov5s_256)
+        AvailableYoloModels.yoloV5s_512 = readYoloModelBytes(R.raw.yolov5s_512)
+        AvailableYoloModels.yoloV5s_640 = readYoloModelBytes(R.raw.yolov5s_640)
+
+        AvailableYoloModels.yoloV5s6_64 = readYoloModelBytes(R.raw.yolov5s6_64)
+        AvailableYoloModels.yoloV5s6_128 = readYoloModelBytes(R.raw.yolov5s6_128)
+        AvailableYoloModels.yoloV5s6_256 = readYoloModelBytes(R.raw.yolov5s6_256)
+        AvailableYoloModels.yoloV5s6_512 = readYoloModelBytes(R.raw.yolov5s6_512)
+        AvailableYoloModels.yoloV5s6_640 = readYoloModelBytes(R.raw.yolov5s6_640)
+    }
+
+
+    private fun readYoloModelBytes(modelId: Int): ByteArray {
+        return applicationContext.resources.openRawResource(modelId).readBytes()
     }
 
     private fun setupXLog() {

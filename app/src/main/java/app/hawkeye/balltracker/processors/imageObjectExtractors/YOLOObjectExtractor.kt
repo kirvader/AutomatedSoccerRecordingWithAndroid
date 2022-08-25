@@ -1,36 +1,30 @@
 package app.hawkeye.balltracker.processors.imageObjectExtractors
 
-import android.content.Context
 import android.graphics.Bitmap
+import app.hawkeye.balltracker.configs.choices.ModelSelectors
+import app.hawkeye.balltracker.configs.objects.TrackingSystemConfigObject
 import app.hawkeye.balltracker.processors.modelSelector.ModelSelector
-import app.hawkeye.balltracker.processors.modelSelector.YOLOv5sModelSelector
+import app.hawkeye.balltracker.processors.modelSelector.Yolov5sModelSelector
 import app.hawkeye.balltracker.processors.utils.AdaptiveScreenRect
 import app.hawkeye.balltracker.processors.utils.ClassifiedBox
 import app.hawkeye.balltracker.processors.utils.ScreenRect
 import app.hawkeye.balltracker.processors.utils.ScreenVector
 import app.hawkeye.balltracker.utils.createLogger
 import kotlinx.coroutines.*
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import java.nio.FloatBuffer
 
 private val LOG = createLogger<YOLOObjectExtractor>()
 
-class YOLOObjectExtractor(context: Context) : ImageObjectsExtractor {
+class YOLOObjectExtractor : ImageObjectsExtractor {
 
-    private var modelSelector: ModelSelector
+    private var modelSelector: ModelSelector = Yolov5sModelSelector()
 
     private val scope = CoroutineScope(Dispatchers.Default)
-
-    init {
-        modelSelector = YOLOv5sModelSelector(context)
-    }
 
     private val DIM_BATCH_SIZE = 1
     private val DIM_PIXEL_SIZE = 3
 
     private fun preProcess(bitmap: Bitmap, sideSize: Int, offset: ScreenVector): FloatBuffer {
-        LOG.i("bitmap size = (${bitmap.width} ${bitmap.height}), sideSize = $sideSize, offset = (${offset.x}; ${offset.y})")
         val imgData = FloatBuffer.allocate(
             DIM_BATCH_SIZE
                     * DIM_PIXEL_SIZE
@@ -98,10 +92,8 @@ class YOLOObjectExtractor(context: Context) : ImageObjectsExtractor {
         val results: MutableList<Deferred<ClassifiedBox?>> = mutableListOf()
         areaOfDetection.filter { it.isSquare() }.map {
             val chosenModel =
-                modelSelector.selectAppropriateModelToHandleScreenSquare(it.size.x)
+                TrackingSystemConfigObject.yoloModelSelectorChoice.modelSelector.selectAppropriateModelToHandleScreenSquare(it.size.x)
             if (chosenModel != null) {
-                // TODO add multithreading
-
                 results.add(
                     scope.async {
                         val imgData = preProcess(bitmap, it.size.x, it.topLeftPoint)
@@ -118,6 +110,10 @@ class YOLOObjectExtractor(context: Context) : ImageObjectsExtractor {
 
     override fun getCurrentAvailableModelSideSizes(): List<Int> {
         return modelSelector.getAvailableModelSideSizes()
+    }
+
+    override fun setModelSelector(modelSelectorChoice: ModelSelectors) {
+        modelSelector = modelSelectorChoice.modelSelector
     }
 
 }

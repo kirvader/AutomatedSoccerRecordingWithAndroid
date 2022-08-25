@@ -1,4 +1,4 @@
-package app.hawkeye.balltracker.controllers.time.interfaces
+package app.hawkeye.balltracker.controllers.time
 
 interface TimeKeeperBase {
 

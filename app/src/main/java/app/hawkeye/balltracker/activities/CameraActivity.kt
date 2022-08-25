@@ -13,6 +13,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import app.hawkeye.balltracker.*
 import app.hawkeye.balltracker.R
+import app.hawkeye.balltracker.controllers.UIController
 import app.hawkeye.balltracker.processors.utils.AdaptiveScreenRect
 import app.hawkeye.balltracker.rotatable.PivoPodDevice
 import app.hawkeye.balltracker.utils.*
@@ -33,12 +34,6 @@ class CameraActivity : AppCompatActivity() {
         cameraManager = CameraManager(
             this,
             this,
-            ::updateUIOnStartRecording,
-            ::updateUIOnStopRecording,
-            ::getPreviewSurfaceProvider,
-            ::updateUIWhenImageAnalyzerFinished,
-            ::updateUIAreaOfDetectionWithNewArea,
-            ::attachTrackingSystemToLocator
         )
 
         if (allPermissionsGranted()) {
@@ -62,30 +57,14 @@ class CameraActivity : AppCompatActivity() {
             }
         }
 
-        ArrayAdapter.createFromResource(
-            this,
-            R.array.available_object_detectors,
-            android.R.layout.simple_spinner_item
-        ).also { adapter ->
-            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-            imageAnalyzerChoiceSpinner.adapter = adapter
-        }
-
-        imageAnalyzerChoiceSpinner.onItemSelectedListener =
-            object : AdapterView.OnItemSelectedListener {
-                override fun onItemSelected(p0: AdapterView<*>?, p1: View?, p2: Int, p3: Long) {
-                    val imageProcessorsChoice = ImageProcessorsChoice.getByValue(p2) ?: return
-                    LOG.i("Clicked on Model number $imageProcessorsChoice")
-
-                    cameraManager.setImageProcessor(imageProcessorsChoice)
-                }
-
-                override fun onNothingSelected(p0: AdapterView<*>?) {
-                    LOG.i("Model is not changed.")
-                }
-            }
-
         updateUIAreaOfDetectionWithNewArea(listOf())
+
+        UIController.updateUIOnStartRecording = ::updateUIOnStartRecording
+        UIController.updateUIOnStopRecording = ::updateUIOnStopRecording
+        UIController.updateUIAreaOfDetectionWithNewArea = ::updateUIAreaOfDetectionWithNewArea
+        UIController.updateUIWhenImageAnalyzerFinished = ::updateUIWhenImageAnalyzerFinished
+        UIController.getPreviewSurfaceProvider = ::getPreviewSurfaceProvider
+        UIController.attachTrackingSystemToLocator = ::attachTrackingSystemToLocator
     }
 
     private fun attachTrackingSystemToLocator(trackingSystemControllerBase: TrackingSystemControllerBase) {

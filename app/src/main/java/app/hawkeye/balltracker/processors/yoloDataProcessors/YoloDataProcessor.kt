@@ -3,21 +3,16 @@ package app.hawkeye.balltracker.processors.yoloDataProcessors
 import ai.onnxruntime.OnnxTensor
 import ai.onnxruntime.OrtEnvironment
 import ai.onnxruntime.OrtSession
-import android.content.Context
 import app.hawkeye.balltracker.processors.utils.*
 import java.nio.FloatBuffer
 import java.util.*
 
-class YoloDataProcessor(context: Context, modelId: Int, private val modelInputImageSideSize: Int) :
+class YoloDataProcessor(modelBytesArray: ByteArray, private val modelInputImageSideSize: Int) :
     DataProcessor {
     private var ortSession: OrtSession
 
-    private fun readYoloModel(context: Context, modelId: Int): ByteArray {
-        return context.resources.openRawResource(modelId).readBytes()
-    }
-
     init {
-        ortSession = OrtEnvironment.getEnvironment().createSession(readYoloModel(context, modelId))
+        ortSession = OrtEnvironment.getEnvironment().createSession(modelBytesArray)
     }
 
     private fun getTopDetectedObject(foundObjects: List<ClassifiedBox>): ClassifiedBox? {

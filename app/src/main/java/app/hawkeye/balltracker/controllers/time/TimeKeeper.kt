@@ -1,6 +1,5 @@
 package app.hawkeye.balltracker.controllers.time
 
-import app.hawkeye.balltracker.controllers.time.interfaces.TimeKeeperBase
 import java.util.*
 
 class TimeKeeper : TimeKeeperBase {
