@@ -7,22 +7,24 @@ import android.graphics.Paint
 import android.graphics.RectF
 import android.util.AttributeSet
 import android.view.View
+import app.hawkeye.balltracker.configs.objects.TrackingSystemConfigObject
+import app.hawkeye.balltracker.utils.createLogger
 import com.hawkeye.movement.interfaces.TrackingSystemControllerBase
 import com.hawkeye.movement.utils.AngleMeasure
 import com.hawkeye.movement.utils.Point
+import kotlinx.android.synthetic.main.activity_camera.view.*
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.min
 import kotlin.math.sin
 
 
+private val LOG = createLogger<TrackingSystemStateView>()
+
 // represents tracking system state
 class TrackingSystemStateView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
-
-    private var trackingSystemController: TrackingSystemControllerBase? = null
-
     private val guidelinesQuantity = 8
 
     private val circlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -45,11 +47,6 @@ class TrackingSystemStateView @JvmOverloads constructor(
         style = Paint.Style.FILL_AND_STROKE
         color = Color.argb(0.6f, 0.4f, 0.4f, 0.4f)
         strokeWidth = 3f
-    }
-
-    fun setTrackingSystemController(newTrackingSystemController: TrackingSystemControllerBase) {
-        trackingSystemController = newTrackingSystemController
-        invalidate()
     }
 
     fun updateLocatorState() {
@@ -82,9 +79,9 @@ class TrackingSystemStateView @JvmOverloads constructor(
 
         canvas?.drawCircle(centerX, centerY, radius, circlePaint)
 
-        if (trackingSystemController != null) {
+        if (TrackingSystemConfigObject.movementControllerSystem != null) {
 
-            val (direction, FOVAngle) = trackingSystemController!!.getCameraDirectionAndFOVAngleAtTime(
+            val (direction, FOVAngle) = TrackingSystemConfigObject.movementControllerSystem.getCameraDirectionAndFOVAngleAtTime(
                 System.currentTimeMillis()
             )
 
@@ -106,8 +103,8 @@ class TrackingSystemStateView @JvmOverloads constructor(
             canvas?.drawLine(centerX + x, centerY + y, centerX - x, centerY - y, guidelinesPaint)
         }
 
-        if (trackingSystemController != null) {
-            drawTrackedObjectPointAtTime(canvas, centerX, centerY, distanceFromCenter = radius * 0.6f, trackingSystemController?.getObjectPositionAtTime(System.currentTimeMillis()))
+        if (TrackingSystemConfigObject.movementControllerSystem != null) {
+            drawTrackedObjectPointAtTime(canvas, centerX, centerY, distanceFromCenter = radius * 0.6f, TrackingSystemConfigObject.movementControllerSystem.getObjectPositionAtTime(System.currentTimeMillis()))
         }
 
     }

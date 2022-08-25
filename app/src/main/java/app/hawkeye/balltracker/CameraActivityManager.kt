@@ -67,8 +67,6 @@ class CameraManager(
     init {
         objectDetectorImageAnalyzer =
             ObjectDetectorImageAnalyzer()
-
-        UIController.attachTrackingSystemToLocator(objectDetectorImageAnalyzer!!.getTrackingSystemController())
     }
 
     private fun setAnalyzerFor(imageAnalysis: ImageAnalysis) {
@@ -93,7 +91,6 @@ class CameraManager(
                 autoFocusPoint,
                 FocusMeteringAction.FLAG_AF
             ).apply {
-                //start auto-focusing after 2 seconds
                 setAutoCancelDuration(2, TimeUnit.SECONDS)
             }.build()
             camera.cameraControl.startFocusAndMetering(autoFocusAction)

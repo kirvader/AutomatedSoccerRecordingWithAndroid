@@ -64,11 +64,6 @@ class CameraActivity : AppCompatActivity() {
         UIController.updateUIAreaOfDetectionWithNewArea = ::updateUIAreaOfDetectionWithNewArea
         UIController.updateUIWhenImageAnalyzerFinished = ::updateUIWhenImageAnalyzerFinished
         UIController.getPreviewSurfaceProvider = ::getPreviewSurfaceProvider
-        UIController.attachTrackingSystemToLocator = ::attachTrackingSystemToLocator
-    }
-
-    private fun attachTrackingSystemToLocator(trackingSystemControllerBase: TrackingSystemControllerBase) {
-        trackingSystemStateView.setTrackingSystemController(trackingSystemControllerBase)
     }
 
     private fun updateUIOnStartRecording() {
@@ -92,6 +87,8 @@ class CameraActivity : AppCompatActivity() {
                 )?.toRect()
             )
             inference_time_info.text = newBenchmarksInfo
+
+            LOG.i("rect size ${rect?.size}")
             trackingSystemStateView.updateLocatorState()
         }
     }
