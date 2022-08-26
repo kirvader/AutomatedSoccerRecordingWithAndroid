@@ -60,6 +60,6 @@ class FootballTrackingSystemController(rotatableDevice: RotatableDevice) : Track
     }
 
     companion object {
-        private val cameraFOV = Degree(90.0f)
+        private val cameraFOV = Degree(50.0f)
     }
 }

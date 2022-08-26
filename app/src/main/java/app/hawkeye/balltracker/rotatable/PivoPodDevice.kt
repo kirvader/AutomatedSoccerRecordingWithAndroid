@@ -36,7 +36,7 @@ class PivoPodDevice(context: Context) : RotatableDevice {
         sdk = PivoSdk.getInstance()
         sdk.unlockWithLicenseKey(getLicenseContent(context))
 
-        availableSpeeds = sdk.supportedSpeeds.filter { it in 50..200 }
+        availableSpeeds = sdk.supportedSpeeds.filter { it in 110..200 }
     }
 
     override fun rotateBy(speed: Float, orientedAngle: AngleMeasure) {
@@ -57,7 +57,7 @@ class PivoPodDevice(context: Context) : RotatableDevice {
 
     override fun getTheMostAppropriateSpeedFromAvailable(speed: AngleMeasure): Float {
         if (availableSpeeds.isEmpty()) {
-            availableSpeeds = sdk.supportedSpeeds.filter { it in 50..200 }
+            availableSpeeds = sdk.supportedSpeeds.filter { it in 110..200 }
         }
         if (speed.degree() == 0f) {
             return availableSpeeds.last().toFloat()
