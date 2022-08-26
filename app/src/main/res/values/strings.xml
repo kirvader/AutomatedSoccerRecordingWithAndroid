@@ -39,6 +39,14 @@
 
     <string name="start_recording">Start recording</string>
     <string name="stop_recording">Stop recording</string>
+    <string name="tracking_strategy_header">Tracking strategy</string>
+    <string name="tiling_strategy_header">Tiling strategy</string>
+    <string name="object_extractor_header">Object extractor</string>
+    <string name="model_selector_header">Model selector</string>
+    <string name="control_recording_state">Control recording state</string>
+    <string name="scan_for_controllable_devices">Scan for controllable devices</string>
+    <string name="open_settings">Open settings</string>
+    <string name="settings_back_button_text">Back</string>
     <string-array name="available_object_detectors">
         <item>None</item>
         <item>ONNX YOLO default</item>

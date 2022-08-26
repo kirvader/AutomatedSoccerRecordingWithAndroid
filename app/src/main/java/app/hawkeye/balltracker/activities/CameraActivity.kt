@@ -2,6 +2,7 @@ package app.hawkeye.balltracker.activities
 
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.View
@@ -45,16 +46,13 @@ class CameraActivity : AppCompatActivity() {
             )
         }
 
-        videoCaptureButton.setOnClickListener {
+        recording_button.setOnClickListener {
             cameraManager.toggleCameraRecording()
         }
 
-        scanPivoButton.setOnClickListener {
-            if (RuntimeUtils.isEmulator()) {
-                LOG.i("Scan button pressed")
-            } else {
-                PivoPodDevice.scanForPivoDevices(this, layoutInflater)
-            }
+        settings_button.setOnClickListener{
+            val intent = Intent(this@CameraActivity, SettingsActivity::class.java)
+            startActivity(intent)
         }
 
         updateUIAreaOfDetectionWithNewArea(listOf())
@@ -67,11 +65,11 @@ class CameraActivity : AppCompatActivity() {
     }
 
     private fun updateUIOnStartRecording() {
-        videoCaptureButton.setText(R.string.stop_recording)
+        recording_button.setBackgroundResource(R.drawable.ic_record_in_progress)
     }
 
     private fun updateUIOnStopRecording() {
-        videoCaptureButton.setText(R.string.start_recording)
+        recording_button.setBackgroundResource(R.drawable.ic_ready_to_record)
     }
 
     private fun updateUIAreaOfDetectionWithNewArea(newArea: List<AdaptiveScreenRect>) {

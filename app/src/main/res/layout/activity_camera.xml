@@ -12,9 +12,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_above="@+id/mylinear"
-        app:implementationMode="compatible">
-
-    </androidx.camera.view.PreviewView>
+        app:implementationMode="compatible" />
 
     <app.hawkeye.balltracker.views.AreaOfDetectionView
         android:id="@+id/areaOfDetectionSurface"
@@ -31,9 +29,29 @@
 
     <app.hawkeye.balltracker.views.TrackingSystemStateView
         android:id="@+id/trackingSystemStateView"
-        android:layout_width="200dp"
-        android:layout_height="200dp"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
         android:layout_above="@+id/mylinear" />
+
+    <ImageButton
+        android:id="@+id/recording_button"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_above="@+id/mylinear"
+        android:layout_centerHorizontal="true"
+        android:src="@drawable/ic_ready_to_record"
+        android:contentDescription="@string/control_recording_state" />
+
+
+
+    <ImageButton
+        android:id="@+id/settings_button"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        app:srcCompat="@drawable/ic_settings"
+        android:layout_alignParentEnd="true"
+        android:layout_above="@id/mylinear"
+        android:contentDescription="@string/open_settings" />
 
     <LinearLayout
         android:id="@+id/mylinear"
@@ -47,35 +65,6 @@
         android:paddingRight="10dp"
         android:paddingBottom="10dp"
         app:layout_constraintBottom_toBottomOf="parent">
-
-        <Spinner
-            android:id="@+id/imageAnalyzerChoiceSpinner"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="bottom" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="horizontal"
-            android:weightSum="2">
-
-
-            <Button
-                android:id="@+id/videoCaptureButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/start_recording" />
-
-            <Button
-                android:id="@+id/scanPivoButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Pivo pod scan" />
-        </LinearLayout>
-
         <TextView
             android:id="@+id/inference_time_info"
             android:layout_width="match_parent"

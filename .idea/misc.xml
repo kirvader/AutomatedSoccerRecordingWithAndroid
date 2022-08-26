@@ -3,18 +3,16 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
-        <entry key="..\:/development/AutomatedSoccerRecordingWithAndroid/pivo-basic-sdk-testapp-android/app/src/main/res/layout/activity_camera.xml" value="0.3333333333333333" />
-        <entry key="..\:/development/AutomatedSoccerRecordingWithAndroid/pivo-basic-sdk-testapp-android/app/src/main/res/layout/activity_pivo_scanning.xml" value="0.31145833333333334" />
-        <entry key="..\:/development/AutomatedSoccerRecordingWithAndroid/pivo-basic-sdk-testapp-android/app/src/main/res/layout/device_item.xml" value="0.31145833333333334" />
-        <entry key="..\:/development/AutomatedSoccerRecordingWithAndroid/pivo-basic-sdk-testapp-android/app/src/main/res/layout/pivo_scan_results.xml" value="0.31145833333333334" />
-        <entry key="..\:/development/Videotape/ball-tracker/app/src/main/res/layout/activity_camera.xml" value="0.26773049645390073" />
-        <entry key="..\:/development/Videotape/ball-tracker/app/src/main/res/layout/pivo_scan_results.xml" value="0.4832427536231884" />
-        <entry key="..\:/development/pivo-basic-sdk-testapp-android/app/src/main/res/layout/activity_pivo_controller.xml" value="0.3140625" />
-        <entry key="..\:/development/pivo-basic-sdk-testapp-android/app/src/main/res/layout/camera_activity.xml" value="0.5546875" />
+        <entry key="..\:/development/Videotape/ball-tracker/app/src/main/res/drawable/active_item_border.xml" value="0.2655" />
+        <entry key="..\:/development/Videotape/ball-tracker/app/src/main/res/drawable/disabled_border.xml" value="0.2645" />
+        <entry key="..\:/development/Videotape/ball-tracker/app/src/main/res/layout/activity_camera.xml" value="0.31145833333333334" />
+        <entry key="..\:/development/Videotape/ball-tracker/app/src/main/res/layout/activity_settings.xml" value="0.31145833333333334" />
+        <entry key="..\:/development/Videotape/ball-tracker/app/src/main/res/layout/config_item.xml" value="0.2604166666666667" />
+        <entry key="..\:/development/Videotape/ball-tracker/app/src/main/res/layout/settings_view.xml" value="0.31145833333333334" />
       </map>
     </option>
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_7" project-jdk-name="11" project-jdk-type="JavaSDK">
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_7" project-jdk-name="Android Studio default JDK" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/build/classes" />
   </component>
   <component name="ProjectType">
