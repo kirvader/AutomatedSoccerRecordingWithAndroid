@@ -41,7 +41,6 @@ class AreaOfDetectionView @JvmOverloads constructor(
         super.onDraw(canvas)
 
         for (adaptiveRect in areaOfDetection) {
-            LOG.i("${adaptiveRect.getCenter().x} ${adaptiveRect.getCenter().y}")
 
             canvas?.drawRect(adaptiveRect.toScreenRect(measuredWidth, measuredHeight).toRect(), detectionSegmentPaint)
         }

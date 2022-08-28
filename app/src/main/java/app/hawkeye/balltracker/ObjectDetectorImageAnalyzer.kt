@@ -20,12 +20,13 @@ class ObjectDetectorImageAnalyzer() : ImageAnalysis.Analyzer {
 
     private fun updateTrackingSystemState(result: ClassifiedBox?) {
         if (result == null) {
-            LOG.i("No appropriate objects found")
             TrackingSystemConfigObject.movementControllerSystem.updateBallModelWithClassifiedBox(
                 null,
                 TrackingSystemConfigObject.timeKeeper.getCurrentCircleStartTime()
             )
             TrackingSystemConfigObject.timeKeeper.registerCircle()
+
+            TrackingSystemConfigObject.movementControllerSystem.directDeviceAtObjectAtTime(TrackingSystemConfigObject.timeKeeper.getCurrentCircleStartTime(), TrackingSystemConfigObject.timeKeeper.getCurrentCircleStartTime())
 
             UIController.updateUIWhenImageAnalyzerFinished(
                 null,
@@ -39,8 +40,6 @@ class ObjectDetectorImageAnalyzer() : ImageAnalysis.Analyzer {
         )
 
         TrackingSystemConfigObject.timeKeeper.registerCircle()
-
-        LOG.i("ball position ${TrackingSystemConfigObject.movementControllerSystem.getBallPositionOnScreenAtTime(TrackingSystemConfigObject.timeKeeper.getCurrentCircleStartTime())}")
 
         TrackingSystemConfigObject.movementControllerSystem.directDeviceAtObjectAtTime(TrackingSystemConfigObject.timeKeeper.getCurrentCircleStartTime(), TrackingSystemConfigObject.timeKeeper.getCurrentCircleStartTime())
 

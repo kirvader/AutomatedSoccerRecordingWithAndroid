@@ -36,16 +36,15 @@ class PivoPodDevice(context: Context) : RotatableDevice {
         sdk = PivoSdk.getInstance()
         sdk.unlockWithLicenseKey(getLicenseContent(context))
 
-        availableSpeeds = sdk.supportedSpeeds.filter { it in 110..200 }
+        availableSpeeds = sdk.supportedSpeeds.filter { it in 20..200 }
     }
 
     override fun rotateBy(speed: Float, orientedAngle: AngleMeasure) {
 
-        LOG.i("got command to rotate for ${orientedAngle.degree()} with speed $speed")
         if (orientedAngle > Degree(0.0f)) {
-            sdk.turnRight(abs(orientedAngle.degree().toInt()))
+            sdk.turnRight(abs(orientedAngle.degree().toInt()), speed.toInt())
         } else if (orientedAngle < Degree(0.0f)) {
-            sdk.turnLeft(abs(orientedAngle.degree().toInt()))
+            sdk.turnLeft(abs(orientedAngle.degree().toInt()), speed.toInt())
         } else {
             sdk.stop()
         }
@@ -57,7 +56,7 @@ class PivoPodDevice(context: Context) : RotatableDevice {
 
     override fun getTheMostAppropriateSpeedFromAvailable(speed: AngleMeasure): Float {
         if (availableSpeeds.isEmpty()) {
-            availableSpeeds = sdk.supportedSpeeds.filter { it in 110..200 }
+            availableSpeeds = sdk.supportedSpeeds.filter { it in 20..200 }
         }
         if (speed.degree() == 0f) {
             return availableSpeeds.last().toFloat()
@@ -67,7 +66,7 @@ class PivoPodDevice(context: Context) : RotatableDevice {
     }
 
     override fun getGradPerSecSpeedFromAvailable(availableDeviceSpeed: Float): AngleMeasure {
-        return Degree(1.0f / 360.0f / availableDeviceSpeed)
+        return Degree(360.0f / availableDeviceSpeed)
     }
 
     override fun isConnected(): Boolean {

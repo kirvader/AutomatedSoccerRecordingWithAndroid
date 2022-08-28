@@ -2,10 +2,7 @@ package com.hawkeye.movement
 
 import com.hawkeye.movement.interfaces.RotatableDevice
 import com.hawkeye.movement.interfaces.RotatableDeviceControllerBase
-import com.hawkeye.movement.utils.AngleMeasure
-import com.hawkeye.movement.utils.Degree
-import com.hawkeye.movement.utils.Point
-import com.hawkeye.movement.utils.Radian
+import com.hawkeye.movement.utils.*
 import java.util.*
 import kotlin.math.abs
 
@@ -32,6 +29,7 @@ class RotatableDeviceController(
         while (allStoredStates.isNotEmpty() && allStoredStates.first().absTime < time_ms - relevanceDeltaTime) {
             allStoredStates.removeFirst()
         }
+        updateStateAtTime(time_ms)
     }
 
     private fun updateStateAtTime(time_ms: Long) {
@@ -40,7 +38,6 @@ class RotatableDeviceController(
         val newSpeed: AngleMeasure
         val newRotationLeftover: AngleMeasure
         val newDirection: AngleMeasure
-
 
         if (abs((lastUpdatedState.speed * deltaTime).degree()) < abs(lastUpdatedState.rotationLeftover.degree())) {
             newSpeed = lastUpdatedState.speed
@@ -76,10 +73,9 @@ class RotatableDeviceController(
 
         updateRelevantStatesFor(currentTime_ms)
 
-        updateStateAtTime(currentTime_ms)
-
+        val possibleTargetAngle = getDeviceDirectionWithConstraints(lastUpdatedState.direction + angle)
         val checkedDeltaAngle =
-            getDeviceDirectionWithConstraints(lastUpdatedState.direction + angle) - lastUpdatedState.direction
+            possibleTargetAngle - lastUpdatedState.direction
 
         val availableSpeed = device.getTheMostAppropriateSpeedFromAvailable(speed)
 
@@ -88,7 +84,7 @@ class RotatableDeviceController(
         lastUpdatedState = State(
             lastUpdatedState.direction,
             currentTime_ms,
-            device.getGradPerSecSpeedFromAvailable(availableSpeed),
+            device.getGradPerSecSpeedFromAvailable(availableSpeed) * sign(checkedDeltaAngle),
             checkedDeltaAngle
         )
         allStoredStates.addLast(lastUpdatedState)
@@ -109,12 +105,13 @@ class RotatableDeviceController(
 
         updateRelevantStatesFor(currentTime_ms)
 
-        updateStateAtTime(currentTime_ms)
-
         val checkedDeltaAngle =
             getDeviceDirectionWithConstraints(
                 position.getAngle()
             ) - lastUpdatedState.direction
+        val deltaAngleToCenterArea = max(Degree(0f), abs(checkedDeltaAngle) - centerRadius) * sign(checkedDeltaAngle)
+
+
         val deltaTime = (targetTime_ms - currentTime_ms) / 1000.0f
 
         val availableSpeed =
@@ -122,16 +119,20 @@ class RotatableDeviceController(
 
 
 
-        device.rotateBy(availableSpeed, checkedDeltaAngle)
+        device.rotateBy(availableSpeed, deltaAngleToCenterArea)
 
         lastUpdatedState = State(
             lastUpdatedState.direction,
             currentTime_ms,
-            device.getGradPerSecSpeedFromAvailable(availableSpeed),
-            checkedDeltaAngle
+            device.getGradPerSecSpeedFromAvailable(availableSpeed) * sign(deltaAngleToCenterArea),
+            deltaAngleToCenterArea
         )
         allStoredStates.addLast(lastUpdatedState)
 
+    }
+
+    override fun getDeviceDirectionWithConstraints(direction: AngleMeasure): AngleMeasure {
+        return min(Degree(90f), max(Degree(-90f), direction))
     }
 
     private fun lerpAngle(
@@ -155,8 +156,9 @@ class RotatableDeviceController(
     }
 
     override fun getDirectionAtTime(absTime: Long): AngleMeasure {
-        if (!device.isConnected())
+        if (!device.isConnected()) {
             return Degree(0f)
+        }
         val stack = Stack<State>()
         while (allStoredStates.isNotEmpty() && allStoredStates.last.absTime > absTime) {
             stack.push(allStoredStates.pollLast())
@@ -168,6 +170,8 @@ class RotatableDeviceController(
 
         val previousState = allStoredStates.last
         val deltaTimeFromPreviousState = (absTime - previousState.absTime) / 1000.0f
+
+
 
         if (stack.isEmpty()) {
 
@@ -186,5 +190,9 @@ class RotatableDeviceController(
         }
 
         return lerpAngle(previousState.direction, nextState.direction, previousState.absTime, nextState.absTime, absTime)
+    }
+
+    companion object {
+        private val centerRadius = Degree(12.5f)
     }
 }

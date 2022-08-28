@@ -86,7 +86,6 @@ class CameraActivity : AppCompatActivity() {
             )
             inference_time_info.text = newBenchmarksInfo
 
-            LOG.i("rect size ${rect?.size}")
             trackingSystemStateView.updateLocatorState()
         }
     }

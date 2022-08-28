@@ -6,6 +6,23 @@ import kotlin.math.PI
 fun cos(angle: AngleMeasure): Float = kotlin.math.cos(angle.radian())
 fun sin(angle: AngleMeasure): Float = kotlin.math.sin(angle.radian())
 
+fun abs(angle: AngleMeasure): AngleMeasure = Degree(kotlin.math.abs(angle.degree()))
+fun sign(angle: AngleMeasure): Float {
+    return if (angle > Degree(0f)) {
+        1f
+    } else if (angle < Degree(0f)) {
+        -1f
+    } else {
+        0f
+    }
+}
+
+fun min(a: AngleMeasure, b: AngleMeasure): AngleMeasure =
+    Degree(kotlin.math.min(a.degree(), b.degree()))
+
+fun max(a: AngleMeasure, b: AngleMeasure): AngleMeasure =
+    Degree(kotlin.math.max(a.degree(), b.degree()))
+
 interface AngleMeasure : Comparable<AngleMeasure> {
     fun degree(): Float {
         return this.radian() * 180.0f / PI.toFloat()

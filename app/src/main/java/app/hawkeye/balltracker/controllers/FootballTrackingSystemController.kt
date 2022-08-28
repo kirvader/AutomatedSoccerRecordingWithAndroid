@@ -48,10 +48,6 @@ class FootballTrackingSystemController(rotatableDevice: RotatableDevice) : Track
         val deltaAngle = ScreenPart(centerX, cameraFOV.degree())
         val height = box.adaptiveRect.topLeftPoint.y + box.adaptiveRect.size.y / 2
 
-        LOG.i(box.adaptiveRect.topLeftPoint + box.adaptiveRect.size)
-
-        LOG.i("grad = ${rotatableDeviceController.getDirectionAtTime(absTime_ms).degree()} + ${deltaAngle.degree()} = ${rotatableDeviceController.getDirectionAtTime(absTime_ms).degree() + deltaAngle.degree()}")
-
         updateTargetPosition(Point(PolarPoint(averageDistance, rotatableDeviceController.getDirectionAtTime(absTime_ms) + deltaAngle, height)), absTime_ms)
     }
 
